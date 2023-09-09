@@ -1,0 +1,137 @@
+- type: entity
+  id: BasePowerCellIndustrial
+  abstract: true
+  parent: BaseItem
+  components:
+  - type: Battery
+    pricePerJoule: 0.15
+  - type: PowerCell
+  - type: Explosive
+    explosionType: Default
+    maxIntensity: 200
+    intensitySlope: 1.5
+  - type: Sprite
+    sprite: Objects/Power/power_cells_industrial.rsi
+  - type: SolutionContainerManager
+    solutions:
+      battery:
+        maxVol: 5
+  - type: InjectableSolution
+    solution: battery
+  - type: DrawableSolution
+    solution: battery
+  - type: Extractable
+    juiceSolution:
+      reagents:
+        - ReagentId: Zinc
+          Quantity: 5
+  - type: Tag
+    tags:
+      - DroneUsable
+  - type: Appearance
+  - type: Riggable
+
+- type: entity
+  name: small-capacity power pack
+  description: A rechargeable power pack. This is the cheapest kind you can find.
+  id: PowerCellIndustrialSmall
+  suffix: Full
+  parent: BasePowerCellIndustrial
+  components:
+  - type: Sprite
+    layers:
+      - state: small
+  - type: Battery
+    maxCharge: 50000
+    startingCharge: 50000
+
+- type: entity
+  id: PowerCellIndustrialSmallPrinted
+  suffix: Empty
+  parent: PowerCellIndustrialSmall
+  components:
+  - type: Sprite
+    layers:
+      - state: small
+  - type: Battery
+    maxCharge: 50000
+    startingCharge: 0
+
+- type: entity
+  name: medium-capacity power pack
+  description: A rechargeable power pack. This is the popular and reliable version.
+  id: PowerCellIndustrialMedium
+  suffix: Full
+  parent: BasePowerCellIndustrial
+  components:
+  - type: Sprite
+    layers:
+      - state: medium
+  - type: Battery
+    maxCharge: 100000
+    startingCharge: 100000
+
+- type: entity
+  id: PowerCellIndustrialMediumPrinted
+  suffix: Empty
+  parent: PowerCellIndustrialMedium
+  components:
+  - type: Sprite
+    layers:
+      - state: medium
+  - type: Battery
+    maxCharge: 100000
+    startingCharge: 0
+
+- type: entity
+  name: high-capacity power pack
+  description: A rechargeable standardized power pack. This premium brand stores up to 50% more energy than the competition.
+  id: PowerCellIndustrialHigh
+  suffix: Full
+  parent: BasePowerCellIndustrial
+  components:
+  - type: Sprite
+    layers:
+      - state: high
+  - type: Battery
+    maxCharge: 150000
+    startingCharge: 150000
+
+- type: entity
+  id: PowerCellIndustrialHighPrinted
+  suffix: Empty
+  parent: PowerCellIndustrialHigh
+  components:
+  - type: Sprite
+    layers:
+      - state: high
+  - type: Battery
+    maxCharge: 150000
+    startingCharge: 0
+
+- type: entity
+  name: hyper-capacity power pack
+  description: A rechargeable standardized power pack. This one looks like a rare and powerful prototype.
+  id: PowerCellIndustrialHyper
+  suffix: Full
+  parent: BasePowerCellIndustrial
+  components:
+  - type: Sprite
+    layers:
+      - state: hyper
+  - type: Battery
+    maxCharge: 200000
+    startingCharge: 200000
+
+- type: entity
+  id: PowerCellIndustrialHyperPrinted
+  suffix: Empty
+  parent: PowerCellIndustrialHyper
+  components:
+  - type: Sprite
+    layers:
+      - state: hyper
+  - type: Battery
+    maxCharge: 200000
+    startingCharge: 0
+    
