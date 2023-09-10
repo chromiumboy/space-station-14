@@ -22,6 +22,11 @@ public sealed partial class PowerCellSlotComponent : Component
     [DataField("fitsInCharger")]
     public bool FitsInCharger = true;
 
+    /// <summary>
+    /// Determines what type of power cell can be inserted into the slot.
+    /// </summary>
+    [DataField("acceptedCellType")]
+    public PowerCellType AcceptedCellType = PowerCellType.Standard;
 }
 
 /// <summary>

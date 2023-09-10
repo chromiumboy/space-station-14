@@ -36,7 +36,13 @@ public abstract class SharedPowerCellSystem : EntitySystem
         if (args.Container.ID != component.CellSlotId)
             return;
 
-        if (!HasComp<PowerCellComponent>(args.EntityUid))
+        if (TryComp<PowerCellComponent>(args.EntityUid, out var powerCell) &&
+            powerCell.CellType == component.AcceptedCellType)
+        {
+            return;
+        }
+
+        else
         {
             args.Cancel();
         }
