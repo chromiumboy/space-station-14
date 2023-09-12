@@ -25,6 +25,7 @@
   cost: 5000
   recipeUnlocks:
   - PowerCellMedium
+  - PowerCellIndustrialMedium
 
 - type: technology
   id: CompactPower
@@ -175,6 +176,7 @@
   cost: 7500
   recipeUnlocks:
   - PowerCellHigh
+  - PowerCellIndustrialHigh
   technologyPrerequisites:
   - AdvancedPowercells
 

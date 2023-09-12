@@ -93,6 +93,7 @@
       part-container: !type:Container
   - type: PowerCellSlot
     cellSlotId: cell_slot
+    acceptedCellType: Industrial
     fitsInCharger: true
   - type: PowerCellDraw
     drawRate: 0.6

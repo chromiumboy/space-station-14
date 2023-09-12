@@ -125,7 +125,7 @@
   - type: ContainerFill
     containers:
       mech-battery-slot:
-      - PowerCellHigh
+      - PowerCellIndustrialHigh
 
 # TODO: have a whitelist for honker equipment
 - type: entity
@@ -161,7 +161,7 @@
   - type: ContainerFill
     containers:
       mech-battery-slot:
-      - PowerCellHigh
+      - PowerCellIndustrialHigh
 
 - type: entity
   parent: BaseMech
@@ -211,7 +211,7 @@
   - type: ContainerFill
     containers:
       mech-battery-slot:
-      - PowerCellHigh
+      - PowerCellIndustrialHigh
 
 # Vim!!!!!!!
 

@@ -244,6 +244,8 @@
       - VoiceTrigger
       - PowerCellMedium
       - PowerCellHigh
+      - PowerCellIndustrialMedium
+      - PowerCellIndustrialHigh
       - WeaponPistolCHIMP
       - SynthesizerInstrument
       - RPED
