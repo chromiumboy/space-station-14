@@ -1,4 +1,4 @@
-﻿<controls:FancyWindow  xmlns="https://spacestation14.io"
+<controls:FancyWindow  xmlns="https://spacestation14.io"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="clr-namespace:Content.Client.UserInterface.Controls"
     xmlns:style="clr-namespace:Content.Client.Stylesheets"
@@ -42,6 +42,15 @@
                         Value="0.5">
                 <Label Name="ChargePercentage" Margin="4 0" Text="0 %" />
             </ProgressBar>
+            <!-- Cover lock -->
+            <BoxContainer Orientation="Vertical" HorizontalExpand="True">
+                <GridContainer Margin="10 10 0 0" Columns="2" HorizontalExpand="True">
+                    <Label Name="CoverLockStateLabel" Text="{Loc 'power-cell-slot-cover-label'}" StyleClasses="StatusFieldTitle" MinWidth="120" HorizontalExpand="True"/>
+                    <BoxContainer Orientation="Horizontal" MinWidth="120" HorizontalAlignment="Right">
+                        <Button Name="CoverLockButton" HorizontalExpand="True"/>
+                    </BoxContainer>
+                </GridContainer>
+            </BoxContainer>
         </BoxContainer>
 
         <!-- Footer -->

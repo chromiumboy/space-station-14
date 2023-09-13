@@ -182,19 +182,26 @@ namespace Content.Shared.APC
         public readonly int Power;
         public readonly ApcExternalPowerState ApcExternalPower;
         public readonly float Charge;
+        public readonly bool CoverLock;
 
-        public ApcBoundInterfaceState(bool mainBreaker, bool hasAccess, int power, ApcExternalPowerState apcExternalPower, float charge)
+        public ApcBoundInterfaceState(bool mainBreaker, bool hasAccess, int power, ApcExternalPowerState apcExternalPower, float charge, bool coverLock)
         {
             MainBreaker = mainBreaker;
             HasAccess = hasAccess;
             Power = power;
             ApcExternalPower = apcExternalPower;
             Charge = charge;
+            CoverLock = coverLock;
         }
     }
 
     [Serializable, NetSerializable]
     public sealed class ApcToggleMainBreakerMessage : BoundUserInterfaceMessage
+    {
+    }
+
+    [Serializable, NetSerializable]
+    public sealed class ApcToggleCoverLockMessage : BoundUserInterfaceMessage
     {
     }
 

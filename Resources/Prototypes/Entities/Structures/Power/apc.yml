@@ -52,11 +52,11 @@
       map: ["enum.ApcVisualLayers.Environment"]
   - type: Appearance
   - type: ApcVisuals
-#  - type: Battery
-#    maxCharge: 50000
-#    startingCharge: 50000
   - type: PowerCellSlot
     cellSlotId: cell_slot
+  - type: PowerCellSlotCover
+    cellSlotId: cell_slot
+    lockState: Engaged
   - type: ContainerContainer
     containers:
       cell_slot: !type:ContainerSlot

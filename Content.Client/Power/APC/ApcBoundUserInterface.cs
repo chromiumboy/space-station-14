@@ -1,4 +1,4 @@
-﻿using Content.Client.Power.APC.UI;
+using Content.Client.Power.APC.UI;
 using Content.Shared.APC;
 using JetBrains.Annotations;
 using Robust.Client.GameObjects;
@@ -35,6 +35,11 @@ namespace Content.Client.Power.APC
         public void BreakerPressed()
         {
             SendMessage(new ApcToggleMainBreakerMessage());
+        }
+
+        public void CoverLockPressed()
+        {
+            SendMessage(new ApcToggleCoverLockMessage());
         }
 
         protected override void Dispose(bool disposing)

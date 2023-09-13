@@ -2,12 +2,13 @@ using Content.Server.Emp;
 using Content.Server.Popups;
 using Content.Server.Power.Components;
 using Content.Server.Power.Pow3r;
-using Content.Shared.Access.Components;
 using Content.Shared.Access.Systems;
 using Content.Shared.APC;
 using Content.Shared.Emag.Components;
 using Content.Shared.Emag.Systems;
 using Content.Shared.Popups;
+using Content.Shared.PowerCell;
+using Content.Shared.PowerCell.Components;
 using Robust.Server.GameObjects;
 using Robust.Shared.Audio;
 using Robust.Shared.Timing;
@@ -33,8 +34,9 @@ public sealed class ApcSystem : EntitySystem
         SubscribeLocalEvent<ApcComponent, MapInitEvent>(OnApcInit);
         SubscribeLocalEvent<ApcComponent, ChargeChangedEvent>(OnBatteryChargeChanged);
         SubscribeLocalEvent<ApcComponent, ApcToggleMainBreakerMessage>(OnToggleMainBreaker);
-        SubscribeLocalEvent<ApcComponent, GotEmaggedEvent>(OnEmagged);
+        SubscribeLocalEvent<ApcComponent, ApcToggleCoverLockMessage>(OnToggleCoverLock);
 
+        SubscribeLocalEvent<ApcComponent, GotEmaggedEvent>(OnEmagged);
         SubscribeLocalEvent<ApcComponent, EmpPulseEvent>(OnEmpPulse);
     }
 
@@ -93,8 +95,8 @@ public sealed class ApcSystem : EntitySystem
         }
         else
         {
-            _popup.PopupCursor(Loc.GetString("apc-component-insufficient-access"),
-                args.Session, PopupType.Medium);
+            _popup.PopupEntity(Loc.GetString("apc-component-insufficient-access"),
+                uid, args.Session.AttachedEntity.Value, PopupType.Medium);
         }
     }
 
@@ -105,6 +107,42 @@ public sealed class ApcSystem : EntitySystem
 
         apc.MainBreakerEnabled = !apc.MainBreakerEnabled;
         battery.CanDischarge = apc.MainBreakerEnabled;
+
+        UpdateUIState(uid, apc);
+        _audio.PlayPvs(apc.OnReceiveMessageSound, uid, AudioParams.Default.WithVolume(-2f));
+    }
+
+    private void OnToggleCoverLock(EntityUid uid, ApcComponent component, ApcToggleCoverLockMessage args)
+    {
+        var attemptEv = new ApcToggleMainBreakerAttemptEvent();
+        RaiseLocalEvent(uid, ref attemptEv);
+        if (attemptEv.Cancelled)
+        {
+            _popup.PopupCursor(Loc.GetString("apc-component-on-toggle-cancel"),
+                args.Session, PopupType.Medium);
+            return;
+        }
+
+        if (args.Session.AttachedEntity == null)
+            return;
+
+        if (_accessReader.IsAllowed(args.Session.AttachedEntity.Value, uid))
+        {
+            ApcToggleCoverLock(uid, component);
+        }
+        else
+        {
+            _popup.PopupEntity(Loc.GetString("apc-component-insufficient-access"),
+                uid, args.Session.AttachedEntity.Value, PopupType.Medium);
+        }
+    }
+
+    public void ApcToggleCoverLock(EntityUid uid, ApcComponent? apc = null, PowerCellSlotCoverComponent? cover = null)
+    {
+        if (!Resolve(uid, ref apc, ref cover))
+            return;
+
+        RaiseLocalEvent(uid, new TogglePowerCellSlotCoverLockEvent());
 
         UpdateUIState(uid, apc);
         _audio.PlayPvs(apc.OnReceiveMessageSound, uid, AudioParams.Default.WithVolume(-2f));
@@ -146,16 +184,17 @@ public sealed class ApcSystem : EntitySystem
     public void UpdateUIState(EntityUid uid,
         ApcComponent? apc = null,
         PowerNetworkBatteryComponent? netBat = null,
+        PowerCellSlotCoverComponent? cover = null,
         UserInterfaceComponent? ui = null)
     {
-        if (!Resolve(uid, ref apc, ref netBat, ref ui))
+        if (!Resolve(uid, ref apc, ref netBat, ref cover, ref ui))
             return;
 
         var battery = netBat.NetworkBattery;
 
         var state = new ApcBoundInterfaceState(apc.MainBreakerEnabled, apc.HasAccess,
             (int) MathF.Ceiling(battery.CurrentSupply), apc.LastExternalState,
-            battery.CurrentStorage / battery.Capacity);
+            battery.CurrentStorage / battery.Capacity, cover.LockState == PowerCellCoverLockState.Engaged);
 
         _ui.TrySetUiState(uid, ApcUiKey.Key, state, ui: ui);
     }

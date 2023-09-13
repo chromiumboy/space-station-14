@@ -4,6 +4,9 @@ apc-menu-breaker-button = Toggle
 apc-menu-power-label = Load
 apc-menu-external-label = External Power
 apc-menu-charge-label = {$percent} Charged
+apc-menu-power-cell-missing = Power cell missing
+apc-menu-power-cell-cover-lock-engaged = Engaged
+apc-menu-power-cell-cover-lock-disengaged = Disengaged
 
 # For the power state label
 
