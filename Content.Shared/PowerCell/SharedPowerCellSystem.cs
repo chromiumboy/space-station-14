@@ -9,6 +9,7 @@ using Content.Shared.Rejuvenate;
 using Content.Shared.Tools.Components;
 using Robust.Shared.Containers;
 using Robust.Shared.Serialization;
+using Robust.Shared.Timing;
 
 namespace Content.Shared.PowerCell;
 
@@ -29,7 +30,7 @@ public abstract class SharedPowerCellSystem : EntitySystem
         SubscribeLocalEvent<PowerCellSlotComponent, ContainerIsRemovingAttemptEvent>(OnCellRemovalAttempt);
 
         SubscribeLocalEvent<PowerCellSlotCoverComponent, InteractUsingEvent>(OnInteractUsing);
-        SubscribeLocalEvent<PowerCellSlotCoverComponent, TogglePowerCellSlotCoverEvent>(OnTogglePowerCellSlotCover);       
+        SubscribeLocalEvent<PowerCellSlotCoverComponent, TogglePowerCellSlotCoverEvent>(OnTogglePowerCellSlotCover);
         SubscribeLocalEvent<PowerCellSlotCoverComponent, TogglePowerCellSlotCoverLockEvent>(OnTogglePowerCellSlotCoverLock);
         SubscribeLocalEvent<PowerCellSlotCoverComponent, ExaminedEvent>(OnExamine);
     }
@@ -56,7 +57,8 @@ public abstract class SharedPowerCellSystem : EntitySystem
         }
 
         if (TryComp<PowerCellSlotCoverComponent>(args.Container.Owner, out var cover) &&
-            cover.CoverState == PowerCellCoverState.Closed)
+            cover.CoverState == PowerCellCoverState.Closed &&
+            EntityManager.CurrentTick > component.CreationTick) // Required so that batteries can be inserted when the entity initializes 
         {
             args.Cancel();
         }
