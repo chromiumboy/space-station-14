@@ -1,7 +1,9 @@
 using Content.Server.Cargo.Systems;
 using Content.Server.Emp;
 using Content.Server.Power.Components;
+using Content.Shared.Containers.ItemSlots;
 using Content.Shared.Examine;
+using Content.Shared.PowerCell.Components;
 using Content.Shared.Rejuvenate;
 using JetBrains.Annotations;
 using Robust.Shared.Utility;
@@ -11,6 +13,8 @@ namespace Content.Server.Power.EntitySystems
     [UsedImplicitly]
     public sealed class BatterySystem : EntitySystem
     {
+        [Dependency] private readonly ItemSlotsSystem _itemSlots = default!;
+
         public override void Initialize()
         {
             base.Initialize();
@@ -59,22 +63,48 @@ namespace Content.Server.Power.EntitySystems
         private void PreSync(NetworkBatteryPreSync ev)
         {
             // Ignoring entity pausing. If the entity was paused, neither component's data should have been changed.
-            var enumerator = AllEntityQuery<PowerNetworkBatteryComponent, BatteryComponent>();
-            while (enumerator.MoveNext(out var netBat, out var bat))
+            var enumerator = AllEntityQuery<PowerNetworkBatteryComponent>();
+            while (enumerator.MoveNext(out var netBat))
             {
-                DebugTools.Assert(bat.Charge <= bat.MaxCharge && bat.Charge >= 0);
-                netBat.NetworkBattery.Capacity = bat.MaxCharge;
-                netBat.NetworkBattery.CurrentStorage = bat.Charge;
+                float multipler = 1f;
+                TryComp<BatteryComponent>(netBat.Owner, out var bat);
+
+                if (TryComp<PowerCellSlotComponent>(netBat.Owner, out var powerCellSlot) &&
+                    _itemSlots.TryGetSlot(netBat.Owner, powerCellSlot.CellSlotId, out var slot) &&
+                    TryComp(slot.Item, out bat))
+                {
+                    multipler = 150f;
+                }
+
+                if (bat != null)
+                    DebugTools.Assert(bat.Charge <= bat.MaxCharge && bat.Charge >= 0);
+
+                netBat.NetworkBattery.Capacity = bat != null ? bat.MaxCharge * multipler : 0;
+                netBat.NetworkBattery.CurrentStorage = bat != null ? bat.Charge * multipler : 0;
             }
         }
 
         private void PostSync(NetworkBatteryPostSync ev)
         {
             // Ignoring entity pausing. If the entity was paused, neither component's data should have been changed.
-            var enumerator = AllEntityQuery<PowerNetworkBatteryComponent, BatteryComponent>();
-            while (enumerator.MoveNext(out var uid, out var netBat, out var bat))
+            var enumerator = AllEntityQuery<PowerNetworkBatteryComponent>();
+            while (enumerator.MoveNext(out var uid, out var netBat))
             {
-                SetCharge(uid, netBat.NetworkBattery.CurrentStorage, bat);
+                float multipler = 1f;
+                TryComp<BatteryComponent>(netBat.Owner, out var bat);
+
+                if (TryComp<PowerCellSlotComponent>(netBat.Owner, out var powerCellSlot) &&
+                    _itemSlots.TryGetSlot(netBat.Owner, powerCellSlot.CellSlotId, out var slot) &&
+                    TryComp(slot.Item, out bat))
+                {
+                    //uid = bat.Owner;
+                    multipler = 150f;
+                }
+
+                if (bat == null)
+                    return;
+
+                SetCharge(bat.Owner, netBat.NetworkBattery.CurrentStorage / multipler, bat);
             }
         }
 
