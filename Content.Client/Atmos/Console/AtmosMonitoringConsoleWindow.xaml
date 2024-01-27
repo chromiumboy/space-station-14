@@ -1,0 +1,47 @@
+<controls:FancyWindow xmlns="https://spacestation14.io"
+               xmlns:ui="clr-namespace:Content.Client.Atmos.Console"
+               xmlns:controls="clr-namespace:Content.Client.UserInterface.Controls"
+               xmlns:gfx="clr-namespace:Robust.Client.Graphics;assembly=Robust.Client"
+               Title="{Loc 'atmos-monitoring-window-title'}"
+               Resizable="False"
+               SetSize="1120 750"
+               MinSize="1120 750">
+    <BoxContainer Orientation="Vertical">
+        <!-- Main display -->
+        <BoxContainer Orientation="Horizontal" VerticalExpand="True" HorizontalExpand="True">
+            <!-- Nav map -->
+            <BoxContainer Orientation="Vertical" VerticalExpand="True" HorizontalExpand="True">
+                <ui:AtmosMonitoringConsoleNavMapControl Name="NavMap" Margin="5 5" VerticalExpand="True" HorizontalExpand="True">
+
+                    <!-- System warning -->
+                    <PanelContainer Name="SystemWarningPanel"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Top"
+                                    HorizontalExpand="True"
+                                    Margin="0 48 0 0"
+                                    Visible="False">
+                        <RichTextLabel Name="SystemWarningLabel" Margin="12 8 12 8"/>
+                    </PanelContainer>
+
+
+                </ui:AtmosMonitoringConsoleNavMapControl>
+
+                
+            </BoxContainer>
+
+            
+        </BoxContainer>
+
+        <!-- Footer -->
+        <BoxContainer Orientation="Vertical">
+            <PanelContainer StyleClasses="LowDivider" />
+            <BoxContainer Orientation="Horizontal" Margin="10 2 5 0" VerticalAlignment="Bottom">
+                <Label Text="{Loc 'power-monitoring-window-flavor-left'}" StyleClasses="WindowFooterText" />
+                <Label Text="{Loc 'power-monitoring-window-flavor-right'}" StyleClasses="WindowFooterText"
+                        HorizontalAlignment="Right" HorizontalExpand="True"  Margin="0 0 5 0" />
+                <TextureRect StyleClasses="NTLogoDark" Stretch="KeepAspectCentered"
+                        VerticalAlignment="Center" HorizontalAlignment="Right" SetSize="19 19"/>
+            </BoxContainer>
+        </BoxContainer>
+    </BoxContainer>
+</controls:FancyWindow>

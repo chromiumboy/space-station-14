@@ -16,6 +16,14 @@
       state: alert-2
     - map: ["computerLayerKeys"]
       state: atmos_key
+  - type: AtmosMonitoringConsole
+  - type: ActivatableUI
+    singleUser: true
+    key: enum.AtmosMonitoringConsoleUiKey.Key
+  - type: UserInterface
+    interfaces:
+    - key: enum.AtmosMonitoringConsoleUiKey.Key
+      type: AtmosMonitoringConsoleBoundUserInterface
 
 - type: entity
   parent: BaseComputer
