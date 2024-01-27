@@ -1,12 +1,10 @@
 using Content.Client.Pinpointer.UI;
 using Content.Shared.Atmos.Components;
 using Content.Shared.Pinpointer;
-using Content.Shared.Power;
 using Robust.Client.Graphics;
 using Robust.Shared.Collections;
 using Robust.Shared.Map.Components;
 using System.Numerics;
-using TerraFX.Interop.Xlib;
 
 namespace Content.Client.Atmos.Console;
 
@@ -23,8 +21,8 @@ public sealed partial class AtmosMonitoringConsoleNavMapControl : NavMapControl
     public AtmosMonitoringConsoleNavMapControl() : base()
     {
         // Set colors
-        TileColor = new Color(30, 57, 67);
-        WallColor = new Color(102, 164, 217);
+        TileColor = Color.DarkSlateGray;  //new Color(70, 70, 10);
+        WallColor = Color.LightSlateGray; //new Color(186, 186, 13);
         _backgroundColor = Color.FromSrgb(TileColor.WithAlpha(_backgroundOpacity));
 
         PostWallDrawingAction += DrawAllPipeNetworks;

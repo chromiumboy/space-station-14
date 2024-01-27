@@ -21,6 +21,7 @@ using System.Diagnostics.CodeAnalysis;
 using Content.Server.Atmos.Monitor.Components;
 using Content.Server.Atmos.Piping.Components;
 using Content.Shared.Atmos;
+using Content.Server.Atmos.Piping.Unary.Components;
 
 namespace Content.Server.Atmos.Monitor.Systems;
 
@@ -136,6 +137,51 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
             session);*/
     }
 
+    private List<AtmosMonitorData> GetAtmosMonitorData(EntityUid gridUid)
+    {
+        var data = new List<AtmosMonitorData>();
+
+        var queryScrubbers = AllEntityQuery<AtmosMonitorComponent, TransformComponent>();
+        while (queryScrubbers.MoveNext(out var ent, out var atmosMonitor, out var entXform))
+        {
+            if (entXform.GridUid != gridUid)
+                continue;
+
+            if (!entXform.Anchored)
+                continue;
+
+            var group = AtmosMonitoringConsoleGroup.AirSensor;
+
+            if (HasComp<GasVentPumpComponent>(ent))
+                group = AtmosMonitoringConsoleGroup.GasVentPump;
+
+            else if (HasComp<GasVentScrubberComponent>(ent))
+                group = AtmosMonitoringConsoleGroup.GasVentScrubber;
+
+            var datum = new AtmosMonitorData(GetNetEntity(ent), GetNetCoordinates(entXform.Coordinates), group);
+
+            if (TryComp<AtmosPipeColorComponent>(ent, out var atmosPipeColor))
+                datum.Color = atmosPipeColor.Color;
+
+            data.Add(datum);
+        }
+
+        var queryAirAlarms = AllEntityQuery<AirAlarmComponent, TransformComponent>();
+        while (queryAirAlarms.MoveNext(out var ent, out var airAlarm, out var entXform))
+        {
+            if (entXform.GridUid != gridUid)
+                continue;
+
+            if (!entXform.Anchored)
+                continue;
+
+            var datum = new AtmosMonitorData(GetNetEntity(ent), GetNetCoordinates(entXform.Coordinates), AtmosMonitoringConsoleGroup.AirAlarm);
+            data.Add(datum);
+        }
+
+        return data;
+    }
+
     private Dictionary<Vector2i, AtmosPipeChunk> RefreshAtmosPipeGrid(EntityUid gridUid, MapGridComponent grid)
     {
         // Clears all chunks for the associated grid
@@ -206,6 +252,7 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
             allChunks = RefreshAtmosPipeGrid(grid, map);
 
         component.AllChunks = RefreshAtmosPipeGrid(grid, map);
+        component.AtmosMonitors = GetAtmosMonitorData(grid);
 
         Dirty(uid, component);
     }

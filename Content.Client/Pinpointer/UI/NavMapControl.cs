@@ -468,7 +468,7 @@ public partial class NavMapControl : MapGridControl
                 var position = _transformSystem.GetInvWorldMatrix(_xform).Transform(mapPos.Position) - offset;
                 position = Scale(new Vector2(position.X, -position.Y));
 
-                var scalingCoefficient = 2.5f;
+                var scalingCoefficient = 2f;
                 var positionOffset = scalingCoefficient * float.Sqrt(MinimapScale);
 
                 vertexUVs.Add(new DrawVertexUV2D(new Vector2(position.X - positionOffset, position.Y - positionOffset), new Vector2(1f, 1f)));

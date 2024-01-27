@@ -1,4 +1,5 @@
 //using Content.Server.Atmos.Monitor.Systems;
+using Content.Shared.Atmos.Monitor;
 using Robust.Shared.GameStates;
 using Robust.Shared.Map;
 using Robust.Shared.Serialization;
@@ -15,11 +16,17 @@ public sealed partial class AtmosMonitoringConsoleComponent : Component
     /// </summary>
     [ViewVariables, AutoNetworkedField]
     public Dictionary<Vector2i, AtmosPipeChunk> AllChunks = new();
+
+    [ViewVariables, AutoNetworkedField]
+    public List<AtmosMonitorData> AtmosMonitors = new();
 }
 
 [Serializable, NetSerializable]
 public struct AtmosPipeChunk
 {
+    /// <summary>
+    /// Chunk position
+    /// </summary>
     public readonly Vector2i Origin;
 
     /// <summary>
@@ -34,6 +41,22 @@ public struct AtmosPipeChunk
 }
 
 [Serializable, NetSerializable]
+public struct AtmosMonitorData
+{
+    public NetEntity NetEntity;
+    public NetCoordinates NetCoordinates;
+    public AtmosMonitoringConsoleGroup Group;
+    public Color? Color = null;
+
+    public AtmosMonitorData(NetEntity netEntity, NetCoordinates netCoordinates, AtmosMonitoringConsoleGroup group)
+    {
+        NetEntity = netEntity;
+        NetCoordinates = netCoordinates;
+        Group = group;
+    }
+}
+
+[Serializable, NetSerializable]
 public struct AtmosPipeData
 {
     /// <summary>
@@ -42,7 +65,7 @@ public struct AtmosPipeData
     public ushort NorthFacing = 0;
 
     /// <summary>
-    /// Tiles with a north facing pipe on a specific chunk
+    /// Tiles with a south facing pipe on a specific chunk
     /// </summary>
     public ushort SouthFacing = 0;
 
@@ -52,7 +75,7 @@ public struct AtmosPipeData
     public ushort EastFacing = 0;
 
     /// <summary>
-    /// Tiles with a north facing pipe on a specific chunk
+    /// Tiles with a west facing pipe on a specific chunk
     /// </summary>
     public ushort WestFacing = 0;
 
@@ -61,7 +84,6 @@ public struct AtmosPipeData
 
     }
 }
-
 
 [Serializable, NetSerializable]
 public struct AtmosMonitoringConsoleEntry
@@ -72,6 +94,14 @@ public struct AtmosMonitoringConsoleEntry
     {
         NetEntity = netEntity;
     }
+}
+
+public enum AtmosMonitoringConsoleGroup
+{
+    GasVentScrubber,
+    GasVentPump,
+    AirSensor,
+    AirAlarm,
 }
 
 /// <summary>
