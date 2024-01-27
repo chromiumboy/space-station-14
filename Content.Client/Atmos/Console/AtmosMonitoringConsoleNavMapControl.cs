@@ -60,7 +60,7 @@ public sealed partial class AtmosMonitoringConsoleNavMapControl : NavMapControl
         var offset = GetOffset();
         var area = new Box2(-WorldRange, -WorldRange, WorldRange + 1f, WorldRange + 1f).Translated(offset);
 
-        if (WorldRange / WorldMaxRange > 0f)
+        if (WorldRange / WorldMaxRange > 0.5f)
         {
             var pipeNetworks = new Dictionary<Color, ValueList<Vector2>>();
 
@@ -104,9 +104,9 @@ public sealed partial class AtmosMonitoringConsoleNavMapControl : NavMapControl
             }
         }
 
-        /*else
+        else
         {
-            var cableVertexUVs = new ValueList<Vector2>[3];
+            var pipeVertexUVs = new Dictionary<Color, ValueList<Vector2>>();
 
             foreach ((var chunk, var chunkedLines) in atmosPipeNetwork)
             {
@@ -140,33 +140,34 @@ public sealed partial class AtmosMonitoringConsoleNavMapControl : NavMapControl
                         Math.Max(chunkedLine.Origin.Y, chunkedLine.Terminus.Y) + 0.1f)
                         - new Vector2(offset.X, -offset.Y));
 
-                    cableVertexUVs[(int) chunkedLine.Group].Add(leftBottom);
-                    cableVertexUVs[(int) chunkedLine.Group].Add(leftTop);
-                    cableVertexUVs[(int) chunkedLine.Group].Add(rightBottom);
-                    cableVertexUVs[(int) chunkedLine.Group].Add(leftTop);
-                    cableVertexUVs[(int) chunkedLine.Group].Add(rightBottom);
-                    cableVertexUVs[(int) chunkedLine.Group].Add(rightTop);
+                    if (!pipeVertexUVs.TryGetValue(chunkedLine.Color, out var pipeVertexUV))
+                        pipeVertexUV = new ValueList<Vector2>();
+
+                    pipeVertexUV.Add(leftBottom);
+                    pipeVertexUV.Add(leftTop);
+                    pipeVertexUV.Add(rightBottom);
+                    pipeVertexUV.Add(leftTop);
+                    pipeVertexUV.Add(rightBottom);
+                    pipeVertexUV.Add(rightTop);
+
+                    pipeVertexUVs[chunkedLine.Color] = pipeVertexUV;
                 }
             }
 
-            for (int cableNetworkIdx = 0; cableNetworkIdx < cableVertexUVs.Length; cableNetworkIdx++)
+            foreach ((var color, var pipeVertexUV) in pipeVertexUVs)
             {
-                var cableVertexUV = cableVertexUVs[cableNetworkIdx];
-
-                if (cableVertexUV.Count > 0)
+                if (pipeVertexUV.Count > 0)
                 {
-                    var color = _powerCableColors[cableNetworkIdx] * modulator;
-
                     if (!_sRGBLookUp.TryGetValue(color, out var sRGB))
                     {
                         sRGB = Color.ToSrgb(color);
                         _sRGBLookUp[color] = sRGB;
                     }
 
-                    handle.DrawPrimitives(DrawPrimitiveTopology.TriangleList, cableVertexUV.Span, sRGB);
+                    handle.DrawPrimitives(DrawPrimitiveTopology.TriangleList, pipeVertexUV.Span, sRGB);
                 }
             }
-        }*/
+        }
     }
 
     public Dictionary<Vector2i, List<AtmosMonitoringConsoleLine>>? GetDecodedAtmosPipeChunks(Dictionary<Vector2i, AtmosPipeChunk>? chunks, MapGridComponent? grid)
