@@ -1,3 +1,5 @@
+using Content.Shared.Atmos.Components;
+
 namespace Content.Client.Atmos.Console;
 
 public sealed class AtmosMonitoringConsoleBoundUserInterface : BoundUserInterface
@@ -14,20 +16,20 @@ public sealed class AtmosMonitoringConsoleBoundUserInterface : BoundUserInterfac
         _menu.OnClose += Close;
 
         EntMan.TryGetComponent<TransformComponent>(Owner, out var xform);
-        _menu?.ShowEntites(xform?.Coordinates);
+        //_menu?.ShowEntites(xform?.Coordinates);
     }
 
     protected override void UpdateState(BoundUserInterfaceState state)
     {
         base.UpdateState(state);
 
-        //var castState = (AtmosMonitoringConsoleBoundInterfaceState) state;
+        var castState = (AtmosMonitoringConsoleBoundInterfaceState) state;
 
-        //if (castState == null)
-        //    return;
+        if (castState == null)
+            return;
 
         EntMan.TryGetComponent<TransformComponent>(Owner, out var xform);
-        _menu?.ShowEntites(xform?.Coordinates);
+        _menu?.ShowEntites(xform?.Coordinates, castState.ActiveAlarms);
     }
 
     public void SendAtmosMonitoringConsoleMessage(NetEntity? netEntity)

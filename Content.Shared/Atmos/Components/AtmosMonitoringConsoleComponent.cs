@@ -56,6 +56,47 @@ public struct AtmosMonitorData
     }
 }
 
+/// <summary>
+///     Data from by the server to the client for the power monitoring console UI
+/// </summary>
+[Serializable, NetSerializable]
+public sealed class AtmosMonitoringConsoleBoundInterfaceState : BoundUserInterfaceState
+{
+    public AtmosAlarmEntry[] ActiveAlarms;
+
+    public AtmosMonitoringConsoleBoundInterfaceState(AtmosAlarmEntry[] activeAlarms)
+    {
+        ActiveAlarms = activeAlarms;
+    }
+}
+
+[Serializable, NetSerializable]
+public struct AtmosAlarmEntry
+{
+    public NetEntity Entity;
+    public NetCoordinates Coordinates;
+    public AtmosAlarmType AlarmState;
+    public HashSet<AtmosMonitorThresholdBound> TemperatureAlerts;
+    public HashSet<AtmosMonitorThresholdBound> PressureAlerts;
+    public HashSet<(Gas, AtmosMonitorThresholdBound)> GasAlerts;
+
+    public AtmosAlarmEntry
+        (NetEntity entity,
+        NetCoordinates coordinates,
+        AtmosAlarmType alarmState,
+        HashSet<AtmosMonitorThresholdBound> temperatureAlerts,
+        HashSet<AtmosMonitorThresholdBound> pressureAlerts,
+        HashSet<(Gas, AtmosMonitorThresholdBound)> gasAlerts)
+    {
+        Entity = entity;
+        Coordinates = coordinates;
+        AlarmState = alarmState;
+        TemperatureAlerts = temperatureAlerts;
+        PressureAlerts = pressureAlerts;
+        GasAlerts = gasAlerts;
+    }
+}
+
 [Serializable, NetSerializable]
 public struct AtmosPipeData
 {

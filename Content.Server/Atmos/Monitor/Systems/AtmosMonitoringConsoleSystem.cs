@@ -23,6 +23,11 @@ using Content.Server.Atmos.Piping.Components;
 using Content.Shared.Atmos;
 using Content.Server.Atmos.Piping.Unary.Components;
 
+using System;
+using System.Linq;
+using System.Collections.Generic;
+using Content.Shared.Atmos.Monitor;
+
 namespace Content.Server.Atmos.Monitor.Systems;
 
 public sealed class AtmosMonitoringConsoleSystem : EntitySystem
@@ -125,21 +130,62 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
             allEntries.Add(entry);
         }
 
+        var activeAlarms = GetActiveAlarms(gridUid);
+
         // Set the UI state
-        /*_userInterfaceSystem.SetUiState(bui,
-            new PowerMonitoringConsoleBoundInterfaceState
-                (totalSources,
-                totalBatteryUsage,
-                totalLoads,
-                allEntries.ToArray(),
-                sourcesForFocus.ToArray(),
-                loadsForFocus.ToArray()),
-            session);*/
+        _userInterfaceSystem.SetUiState(bui,
+            new AtmosMonitoringConsoleBoundInterfaceState(activeAlarms.ToArray()),
+            session);
+    }
+
+    private List<AtmosAlarmEntry> GetActiveAlarms(EntityUid gridUid)
+    {
+        var activeAlarms = new List<AtmosAlarmEntry>();
+
+        var queryAirAlarms = AllEntityQuery<AirAlarmComponent, TransformComponent>();
+        while (queryAirAlarms.MoveNext(out var ent, out var airAlarm, out var entXform))
+        {
+            if (entXform.GridUid != gridUid)
+                continue;
+
+            if (!entXform.Anchored)
+                continue;
+
+            if (airAlarm.State == AtmosAlarmType.Normal)
+                continue;
+
+            var alarmState = airAlarm.State;
+            var temperatureAlerts = new HashSet<AtmosMonitorThresholdBound>();
+            var pressureAlerts = new HashSet<AtmosMonitorThresholdBound>();
+            var gasAlerts = new HashSet<(Gas, AtmosMonitorThresholdBound)>();
+
+            foreach ((var id, var sensorData) in airAlarm.SensorData)
+            {
+                if (sensorData.TemperatureThreshold.CheckThreshold(sensorData.Temperature, out var _, out var temperatureBoundBroken))
+                    temperatureAlerts.Add(temperatureBoundBroken);
+
+                if (sensorData.PressureThreshold.CheckThreshold(sensorData.Pressure, out var _, out var pressureBoundBroken))
+                    pressureAlerts.Add(pressureBoundBroken);
+
+                foreach ((var gas, var threshold) in sensorData.GasThresholds)
+                {
+                    if (threshold.CheckThreshold(sensorData.Gases[gas], out var _, out var gasBoundBroken))
+                        gasAlerts.Add((gas, gasBoundBroken));
+                }
+            }
+
+            var entry = new AtmosAlarmEntry(GetNetEntity(ent), GetNetCoordinates(entXform.Coordinates), alarmState, temperatureAlerts, pressureAlerts, gasAlerts);
+            activeAlarms.Add(entry);
+        }
+
+        return activeAlarms;
     }
 
     private List<AtmosMonitorData> GetAtmosMonitorData(EntityUid gridUid)
     {
         var data = new List<AtmosMonitorData>();
+        var temperatures = new List<float>();
+        var pressures = new List<float>();
 
         var queryScrubbers = AllEntityQuery<AtmosMonitorComponent, TransformComponent>();
         while (queryScrubbers.MoveNext(out var ent, out var atmosMonitor, out var entXform))
@@ -177,6 +223,12 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
 
             var datum = new AtmosMonitorData(GetNetEntity(ent), GetNetCoordinates(entXform.Coordinates), AtmosMonitoringConsoleGroup.AirAlarm);
             data.Add(datum);
+
+            foreach ((var id, var sensorData) in airAlarm.SensorData)
+            {
+                temperatures.Add(sensorData.Temperature);
+                pressures.Add(sensorData.Pressure);
+            }
         }
 
         return data;
@@ -255,5 +307,11 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
         component.AtmosMonitors = GetAtmosMonitorData(grid);
 
         Dirty(uid, component);
+    }
+
+    public float GetStandardDeviation(IEnumerable<float> values)
+    {
+        float avg = values.Average();
+        return (float) Math.Sqrt(values.Average(v => Math.Pow(v - avg, 2)));
     }
 }
