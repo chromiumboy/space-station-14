@@ -293,8 +293,15 @@
   parent: BaseComputer
   id: ComputerCriminalRecords
   name: criminal records computer
-  description: This can be used to check criminal records.
+  description: This can be used to check criminal records. Only security can modify them.
   components:
+  - type: CriminalRecordsConsole
+  - type: UserInterface
+    interfaces:
+    - key: enum.CriminalRecordsConsoleKey.Key
+      type: CriminalRecordsConsoleBoundUserInterface
+  - type: ActivatableUI
+    key: enum.CriminalRecordsConsoleKey.Key
   - type: Sprite
     layers:
     - map: ["computerLayerBody"]
@@ -311,6 +318,11 @@
     color: "#1f8c28"
   - type: Computer
     board: CriminalRecordsComputerCircuitboard
+  - type: AccessReader
+    access: [["Security"]]
+  - type: GuideHelp
+    guides:
+    - CriminalRecords
 
 - type: entity
   parent: BaseComputer
@@ -556,6 +568,8 @@
     access: [[ "Command" ]]
   - type: CommunicationsConsole
     title: comms-console-announcement-title-station
+  - type: DeviceNetwork
+    transmitFrequencyId: ShuttleTimer
   - type: ActivatableUI
     key: enum.CommunicationsConsoleUiKey.Key
   - type: UserInterface
