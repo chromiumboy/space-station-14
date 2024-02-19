@@ -29,12 +29,12 @@ public sealed class AtmosMonitoringConsoleBoundUserInterface : BoundUserInterfac
             return;
 
         EntMan.TryGetComponent<TransformComponent>(Owner, out var xform);
-        _menu?.ShowEntites(xform?.Coordinates, castState.ActiveAlarms);
+        _menu?.ShowEntites(xform?.Coordinates, castState.ActiveAlarms, castState.FocusData);
     }
 
     public void SendAtmosMonitoringConsoleMessage(NetEntity? netEntity)
     {
-        //SendMessage(new AtmosMonitoringConsoleMessage(netEntity));
+        SendMessage(new AtmosMonitoringConsoleMessage(netEntity));
     }
 
     protected override void Dispose(bool disposing)

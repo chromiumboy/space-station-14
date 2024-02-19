@@ -207,7 +207,7 @@ public sealed partial class AtmosMonitoringConsoleNavMapControl : NavMapControl
                         new Vector2(grid.TileSize * 0f, -grid.TileSize * 0.5f) : new Vector2(grid.TileSize * 0.5f, -grid.TileSize * 0.5f);
 
                     // Add points
-                    var color = Color.FromHex(hexColor);
+                    var color = Color.FromHex(hexColor) * Color.DarkGray;
 
                     var lineLongitudinal = new AtmosMonitoringConsoleLine(position + lineLongitudinalOrigin, position + lineLongitudinalTerminus, color);
                     list.Add(lineLongitudinal);

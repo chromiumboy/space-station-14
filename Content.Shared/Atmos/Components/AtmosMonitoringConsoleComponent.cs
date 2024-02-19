@@ -11,6 +11,9 @@ namespace Content.Shared.Atmos.Components;
 //[Access(typeof(AtmosMonitoringConsoleSystem))]
 public sealed partial class AtmosMonitoringConsoleComponent : Component
 {
+    [ViewVariables, AutoNetworkedField]
+    public EntityUid? FocusDevice;
+
     /// <summary>
     /// A dictionary of the all the nav map chunks that contain anchored atmos pipes
     /// </summary>
@@ -56,6 +59,27 @@ public struct AtmosMonitorData
     }
 }
 
+[Serializable, NetSerializable]
+public struct AtmosMonitorFocusDeviceData
+{
+    public NetEntity NetEntity;
+    public (float, AtmosAlarmType) TemperatureData;
+    public (float, AtmosAlarmType) PressureData;
+    public Dictionary<Gas, (float, float, AtmosAlarmType)> GasData;
+
+    public AtmosMonitorFocusDeviceData
+        (NetEntity netEntity,
+        (float, AtmosAlarmType) temperatureData,
+        (float, AtmosAlarmType) pressureData,
+        Dictionary<Gas, (float, float, AtmosAlarmType)> gasData)
+    {
+        NetEntity = netEntity;
+        TemperatureData = temperatureData;
+        PressureData = pressureData;
+        GasData = gasData;
+    }
+}
+
 /// <summary>
 ///     Data from by the server to the client for the power monitoring console UI
 /// </summary>
@@ -63,10 +87,12 @@ public struct AtmosMonitorData
 public sealed class AtmosMonitoringConsoleBoundInterfaceState : BoundUserInterfaceState
 {
     public AtmosAlarmEntry[] ActiveAlarms;
+    public AtmosMonitorFocusDeviceData? FocusData;
 
-    public AtmosMonitoringConsoleBoundInterfaceState(AtmosAlarmEntry[] activeAlarms)
+    public AtmosMonitoringConsoleBoundInterfaceState(AtmosAlarmEntry[] activeAlarms, AtmosMonitorFocusDeviceData? focusData)
     {
         ActiveAlarms = activeAlarms;
+        FocusData = focusData;
     }
 }
 
@@ -76,24 +102,18 @@ public struct AtmosAlarmEntry
     public NetEntity Entity;
     public NetCoordinates Coordinates;
     public AtmosAlarmType AlarmState;
-    public HashSet<AtmosMonitorThresholdBound> TemperatureAlerts;
-    public HashSet<AtmosMonitorThresholdBound> PressureAlerts;
-    public HashSet<(Gas, AtmosMonitorThresholdBound)> GasAlerts;
+    public string Address;
 
     public AtmosAlarmEntry
         (NetEntity entity,
         NetCoordinates coordinates,
         AtmosAlarmType alarmState,
-        HashSet<AtmosMonitorThresholdBound> temperatureAlerts,
-        HashSet<AtmosMonitorThresholdBound> pressureAlerts,
-        HashSet<(Gas, AtmosMonitorThresholdBound)> gasAlerts)
+        string address)
     {
         Entity = entity;
         Coordinates = coordinates;
         AlarmState = alarmState;
-        TemperatureAlerts = temperatureAlerts;
-        PressureAlerts = pressureAlerts;
-        GasAlerts = gasAlerts;
+        Address = address;
     }
 }
 
@@ -134,6 +154,20 @@ public struct AtmosMonitoringConsoleEntry
     public AtmosMonitoringConsoleEntry(NetEntity netEntity)
     {
         NetEntity = netEntity;
+    }
+}
+
+/// <summary>
+///     Triggers the server to send updated power monitoring console data to the client for the single player session
+/// </summary>
+[Serializable, NetSerializable]
+public sealed class AtmosMonitoringConsoleMessage : BoundUserInterfaceMessage
+{
+    public NetEntity? FocusDevice;
+
+    public AtmosMonitoringConsoleMessage(NetEntity? focusDevice)
+    {
+        FocusDevice = focusDevice;
     }
 }
 

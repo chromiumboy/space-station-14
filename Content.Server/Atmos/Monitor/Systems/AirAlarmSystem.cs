@@ -19,6 +19,7 @@ using Content.Shared.DeviceNetwork;
 using Content.Shared.DeviceNetwork.Systems;
 using Content.Shared.Interaction;
 using Content.Shared.Wires;
+using Microsoft.CodeAnalysis.FlowAnalysis.DataFlow;
 using Robust.Server.GameObjects;
 using Robust.Shared.Player;
 
@@ -591,6 +592,21 @@ public sealed class AirAlarmSystem : EntitySystem
         return alarm.SensorData.Count != 0
             ? alarm.SensorData.Values.Select(v => v.Temperature).Average()
             : 0f;
+    }
+
+    public float CalculateGasMolarConcentrationAverage(AirAlarmComponent alarm, Gas gas, out float percentage)
+    {
+        percentage = 0f;
+
+        var data = alarm.SensorData.Values.SelectMany(v => v.Gases.Where(g => g.Key == gas));
+
+        if (data.Count() == 0)
+            return 0f;
+
+        var averageMol = data.Select(kvp => kvp.Value).Average();
+        percentage = data.Select(kvp => kvp.Value).Sum() / alarm.SensorData.Values.Select(v => v.TotalMoles).Sum();
+
+        return averageMol;
     }
 
     public void UpdateUI(EntityUid uid, AirAlarmComponent? alarm = null, DeviceNetworkComponent? devNet = null, AtmosAlarmableComponent? alarmable = null)

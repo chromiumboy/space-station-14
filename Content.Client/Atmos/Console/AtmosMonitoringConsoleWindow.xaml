@@ -64,23 +64,13 @@
                     </PanelContainer>
                 </controls:StripeBack>
 
-                <!-- Atmosphere overview -->
-                <GridContainer Columns="2">
-                    <Label StyleClasses="StatusFieldTitle" Text="{Loc 'atmos-monitoring-window-average-temperature'}"/>
-                    <Label Name="AverageTemperature" Text="?" Margin="10 0 0 0"/>
-                    <Label StyleClasses="StatusFieldTitle" Text="{Loc 'atmos-monitoring-window-average-pressure'}"/>
-                    <Label Name="AveragePressure" Text="?" Margin="10 0 0 0"/>
-                    <Label StyleClasses="StatusFieldTitle" Text="{Loc 'atmos-monitoring-window-gas-composition'}"/>
-                    <Label Name="GasComposition" Text="?" Margin="10 0 0 0"/>
-                </GridContainer>
-
                 <!-- Alarm status (entries added by C# code) -->
                 <TabContainer Name="MasterTabContainer" VerticalExpand="True" HorizontalExpand="True" Margin="0 10 0 0">
                     <ScrollContainer HorizontalExpand="True" Margin="8, 8, 8, 8">
-                        <BoxContainer Name="ActiveAlarms" Orientation="Vertical" VerticalExpand="True" HorizontalExpand="True" Margin="0 0 10 0"/>
+                        <BoxContainer Name="AlertsTable" Orientation="Vertical" VerticalExpand="True" HorizontalExpand="True" Margin="0 0 0 10"/>
                     </ScrollContainer>
                     <ScrollContainer HorizontalExpand="True" Margin="8, 8, 8, 8">
-                        <BoxContainer Name="DeactivatedAlarms" Orientation="Vertical" VerticalExpand="True" HorizontalExpand="True" Margin="0 0 10 0"/>
+                        <BoxContainer Name="AirAlarmsTable" Orientation="Vertical" VerticalExpand="True" HorizontalExpand="True" Margin="0 0 0 10"/>
                     </ScrollContainer>
                 </TabContainer>
             </BoxContainer>

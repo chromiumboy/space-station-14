@@ -27,6 +27,7 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using Content.Shared.Atmos.Monitor;
+using Content.Server.DeviceNetwork.Components;
 
 namespace Content.Server.Atmos.Monitor.Systems;
 
@@ -34,6 +35,8 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
 {
     [Dependency] private readonly UserInterfaceSystem _userInterfaceSystem = default!;
     [Dependency] private readonly SharedMapSystem _sharedMapSystem = default!;
+    [Dependency] private readonly AirAlarmSystem _airAlarmSystem = default!;
+    [Dependency] private readonly AtmosDeviceNetworkSystem _atmosDevNet = default!;
 
     // Note: this data does not need to be saved
     private Dictionary<EntityUid, Dictionary<Vector2i, AtmosPipeChunk>> _gridAtmosPipeChunks = new();
@@ -48,6 +51,8 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
         // Console events
         SubscribeLocalEvent<AtmosMonitoringConsoleComponent, ComponentInit>(OnConsoleInit);
         SubscribeLocalEvent<AtmosMonitoringConsoleComponent, EntParentChangedMessage>(OnConsoleParentChanged);
+
+        SubscribeLocalEvent<AtmosMonitoringConsoleComponent, AtmosMonitoringConsoleMessage>(OnAtmosMonitoringConsoleMessage);
 
         /*
         // UI events
@@ -73,6 +78,17 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
     private void OnConsoleParentChanged(EntityUid uid, AtmosMonitoringConsoleComponent component, EntParentChangedMessage args)
     {
         RefreshAtmosMonitoringConsole(uid, component);
+    }
+
+    private void OnAtmosMonitoringConsoleMessage(EntityUid uid, AtmosMonitoringConsoleComponent component, AtmosMonitoringConsoleMessage args)
+    {
+        var focusDevice = EntityManager.GetEntity(args.FocusDevice);
+
+        // Update this if the focus device has changed
+        if (component.FocusDevice != focusDevice)
+        {
+            component.FocusDevice = focusDevice;
+        }
     }
 
     public override void Update(float frameTime)
@@ -131,10 +147,11 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
         }
 
         var activeAlarms = GetActiveAlarms(gridUid);
+        var focusData = GetFocusAlarmData(uid, component, gridUid);
 
         // Set the UI state
         _userInterfaceSystem.SetUiState(bui,
-            new AtmosMonitoringConsoleBoundInterfaceState(activeAlarms.ToArray()),
+            new AtmosMonitoringConsoleBoundInterfaceState(activeAlarms.ToArray(), focusData),
             session);
     }
 
@@ -142,8 +159,8 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
     {
         var activeAlarms = new List<AtmosAlarmEntry>();
 
-        var queryAirAlarms = AllEntityQuery<AirAlarmComponent, TransformComponent>();
-        while (queryAirAlarms.MoveNext(out var ent, out var airAlarm, out var entXform))
+        var queryAirAlarms = AllEntityQuery<AirAlarmComponent, DeviceNetworkComponent, TransformComponent>();
+        while (queryAirAlarms.MoveNext(out var ent, out var airAlarm, out var deviceNetwork, out var entXform))
         {
             if (entXform.GridUid != gridUid)
                 continue;
@@ -151,34 +168,109 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
             if (!entXform.Anchored)
                 continue;
 
-            if (airAlarm.State == AtmosAlarmType.Normal)
-                continue;
+            //if (airAlarm.State == AtmosAlarmType.Normal)
+            //    continue;
 
             var alarmState = airAlarm.State;
-            var temperatureAlerts = new HashSet<AtmosMonitorThresholdBound>();
-            var pressureAlerts = new HashSet<AtmosMonitorThresholdBound>();
-            var gasAlerts = new HashSet<(Gas, AtmosMonitorThresholdBound)>();
 
-            foreach ((var id, var sensorData) in airAlarm.SensorData)
-            {
-                if (sensorData.TemperatureThreshold.CheckThreshold(sensorData.Temperature, out var _, out var temperatureBoundBroken))
-                    temperatureAlerts.Add(temperatureBoundBroken);
+            if (alarmState == AtmosAlarmType.Emagged)
+                alarmState = AtmosAlarmType.Danger;
 
-                if (sensorData.PressureThreshold.CheckThreshold(sensorData.Pressure, out var _, out var pressureBoundBroken))
-                    pressureAlerts.Add(pressureBoundBroken);
-
-                foreach ((var gas, var threshold) in sensorData.GasThresholds)
-                {
-                    if (threshold.CheckThreshold(sensorData.Gases[gas], out var _, out var gasBoundBroken))
-                        gasAlerts.Add((gas, gasBoundBroken));
-                }
-            }
-
-            var entry = new AtmosAlarmEntry(GetNetEntity(ent), GetNetCoordinates(entXform.Coordinates), alarmState, temperatureAlerts, pressureAlerts, gasAlerts);
+            var entry = new AtmosAlarmEntry(GetNetEntity(ent), GetNetCoordinates(entXform.Coordinates), alarmState, deviceNetwork.Address);
             activeAlarms.Add(entry);
         }
 
         return activeAlarms;
+    }
+
+    private AtmosMonitorFocusDeviceData? GetFocusAlarmData(EntityUid uid, AtmosMonitoringConsoleComponent component, EntityUid gridUid)
+    {
+        if (component.FocusDevice == null)
+            return null;
+
+        var xform = Transform(component.FocusDevice.Value);
+
+        if (!xform.Anchored ||
+            xform.GridUid != gridUid ||
+            !TryComp<AirAlarmComponent>(component.FocusDevice.Value, out var airAlarm))
+        {
+            component.FocusDevice = null;
+            Dirty(uid, component);
+
+            return null;
+        }
+
+        foreach ((var address, var _) in airAlarm.SensorData)
+        {
+            _atmosDevNet.Sync(component.FocusDevice.Value, address);
+        }
+
+        var temperatureData = (_airAlarmSystem.CalculateTemperatureAverage(airAlarm), AtmosAlarmType.Normal);
+        var pressureData = (_airAlarmSystem.CalculatePressureAverage(airAlarm), AtmosAlarmType.Normal);
+        var gasData = new Dictionary<Gas, (float, float, AtmosAlarmType)>();
+
+        foreach ((var id, var sensorData) in airAlarm.SensorData)
+        {
+            if (sensorData.TemperatureThreshold.CheckThreshold(sensorData.Temperature, out var temperatureState) &&
+                (int) temperatureState > (int) temperatureData.Item2)
+            {
+                temperatureData = (temperatureData.Item1, temperatureState);
+            }
+
+            if (sensorData.PressureThreshold.CheckThreshold(sensorData.Pressure, out var pressureState) &&
+                (int) pressureState > (int) pressureData.Item2)
+            {
+                pressureData = (pressureData.Item1, pressureState);
+            }
+
+            foreach ((var gas, var threshold) in sensorData.GasThresholds)
+            {
+                if (!gasData.ContainsKey(gas))
+                {
+                    float mol = _airAlarmSystem.CalculateGasMolarConcentrationAverage(airAlarm, gas, out var percentage);
+                    gasData[gas] = (mol, percentage, AtmosAlarmType.Normal);
+                }
+
+                if (threshold.CheckThreshold(sensorData.Gases[gas], out var gasState) &&
+                    (int) gasState > (int) gasData[gas].Item3)
+                {
+                    gasData[gas] = (gasData[gas].Item1, gasData[gas].Item2, gasState);
+                }
+            }
+        }
+
+        return new AtmosMonitorFocusDeviceData(GetNetEntity(component.FocusDevice.Value), temperatureData, pressureData, gasData);
+    }
+
+    private bool TryDetermineAtmosMonitorLimitType(AtmosAlarmType state, AtmosMonitorThresholdBound boundBroken, out AtmosMonitorLimitType? limit)
+    {
+        limit = null;
+
+        if (state == AtmosAlarmType.Warning && boundBroken == AtmosMonitorThresholdBound.Lower)
+        {
+            limit = AtmosMonitorLimitType.LowerWarning;
+            return true;
+        }
+
+        else if (state == AtmosAlarmType.Warning && boundBroken == AtmosMonitorThresholdBound.Upper)
+        {
+            limit = AtmosMonitorLimitType.UpperWarning;
+            return true;
+        }
+
+        else if (state == AtmosAlarmType.Danger && boundBroken == AtmosMonitorThresholdBound.Lower)
+        {
+            limit = AtmosMonitorLimitType.LowerDanger;
+            return true;
+        }
+
+        else if (state == AtmosAlarmType.Danger && boundBroken == AtmosMonitorThresholdBound.Upper)
+        {
+            limit = AtmosMonitorLimitType.UpperDanger;
+            return true;
+        }
+
+        return false;
     }
 
     private List<AtmosMonitorData> GetAtmosMonitorData(EntityUid gridUid)
