@@ -28,6 +28,7 @@ using System.Linq;
 using System.Collections.Generic;
 using Content.Shared.Atmos.Monitor;
 using Content.Server.DeviceNetwork.Components;
+using Content.Shared.Atmos.Monitor.Components;
 
 namespace Content.Server.Atmos.Monitor.Systems;
 
@@ -188,11 +189,13 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
         if (component.FocusDevice == null)
             return null;
 
-        var xform = Transform(component.FocusDevice.Value);
 
-        if (!xform.Anchored ||
-            xform.GridUid != gridUid ||
-            !TryComp<AirAlarmComponent>(component.FocusDevice.Value, out var airAlarm))
+        var ent = component.FocusDevice.Value;
+        var entXform = Transform(component.FocusDevice.Value);
+
+        if (!entXform.Anchored ||
+            entXform.GridUid != gridUid ||
+            !TryComp<AirAlarmComponent>(ent, out var entAirAlarm))
         {
             component.FocusDevice = null;
             Dirty(uid, component);
@@ -200,16 +203,20 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
             return null;
         }
 
-        foreach ((var address, var _) in airAlarm.SensorData)
+        if (!_userInterfaceSystem.TryGetUi(ent, SharedAirAlarmInterfaceKey.Key, out var bui) ||
+            bui.SubscribedSessions.Count == 0)
         {
-            _atmosDevNet.Sync(component.FocusDevice.Value, address);
+            foreach ((var address, var _) in entAirAlarm.SensorData)
+            {
+                _atmosDevNet.Sync(component.FocusDevice.Value, address);
+            }
         }
 
-        var temperatureData = (_airAlarmSystem.CalculateTemperatureAverage(airAlarm), AtmosAlarmType.Normal);
-        var pressureData = (_airAlarmSystem.CalculatePressureAverage(airAlarm), AtmosAlarmType.Normal);
+        var temperatureData = (_airAlarmSystem.CalculateTemperatureAverage(entAirAlarm), AtmosAlarmType.Normal);
+        var pressureData = (_airAlarmSystem.CalculatePressureAverage(entAirAlarm), AtmosAlarmType.Normal);
         var gasData = new Dictionary<Gas, (float, float, AtmosAlarmType)>();
 
-        foreach ((var id, var sensorData) in airAlarm.SensorData)
+        foreach ((var address, var sensorData) in entAirAlarm.SensorData)
         {
             if (sensorData.TemperatureThreshold.CheckThreshold(sensorData.Temperature, out var temperatureState) &&
                 (int) temperatureState > (int) temperatureData.Item2)
@@ -223,54 +230,30 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
                 pressureData = (pressureData.Item1, pressureState);
             }
 
-            foreach ((var gas, var threshold) in sensorData.GasThresholds)
+            if (entAirAlarm.SensorData.Sum(g => g.Value.TotalMoles) > 1e-8)
             {
-                if (!gasData.ContainsKey(gas))
+                foreach ((var gas, var threshold) in sensorData.GasThresholds)
                 {
-                    float mol = _airAlarmSystem.CalculateGasMolarConcentrationAverage(airAlarm, gas, out var percentage);
-                    gasData[gas] = (mol, percentage, AtmosAlarmType.Normal);
-                }
+                    if (!gasData.ContainsKey(gas))
+                    {
+                        float mol = _airAlarmSystem.CalculateGasMolarConcentrationAverage(entAirAlarm, gas, out var percentage);
 
-                if (threshold.CheckThreshold(sensorData.Gases[gas], out var gasState) &&
-                    (int) gasState > (int) gasData[gas].Item3)
-                {
-                    gasData[gas] = (gasData[gas].Item1, gasData[gas].Item2, gasState);
+                        if (mol < 1e-8)
+                            continue;
+
+                        gasData[gas] = (mol, percentage, AtmosAlarmType.Normal);
+                    }
+
+                    if (threshold.CheckThreshold(gasData[gas].Item2, out var gasState) &&
+                        (int) gasState > (int) gasData[gas].Item3)
+                    {
+                        gasData[gas] = (gasData[gas].Item1, gasData[gas].Item2, gasState);
+                    }
                 }
             }
         }
 
         return new AtmosMonitorFocusDeviceData(GetNetEntity(component.FocusDevice.Value), temperatureData, pressureData, gasData);
-    }
-
-    private bool TryDetermineAtmosMonitorLimitType(AtmosAlarmType state, AtmosMonitorThresholdBound boundBroken, out AtmosMonitorLimitType? limit)
-    {
-        limit = null;
-
-        if (state == AtmosAlarmType.Warning && boundBroken == AtmosMonitorThresholdBound.Lower)
-        {
-            limit = AtmosMonitorLimitType.LowerWarning;
-            return true;
-        }
-
-        else if (state == AtmosAlarmType.Warning && boundBroken == AtmosMonitorThresholdBound.Upper)
-        {
-            limit = AtmosMonitorLimitType.UpperWarning;
-            return true;
-        }
-
-        else if (state == AtmosAlarmType.Danger && boundBroken == AtmosMonitorThresholdBound.Lower)
-        {
-            limit = AtmosMonitorLimitType.LowerDanger;
-            return true;
-        }
-
-        else if (state == AtmosAlarmType.Danger && boundBroken == AtmosMonitorThresholdBound.Upper)
-        {
-            limit = AtmosMonitorLimitType.UpperDanger;
-            return true;
-        }
-
-        return false;
     }
 
     private List<AtmosMonitorData> GetAtmosMonitorData(EntityUid gridUid)
