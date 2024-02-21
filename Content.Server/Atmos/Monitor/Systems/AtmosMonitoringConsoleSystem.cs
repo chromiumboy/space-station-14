@@ -147,21 +147,21 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
             allEntries.Add(entry);
         }
 
-        var activeAlarms = GetActiveAlarms(gridUid);
+        var airAlarms = GetAirAlarms(gridUid);
         var focusData = GetFocusAlarmData(uid, component, gridUid);
 
         // Set the UI state
         _userInterfaceSystem.SetUiState(bui,
-            new AtmosMonitoringConsoleBoundInterfaceState(activeAlarms.ToArray(), focusData),
+            new AtmosMonitoringConsoleBoundInterfaceState(airAlarms.ToArray(), focusData),
             session);
     }
 
-    private List<AtmosAlarmEntry> GetActiveAlarms(EntityUid gridUid)
+    private List<AtmosAlarmEntry> GetAirAlarms(EntityUid gridUid)
     {
         var activeAlarms = new List<AtmosAlarmEntry>();
 
-        var queryAirAlarms = AllEntityQuery<AirAlarmComponent, DeviceNetworkComponent, TransformComponent>();
-        while (queryAirAlarms.MoveNext(out var ent, out var airAlarm, out var deviceNetwork, out var entXform))
+        var queryAirAlarms = AllEntityQuery<AirAlarmComponent, DeviceNetworkComponent, ApcPowerReceiverComponent, TransformComponent>();
+        while (queryAirAlarms.MoveNext(out var ent, out var entAirAlarm, out var entDeviceNetwork, out var entAPCPower, out var entXform))
         {
             if (entXform.GridUid != gridUid)
                 continue;
@@ -169,15 +169,15 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
             if (!entXform.Anchored)
                 continue;
 
-            //if (airAlarm.State == AtmosAlarmType.Normal)
-            //    continue;
+            if (!entAPCPower.Powered)
+                continue;
 
-            var alarmState = airAlarm.State;
+            var alarmState = entAirAlarm.State;
 
             if (alarmState == AtmosAlarmType.Emagged)
                 alarmState = AtmosAlarmType.Danger;
 
-            var entry = new AtmosAlarmEntry(GetNetEntity(ent), GetNetCoordinates(entXform.Coordinates), alarmState, deviceNetwork.Address);
+            var entry = new AtmosAlarmEntry(GetNetEntity(ent), GetNetCoordinates(entXform.Coordinates), alarmState, entDeviceNetwork.Address);
             activeAlarms.Add(entry);
         }
 
@@ -188,7 +188,6 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
     {
         if (component.FocusDevice == null)
             return null;
-
 
         var ent = component.FocusDevice.Value;
         var entXform = Transform(component.FocusDevice.Value);
@@ -262,8 +261,8 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
         var temperatures = new List<float>();
         var pressures = new List<float>();
 
-        var queryScrubbers = AllEntityQuery<AtmosMonitorComponent, TransformComponent>();
-        while (queryScrubbers.MoveNext(out var ent, out var atmosMonitor, out var entXform))
+        var queryAtmosMonitors = AllEntityQuery<AtmosMonitorComponent, TransformComponent>();
+        while (queryAtmosMonitors.MoveNext(out var ent, out var _, out var entXform))
         {
             if (entXform.GridUid != gridUid)
                 continue;
@@ -279,6 +278,9 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
             else if (HasComp<GasVentScrubberComponent>(ent))
                 group = AtmosMonitoringConsoleGroup.GasVentScrubber;
 
+            else
+                continue;
+
             var datum = new AtmosMonitorData(GetNetEntity(ent), GetNetCoordinates(entXform.Coordinates), group);
 
             if (TryComp<AtmosPipeColorComponent>(ent, out var atmosPipeColor))
@@ -287,8 +289,8 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
             data.Add(datum);
         }
 
-        var queryAirAlarms = AllEntityQuery<AirAlarmComponent, TransformComponent>();
-        while (queryAirAlarms.MoveNext(out var ent, out var airAlarm, out var entXform))
+        var queryAirAlarms = AllEntityQuery<AirAlarmComponent, ApcPowerReceiverComponent, TransformComponent>();
+        while (queryAirAlarms.MoveNext(out var ent, out var entAirAlarm, out var entAPCPower, out var entXform))
         {
             if (entXform.GridUid != gridUid)
                 continue;
@@ -296,10 +298,16 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
             if (!entXform.Anchored)
                 continue;
 
+            if (!entAPCPower.Powered)
+                continue;
+
+            //if (entAirAlarm.State <= AtmosAlarmType.Normal)
+            //    continue;
+
             var datum = new AtmosMonitorData(GetNetEntity(ent), GetNetCoordinates(entXform.Coordinates), AtmosMonitoringConsoleGroup.AirAlarm);
             data.Add(datum);
 
-            foreach ((var id, var sensorData) in airAlarm.SensorData)
+            foreach ((var id, var sensorData) in entAirAlarm.SensorData)
             {
                 temperatures.Add(sensorData.Temperature);
                 pressures.Add(sensorData.Pressure);

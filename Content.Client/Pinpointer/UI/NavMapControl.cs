@@ -469,14 +469,15 @@ public partial class NavMapControl : MapGridControl
                 position = Scale(new Vector2(position.X, -position.Y));
 
                 var scalingCoefficient = 2f;
-                var positionOffset = scalingCoefficient * float.Sqrt(MinimapScale);
+                var positionOffsetX = scalingCoefficient * float.Sqrt(MinimapScale) * blip.Texture.Width / 32f;
+                var positionOffsetY = scalingCoefficient * float.Sqrt(MinimapScale) * blip.Texture.Height / 32f;
 
-                vertexUVs.Add(new DrawVertexUV2D(new Vector2(position.X - positionOffset, position.Y - positionOffset), new Vector2(1f, 1f)));
-                vertexUVs.Add(new DrawVertexUV2D(new Vector2(position.X - positionOffset, position.Y + positionOffset), new Vector2(1f, 0f)));
-                vertexUVs.Add(new DrawVertexUV2D(new Vector2(position.X + positionOffset, position.Y - positionOffset), new Vector2(0f, 1f)));
-                vertexUVs.Add(new DrawVertexUV2D(new Vector2(position.X - positionOffset, position.Y + positionOffset), new Vector2(1f, 0f)));
-                vertexUVs.Add(new DrawVertexUV2D(new Vector2(position.X + positionOffset, position.Y - positionOffset), new Vector2(0f, 1f)));
-                vertexUVs.Add(new DrawVertexUV2D(new Vector2(position.X + positionOffset, position.Y + positionOffset), new Vector2(0f, 0f)));
+                vertexUVs.Add(new DrawVertexUV2D(new Vector2(position.X - positionOffsetX, position.Y - positionOffsetY), new Vector2(1f, 1f)));
+                vertexUVs.Add(new DrawVertexUV2D(new Vector2(position.X - positionOffsetX, position.Y + positionOffsetY), new Vector2(1f, 0f)));
+                vertexUVs.Add(new DrawVertexUV2D(new Vector2(position.X + positionOffsetX, position.Y - positionOffsetY), new Vector2(0f, 1f)));
+                vertexUVs.Add(new DrawVertexUV2D(new Vector2(position.X - positionOffsetX, position.Y + positionOffsetY), new Vector2(1f, 0f)));
+                vertexUVs.Add(new DrawVertexUV2D(new Vector2(position.X + positionOffsetX, position.Y - positionOffsetY), new Vector2(0f, 1f)));
+                vertexUVs.Add(new DrawVertexUV2D(new Vector2(position.X + positionOffsetX, position.Y + positionOffsetY), new Vector2(0f, 0f)));
             }
 
             iconVertexUVs[(blip.Texture, blip.Color)] = vertexUVs;

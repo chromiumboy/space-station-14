@@ -42,12 +42,27 @@ public sealed partial class AtmosMonitoringConsoleWindow : FancyWindow
 
     public event Action<NetEntity?>? SendAtmosMonitoringConsoleMessageAction;
 
+    private Font _displayFont;
+    private Font _noAlertFont;
+
+    public Dictionary<Gas, string> GasSymbols = new Dictionary<Gas, string>()
+    {
+        [Gas.Ammonia] = "NH₃",
+        [Gas.CarbonDioxide] = "CO₂",
+        [Gas.Frezon] = "F",
+        [Gas.Nitrogen] = "N₂",
+        [Gas.NitrousOxide] = "N₂O",
+        [Gas.Oxygen] = "O₂",
+        [Gas.Plasma] = "P",
+        [Gas.Tritium] = "T",
+        [Gas.WaterVapor] = "H₂O",
+    };
+
     private Dictionary<AtmosMonitoringConsoleGroup, (SpriteSpecifier.Texture, Color)> _groupBlips = new()
     {
-        { AtmosMonitoringConsoleGroup.GasVentPump, (new SpriteSpecifier.Texture(new ResPath("/Textures/Interface/NavMap/beveled_square.png")), Color.Gray) },
-        { AtmosMonitoringConsoleGroup.GasVentScrubber, (new SpriteSpecifier.Texture(new ResPath("/Textures/Interface/NavMap/beveled_circle.png")), Color.Gray) },
-        { AtmosMonitoringConsoleGroup.AirSensor, (new SpriteSpecifier.Texture(new ResPath("/Textures/Interface/NavMap/beveled_diamond.png")), Color.LimeGreen) },
-        { AtmosMonitoringConsoleGroup.AirAlarm, (new SpriteSpecifier.Texture(new ResPath("/Textures/Interface/NavMap/beveled_star.png")), Color.Magenta) },
+        { AtmosMonitoringConsoleGroup.GasVentPump, (new SpriteSpecifier.Texture(new ResPath("/Textures/Interface/NavMap/beveled_square.png")), Color.DarkGray) },
+        { AtmosMonitoringConsoleGroup.GasVentScrubber, (new SpriteSpecifier.Texture(new ResPath("/Textures/Interface/NavMap/beveled_circle.png")), Color.DarkGray) },
+        { AtmosMonitoringConsoleGroup.AirAlarm, (new SpriteSpecifier.Texture(new ResPath("/Textures/Interface/NavMap/beveled_star.png")), Color.OrangeRed) },
     };
 
     public AtmosMonitoringConsoleWindow(AtmosMonitoringConsoleBoundUserInterface userInterface, EntityUid? owner)
@@ -92,6 +107,8 @@ public sealed partial class AtmosMonitoringConsoleWindow : FancyWindow
         // Update nav map
         NavMap.ForceNavMapUpdate();
 
+        //var font = new VectorFont(_cache.GetResource<FontResource>("/Fonts/NotoSans/NotoSansSymbols-Regular.ttf"), 10);
+        //MasterTabContainer.StylePropertyDefault<Font>("font", font);
         MasterTabContainer.SetTabTitle(0, Loc.GetString("Alerts"));
         MasterTabContainer.SetTabTitle(1, Loc.GetString("Air alarms"));
 
@@ -105,6 +122,9 @@ public sealed partial class AtmosMonitoringConsoleWindow : FancyWindow
 
         // Set power monitoring message action
         SendAtmosMonitoringConsoleMessageAction += userInterface.SendAtmosMonitoringConsoleMessage;
+
+        _displayFont = new VectorFont(_cache.GetResource<FontResource>("/Fonts/NotoSansDisplay/NotoSansDisplay-Regular.ttf"), 12);
+        _noAlertFont = new VectorFont(_cache.GetResource<FontResource>("/Fonts/NotoSans/NotoSans-Regular.ttf"), 18);
     }
 
     private void OnTabChanged(int tab)
@@ -154,10 +174,42 @@ public sealed partial class AtmosMonitoringConsoleWindow : FancyWindow
         }
 
         AlertsTable.RemoveAllChildren();
+        AirAlarmsTable.RemoveAllChildren();
 
         foreach (var entry in activeAlarms)
         {
             MakeNewAlarmEntry(entry, focusData);
+        }
+
+        if (MasterTabContainer.CurrentTab == 0 && AlertsTable.ChildCount == 0)
+        {
+            Logger.Debug("no alerts");
+
+            var label = new Label()
+            {
+                Text = "No active alerts",
+                HorizontalExpand = true,
+                VerticalExpand = true,
+                HorizontalAlignment = HAlignment.Center,
+                VerticalAlignment = VAlignment.Bottom,
+                FontColorOverride = StyleNano.GoodGreenFore,
+                FontOverride = _noAlertFont,
+            };
+
+            AlertsTable.AddChild(label);
+
+            var newlabel = new Label()
+            {
+                Text = "Situation normal",
+                HorizontalExpand = true,
+                VerticalExpand = true,
+                HorizontalAlignment = HAlignment.Center,
+                VerticalAlignment = VAlignment.Top,
+                FontColorOverride = StyleNano.GoodGreenFore,
+                FontOverride = _noAlertFont,
+            };
+
+            AlertsTable.AddChild(newlabel);
         }
 
         // Update nav map
@@ -171,7 +223,7 @@ public sealed partial class AtmosMonitoringConsoleWindow : FancyWindow
 
         var coords = _entManager.GetCoordinates(metaData.NetCoordinates);
         var texture = data.Item1;
-        var color = (metaData.Color != null) ? metaData.Color : data.Item2;
+        var color = (metaData.Color != null) ? metaData.Color * data.Item2 : data.Item2;
 
         var blip = new NavMapBlip(coords, _spriteSystem.Frame0(texture), color.Value, false);
         NavMap.TrackedEntities[metaData.NetEntity] = blip;
@@ -186,7 +238,14 @@ public sealed partial class AtmosMonitoringConsoleWindow : FancyWindow
             Margin = new Thickness(0, 0, 0, 3),
         };
 
-        AlertsTable.AddChild(mainContainer);
+        if (MasterTabContainer.CurrentTab == 0)
+            if (entry.AlarmState > AtmosAlarmType.Normal)
+                AlertsTable.AddChild(mainContainer);
+            else
+                return;
+
+        else
+            AirAlarmsTable.AddChild(mainContainer);
 
         var button = new AtmosAlertButton()
         {
@@ -385,7 +444,7 @@ public sealed partial class AtmosMonitoringConsoleWindow : FancyWindow
 
             var oxygen = new Label()
             {
-                Text = "Air mixture",
+                Text = "Oxygenation",
                 HorizontalAlignment = HAlignment.Center,
                 VerticalAlignment = VAlignment.Center,
                 HorizontalExpand = true,
@@ -447,30 +506,33 @@ public sealed partial class AtmosMonitoringConsoleWindow : FancyWindow
 
             values.AddChild(pressureValue);
 
-            var oxygenPercent = 0f;
-            var nitrogenPrecent = 0f;
+            var oxygenPercent = (FixedPoint2) 0f;
+            //var nitrogenPrecent = 0f;
             var nitrogenoxygenAlert = AtmosAlarmType.Normal;
             var nitrogenoxygenColor = StyleNano.DisabledFore;
 
             if (focusData.Value.GasData.TryGetValue(Gas.Oxygen, out var oxygenData))
             {
-                oxygenPercent = MathF.Ceiling(oxygenData.Item2 * 100f);
+                oxygenPercent = oxygenData.Item2 * 100f;
 
-                if ((int) oxygenData.Item3 > (int) nitrogenoxygenAlert)
+                if (oxygenData.Item3 > nitrogenoxygenAlert)
                     nitrogenoxygenAlert = oxygenData.Item3;
             }
 
-            if (focusData.Value.GasData.TryGetValue(Gas.Nitrogen, out var nitrogenData))
+            else
+                nitrogenoxygenAlert = AtmosAlarmType.Danger;
+
+            /*if (focusData.Value.GasData.TryGetValue(Gas.Nitrogen, out var nitrogenData))
             {
                 nitrogenPrecent = MathF.Ceiling(nitrogenData.Item2 * 100f);
 
                 if ((int) nitrogenData.Item3 > (int) nitrogenoxygenAlert)
                     nitrogenoxygenAlert = nitrogenData.Item3;
-            }
+            }*/
 
             var oxygenValue = new Label()
             {
-                Text = "N2 (" + nitrogenPrecent + "%) : O2 (" + oxygenPercent + "%)",
+                Text = oxygenPercent + "%",
                 HorizontalAlignment = HAlignment.Center,
                 VerticalAlignment = VAlignment.Bottom,
                 HorizontalExpand = true,
@@ -535,12 +597,12 @@ public sealed partial class AtmosMonitoringConsoleWindow : FancyWindow
             {
                 HorizontalExpand = true,
                 VerticalExpand = true,
-                Columns = 3,
+                Columns = 4,
             };
 
             valuePanel2.AddChild(values2);
 
-            var gasData = focusData.Value.GasData.Where(g => g.Key != Gas.Oxygen && g.Key != Gas.Nitrogen);
+            var gasData = focusData.Value.GasData.Where(g => g.Key != Gas.Oxygen);
 
             if (gasData.Count() == 0)
             {
@@ -562,17 +624,22 @@ public sealed partial class AtmosMonitoringConsoleWindow : FancyWindow
             {
                 foreach ((var gas, (var mol, var percent, var alert)) in gasData)
                 {
-                    var percentRounded = MathF.Ceiling(percent * 100f);
+                    var gasPercent = (FixedPoint2) 0f;
+                    gasPercent = percent * 100f;
+
+                    if (!GasSymbols.TryGetValue(gas, out var gasSymbol))
+                        gasSymbol = "X";
 
                     var contaminant1 = new Label()
                     {
-                        Text = gas + " (" + percentRounded + "%)",
+                        Text = gasSymbol + " (" + gasPercent + "%)",
                         HorizontalAlignment = HAlignment.Center,
                         VerticalAlignment = VAlignment.Center,
                         HorizontalExpand = true,
                         FontColorOverride = DetermineAlertColoration(alert),
                         Margin = new Thickness(0, 2, 0, 0),
                         MinHeight = 24f,
+                        FontOverride = _displayFont,
                     };
 
                     values2.AddChild(contaminant1);
