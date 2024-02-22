@@ -53,22 +53,15 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
         SubscribeLocalEvent<AtmosMonitoringConsoleComponent, ComponentInit>(OnConsoleInit);
         SubscribeLocalEvent<AtmosMonitoringConsoleComponent, EntParentChangedMessage>(OnConsoleParentChanged);
 
-        SubscribeLocalEvent<AtmosMonitoringConsoleComponent, AtmosMonitoringConsoleMessage>(OnAtmosMonitoringConsoleMessage);
-
-        /*
         // UI events
-        SubscribeLocalEvent<PowerMonitoringConsoleComponent, PowerMonitoringConsoleMessage>(OnPowerMonitoringConsoleMessage);
-        SubscribeLocalEvent<PowerMonitoringConsoleComponent, BoundUIOpenedEvent>(OnBoundUIOpened);
+        SubscribeLocalEvent<AtmosMonitoringConsoleComponent, AtmosMonitoringConsoleMessage>(OnAtmosMonitoringConsoleMessage);
 
         // Grid events
         SubscribeLocalEvent<GridSplitEvent>(OnGridSplit);
-        SubscribeLocalEvent<CableComponent, CableAnchorStateChangedEvent>(OnCableAnchorStateChanged);
-        SubscribeLocalEvent<PowerMonitoringDeviceComponent, AnchorStateChangedEvent>(OnDeviceAnchoringChanged);
-        SubscribeLocalEvent<PowerMonitoringDeviceComponent, NodeGroupsRebuilt>(OnNodeGroupRebuilt);
-
-        // Game rule events
-        SubscribeLocalEvent<GameRuleStartedEvent>(OnPowerGridCheckStarted);
-        SubscribeLocalEvent<GameRuleEndedEvent>(OnPowerGridCheckEnded);*/
+        SubscribeLocalEvent<AtmosPipeColorComponent, AtmosPipeColorChangedEvent>(OnPipeColorChanged);
+        SubscribeLocalEvent<AtmosMonitorComponent, AnchorStateChangedEvent>(OnAtmosMonitorAnchoringChanged);
+        SubscribeLocalEvent<AirAlarmComponent, AnchorStateChangedEvent>(OnAirAlarmAnchoringChanged);
+        SubscribeLocalEvent<AtmosPipeColorComponent, NodeGroupsRebuilt>(OnPipeNodeGroupsChanged);
     }
 
     private void OnConsoleInit(EntityUid uid, AtmosMonitoringConsoleComponent component, ComponentInit args)
@@ -89,6 +82,102 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
         if (component.FocusDevice != focusDevice)
         {
             component.FocusDevice = focusDevice;
+        }
+    }
+
+    private void OnGridSplit(ref GridSplitEvent args)
+    {
+        // Collect grids
+        var allGrids = args.NewGrids.ToList();
+
+        if (!allGrids.Contains(args.Grid))
+            allGrids.Add(args.Grid);
+
+        // Update atmos monitoring consoles that stand upon an updated grid
+        var query = AllEntityQuery<AtmosMonitoringConsoleComponent, TransformComponent>();
+        while (query.MoveNext(out var ent, out var entConsole, out var entXform))
+        {
+            if (entXform.GridUid == null)
+                continue;
+
+            if (!allGrids.Contains(entXform.GridUid.Value))
+                continue;
+
+            RefreshAtmosMonitoringConsole(ent, entConsole);
+        }
+    }
+
+    private void OnPipeColorChanged(EntityUid uid, AtmosPipeColorComponent component, ref AtmosPipeColorChangedEvent args)
+    {
+        Logger.Debug("paint msg rec");
+
+        var xform = Transform(uid);
+        var gridUid = xform.GridUid;
+
+        if (gridUid == null)
+            return;
+
+        var query = AllEntityQuery<AtmosMonitoringConsoleComponent, TransformComponent>();
+        while (query.MoveNext(out var ent, out var entConsole, out var entXform))
+        {
+            if (gridUid != entXform.GridUid)
+                continue;
+
+            RefreshAtmosMonitoringConsole(ent, entConsole);
+        }
+    }
+
+    private void OnAtmosMonitorAnchoringChanged(EntityUid uid, AtmosMonitorComponent component, AnchorStateChangedEvent args)
+    {
+        var xform = Transform(uid);
+        var gridUid = xform.GridUid;
+
+        if (gridUid == null)
+            return;
+
+        var query = AllEntityQuery<AtmosMonitoringConsoleComponent, TransformComponent>();
+        while (query.MoveNext(out var ent, out var entConsole, out var entXform))
+        {
+            if (gridUid != entXform.GridUid)
+                continue;
+
+            RefreshAtmosMonitoringConsole(ent, entConsole);
+        }
+    }
+
+    private void OnAirAlarmAnchoringChanged(EntityUid uid, AirAlarmComponent component, AnchorStateChangedEvent args)
+    {
+        var xform = Transform(uid);
+        var gridUid = xform.GridUid;
+
+        if (gridUid == null)
+            return;
+
+        var query = AllEntityQuery<AtmosMonitoringConsoleComponent, TransformComponent>();
+        while (query.MoveNext(out var ent, out var entConsole, out var entXform))
+        {
+            if (gridUid != entXform.GridUid)
+                continue;
+
+            RefreshAtmosMonitoringConsole(ent, entConsole);
+        }
+    }
+
+    private void OnPipeNodeGroupsChanged(EntityUid uid, AtmosPipeColorComponent component, NodeGroupsRebuilt args)
+    {
+        var xform = Transform(uid);
+        var gridUid = xform.GridUid;
+
+        if (gridUid == null)
+            return;
+
+        var query = AllEntityQuery<AtmosMonitoringConsoleComponent, TransformComponent>();
+        while (query.MoveNext(out var ent, out var entConsole, out var entXform))
+        {
+            if (gridUid != entXform.GridUid)
+                continue;
+
+            RefreshAtmosMonitoringConsole(ent, entConsole);
         }
     }
 
@@ -169,13 +258,10 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
             if (!entXform.Anchored)
                 continue;
 
+            var alarmState = (entAirAlarm.State == AtmosAlarmType.Emagged) ? AtmosAlarmType.Danger : entAirAlarm.State;
+
             if (!entAPCPower.Powered)
-                continue;
-
-            var alarmState = entAirAlarm.State;
-
-            if (alarmState == AtmosAlarmType.Emagged)
-                alarmState = AtmosAlarmType.Danger;
+                alarmState = AtmosAlarmType.Invalid;
 
             var entry = new AtmosAlarmEntry(GetNetEntity(ent), GetNetCoordinates(entXform.Coordinates), alarmState, entDeviceNetwork.Address);
             activeAlarms.Add(entry);
@@ -255,9 +341,9 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
         return new AtmosMonitorFocusDeviceData(GetNetEntity(component.FocusDevice.Value), temperatureData, pressureData, gasData);
     }
 
-    private List<AtmosMonitorData> GetAtmosMonitorData(EntityUid gridUid)
+    private HashSet<AtmosMonitorData> GetAtmosMonitorData(EntityUid gridUid)
     {
-        var data = new List<AtmosMonitorData>();
+        var data = new HashSet<AtmosMonitorData>();
         var temperatures = new List<float>();
         var pressures = new List<float>();
 
@@ -270,7 +356,7 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
             if (!entXform.Anchored)
                 continue;
 
-            var group = AtmosMonitoringConsoleGroup.AirSensor;
+            AtmosMonitoringConsoleGroup group;
 
             if (HasComp<GasVentPumpComponent>(ent))
                 group = AtmosMonitoringConsoleGroup.GasVentPump;
@@ -300,9 +386,6 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
 
             if (!entAPCPower.Powered)
                 continue;
-
-            //if (entAirAlarm.State <= AtmosAlarmType.Normal)
-            //    continue;
 
             var datum = new AtmosMonitorData(GetNetEntity(ent), GetNetCoordinates(entXform.Coordinates), AtmosMonitoringConsoleGroup.AirAlarm);
             data.Add(datum);
@@ -383,18 +466,12 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
         if (!TryComp<MapGridComponent>(grid, out var map))
             return;
 
-        if (!_gridAtmosPipeChunks.TryGetValue(grid, out var allChunks))
-            allChunks = RefreshAtmosPipeGrid(grid, map);
+        //if (!_gridAtmosPipeChunks.TryGetValue(grid, out var allChunks))
+        //    allChunks = RefreshAtmosPipeGrid(grid, map);
 
         component.AllChunks = RefreshAtmosPipeGrid(grid, map);
         component.AtmosMonitors = GetAtmosMonitorData(grid);
 
         Dirty(uid, component);
-    }
-
-    public float GetStandardDeviation(IEnumerable<float> values)
-    {
-        float avg = values.Average();
-        return (float) Math.Sqrt(values.Average(v => Math.Pow(v - avg, 2)));
     }
 }

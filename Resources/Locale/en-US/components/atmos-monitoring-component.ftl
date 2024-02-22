@@ -1,4 +1,4 @@
-atmos-monitoring-window-title = Atmospheric Monitoring and Alerts Console
+atmos-monitoring-window-title = Atmospheric Monitoring Console
 
 atmos-monitoring-window-label-gas-vent-pump = Gas vent
 atmos-monitoring-window-label-gas-vent-scrubber = Gas scrubber
@@ -7,12 +7,31 @@ atmos-monitoring-window-label-air-alarm = Air alarm
 
 atmos-monitoring-window-station-name = [color=white][font size=14]{$stationName}[/font][/color]
 atmos-monitoring-window-unknown-location = Unknown location
-atmos-monitoring-window-average-temperature = Temperature
-atmos-monitoring-window-average-pressure = Pressure
-atmos-monitoring-window-gas-composition = Composition
 
-atmos-monitoring-window-flavor-left = Testing
+atmos-monitoring-window-air-alarm-label = Air alarm ({$address})
+atmos-monitoring-window-temperature-label = Temperature
+atmos-monitoring-window-temperature-value = {$valueInC} °C ({$valueInK} K)
+atmos-monitoring-window-pressure-label = Pressure
+atmos-monitoring-window-pressure-value = {$value} kPa
+atmos-monitoring-window-oxygenation-label = Oxygenation
+atmos-monitoring-window-oxygenation-value = {$value}% 
+atmos-monitoring-window-other-gases-label = Other present gases
+atmos-monitoring-window-other-gases-value = {$shorthand} ({$value}%) 
+atmos-monitoring-window-other-gases-value-nil = None
+atmos-monitoring-window-silence-alerts = Silence alerts
+
+atmos-monitoring-window-normal-state = Normal
+atmos-monitoring-window-warning-state = Warning
+atmos-monitoring-window-danger-state = Danger!
+atmos-monitoring-window-invalid-state = Inactive
+
+atmos-monitoring-window-no-active-alerts = No active alerts
+atmos-monitoring-window-situation-green = Situation normal
+atmos-monitoring-window-no-data-available = No data available
+
+atmos-monitoring-window-toggle-overlays = Toggle overlays
+atmos-monitoring-window-show-pipe-network = Pipe network
+atmos-monitoring-window-show-inactive-air-alarms = Inactive air alarms
+
+atmos-monitoring-window-flavor-left = Contact an atmospheric technician for assistance
 atmos-monitoring-window-flavor-right = v0.8
-
-atmos-monitoring-window-rogue-power-consumer = [color=white][font size=14][bold]! WARNING - ROGUE POWER CONSUMING DEVICE DETECTED ![/bold][/font][/color]
-atmos-monitoring-window-power-net-abnormalities = [color=white][font size=14][bold]CAUTION - ABNORMAL ACTIVITY IN POWER NET[/bold][/font][/color]

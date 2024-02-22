@@ -1,9 +1,7 @@
-//using Content.Server.Atmos.Monitor.Systems;
 using Content.Shared.Atmos.Monitor;
 using Robust.Shared.GameStates;
 using Robust.Shared.Map;
 using Robust.Shared.Serialization;
-
 
 namespace Content.Shared.Atmos.Components;
 
@@ -21,7 +19,10 @@ public sealed partial class AtmosMonitoringConsoleComponent : Component
     public Dictionary<Vector2i, AtmosPipeChunk> AllChunks = new();
 
     [ViewVariables, AutoNetworkedField]
-    public List<AtmosMonitorData> AtmosMonitors = new();
+    public HashSet<AtmosMonitorData> AtmosMonitors = new();
+
+    [ViewVariables]
+    public HashSet<NetEntity> SilencedAlerts = new();
 }
 
 [Serializable, NetSerializable]

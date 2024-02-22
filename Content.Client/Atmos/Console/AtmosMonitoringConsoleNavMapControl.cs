@@ -15,7 +15,7 @@ public sealed partial class AtmosMonitoringConsoleNavMapControl : NavMapControl
     private Dictionary<Color, Color> _sRGBLookUp = new Dictionary<Color, Color>();
 
     public Dictionary<Vector2i, List<AtmosMonitoringConsoleLine>>? AtmosPipeNetwork;
-
+    public bool ShowPipeNetwork = true;
     private MapGridComponent? _grid;
 
     public AtmosMonitoringConsoleNavMapControl() : base()
@@ -51,7 +51,7 @@ public sealed partial class AtmosMonitoringConsoleNavMapControl : NavMapControl
     public void DrawAllPipeNetworks(DrawingHandleScreen handle)
     {
         // Draw network
-        if (AtmosPipeNetwork != null && AtmosPipeNetwork.Count > 0)
+        if (AtmosPipeNetwork != null && AtmosPipeNetwork.Count > 0 && ShowPipeNetwork)
         {
             DrawPipeNetwork(handle, AtmosPipeNetwork);
         }
