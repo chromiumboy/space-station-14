@@ -1,19 +1,27 @@
 using Content.Server.Atmos.Piping.EntitySystems;
 using JetBrains.Annotations;
 
-namespace Content.Server.Atmos.Piping.Components
-{
-    [RegisterComponent]
-    public sealed partial class AtmosPipeColorComponent : Component
-    {
-        [DataField("color")]
-        public Color Color { get; set; } = Color.White;
+namespace Content.Server.Atmos.Piping.Components;
 
-        [ViewVariables(VVAccess.ReadWrite), UsedImplicitly]
-        public Color ColorVV
-        {
-            get => Color;
-            set => EntitySystem.Get<AtmosPipeColorSystem>().SetColor(Owner, this, value);
-        }
+[RegisterComponent]
+public sealed partial class AtmosPipeColorComponent : Component
+{
+    [Dependency] private readonly IEntityManager _entManager = default!;
+
+    [DataField("color")]
+    public Color Color { get; set; } = Color.White;
+
+    [ViewVariables(VVAccess.ReadWrite), UsedImplicitly]
+    public Color ColorVV
+    {
+        get => Color;
+        set => _entManager.System<AtmosPipeColorSystem>().SetColor(Owner, this, value);
     }
+}
+
+[ByRefEvent]
+public record struct AtmosPipeColorChangedEvent(EntityUid EntityUid, Color Color)
+{
+    public EntityUid EntityUid = EntityUid;
+    public Color Color = Color;
 }
