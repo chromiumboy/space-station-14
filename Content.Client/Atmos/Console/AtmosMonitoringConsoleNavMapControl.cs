@@ -21,10 +21,10 @@ public sealed partial class AtmosMonitoringConsoleNavMapControl : NavMapControl
     public AtmosMonitoringConsoleNavMapControl() : base()
     {
         // Set colors
-        //TileColor = Color.DarkSlateGray;  //new Color(70, 70, 10);
-        //WallColor = Color.LightSlateGray; //new Color(186, 186, 13);
-
-        WallColor = new Color(180, 145, 0);
+        //WallColor = new Color(180, 145, 0);
+        //WallColor = new Color(0, 69, 40);
+        //WallColor = new Color(0, 176, 102);
+        WallColor = new Color(64, 64, 64);
         TileColor = Color.DimGray * WallColor;
 
         _backgroundColor = Color.FromSrgb(TileColor.WithAlpha(_backgroundOpacity));

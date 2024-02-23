@@ -255,7 +255,7 @@ public sealed partial class AtmosMonitoringConsoleWindow : FancyWindow
         // Update nav map
         NavMap.ForceNavMapUpdate();
 
-        // Auto-scroll renable
+        // Auto-scroll reenable
         if (_autoScrollAwaitsUpdate)
         {
             _autoScrollActive = true;
@@ -278,7 +278,12 @@ public sealed partial class AtmosMonitoringConsoleWindow : FancyWindow
             {
                 if (alarm.Entity == metaData.NetEntity)
                 {
-                    color = DetermineAlertColoration(alarm.AlarmState);
+                    if (alarm.AlarmState >= AtmosAlarmType.Warning)
+                        color = new Color(255, 205, 0);
+                    else
+                        color = Color.LimeGreen;
+
+                    //color = ChangeColorBrightness(DetermineAlertColoration(alarm.AlarmState), 1.5f);
                     break;
                 }
             }
@@ -898,6 +903,15 @@ public sealed partial class AtmosMonitoringConsoleWindow : FancyWindow
         nextScrollPosition = null;
 
         return false;
+    }
+
+    private Color ChangeColorBrightness(Color color, float factor)
+    {
+        var r = MathF.Min(color.R * factor, 1f);
+        var g = MathF.Min(color.G * factor, 1f);
+        var b = MathF.Min(color.B * factor, 1f);
+
+        return new Color(r, g, b);
     }
 }
 
