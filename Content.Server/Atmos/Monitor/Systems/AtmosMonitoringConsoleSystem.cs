@@ -12,7 +12,6 @@ using Content.Shared.Atmos.Monitor;
 using Content.Shared.Atmos.Monitor.Components;
 using Content.Shared.Pinpointer;
 using Robust.Server.GameObjects;
-using Robust.Shared.GameObjects;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
 using Robust.Shared.Player;
@@ -26,6 +25,7 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
     [Dependency] private readonly SharedMapSystem _sharedMapSystem = default!;
     [Dependency] private readonly AirAlarmSystem _airAlarmSystem = default!;
     [Dependency] private readonly AtmosDeviceNetworkSystem _atmosDevNet = default!;
+    [Dependency] private readonly SharedAppearanceSystem _appearance = default!;
 
     // Note: this data does not need to be saved
     private Dictionary<EntityUid, Dictionary<Vector2i, AtmosPipeChunk>> _gridAtmosPipeChunks = new();
@@ -169,29 +169,54 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
         {
             _updateTimer -= UpdateTime;
 
-            var query = AllEntityQuery<AtmosMonitoringConsoleComponent>();
-            while (query.MoveNext(out var ent, out var console))
+            // Save a list of console UI entries and the highest level of alert for each grid,
+            // just in case multiple console stand on the same grid
+            var consoleEntriesForGrid = new Dictionary<EntityUid, AtmosMonitoringConsoleEntry[]>();
+            var highestAlertOnGrid = new Dictionary<EntityUid, AtmosAlarmType>();
+
+            var query = AllEntityQuery<AtmosMonitoringConsoleComponent, TransformComponent>();
+            while (query.MoveNext(out var ent, out var entConsole, out var entXform))
             {
+                if (entXform?.GridUid == null)
+                    continue;
+
+                if (!consoleEntriesForGrid.TryGetValue(entXform.GridUid.Value, out var consoleEntries))
+                {
+                    consoleEntries = GetAirAlarmStateData(entXform.GridUid.Value).ToArray();
+                    consoleEntriesForGrid[entXform.GridUid.Value] = consoleEntries;
+                }
+
+                if (!highestAlertOnGrid.TryGetValue(entXform.GridUid.Value, out var highestAlert))
+                {
+                    if (consoleEntries.Count() == 0)
+                        highestAlert = AtmosAlarmType.Invalid;
+
+                    else
+                        highestAlert = consoleEntries.Max(x => x.AlarmState);
+
+                    highestAlertOnGrid[entXform.GridUid.Value] = highestAlert;
+                }
+
+                // Update the appearance of the console based on the highest level of alert for the grid it stands on
+                if (TryComp<AppearanceComponent>(ent, out var appearance))
+                    _appearance.SetData(ent, AtmosMonitoringConsoleVisuals.ComputerLayerScreen, (int) highestAlert, appearance);
+
+                // If the console UI is open, send its data to each subscribed session
                 if (!_userInterfaceSystem.TryGetUi(ent, AtmosMonitoringConsoleUiKey.Key, out var bui))
                     continue;
 
                 foreach (var session in bui.SubscribedSessions)
-                    UpdateUIState(ent, console, session);
+                    UpdateUIState(ent, consoleEntries, entConsole, entXform, session);
             }
         }
     }
 
-    public void UpdateUIState(EntityUid uid, AtmosMonitoringConsoleComponent component, ICommonSession session)
+    public void UpdateUIState(EntityUid uid, AtmosMonitoringConsoleEntry[] airAlarmStateData, AtmosMonitoringConsoleComponent component, TransformComponent xform, ICommonSession session)
     {
         if (!_userInterfaceSystem.TryGetUi(uid, AtmosMonitoringConsoleUiKey.Key, out var bui))
             return;
 
-        var consoleXform = Transform(uid);
-
-        if (consoleXform?.GridUid == null)
-            return;
-
-        var gridUid = consoleXform.GridUid.Value;
+        var gridUid = xform.GridUid!.Value;
 
         if (!HasComp<MapGridComponent>(gridUid))
             return;
@@ -199,8 +224,7 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
         // The grid must have a NavMapComponent to visualize the map in the UI
         EnsureComp<NavMapComponent>(gridUid);
 
-        // Gathering data to be send to the client
-        var airAlarmStateData = GetAirAlarmStateData(gridUid).ToArray();
+        // Gathering remaining data to be send to the client
         var focusAlarmData = GetFocusAlarmData(uid, component, gridUid);
 
         // Set the UI state

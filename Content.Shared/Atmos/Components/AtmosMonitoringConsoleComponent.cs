@@ -245,6 +245,12 @@ public enum AtmosMonitoringConsoleGroup
     AirAlarm,
 }
 
+[NetSerializable, Serializable]
+public enum AtmosMonitoringConsoleVisuals
+{
+    ComputerLayerScreen,
+}
+
 /// <summary>
 /// UI key associated with the atmos monitoring console
 /// </summary>

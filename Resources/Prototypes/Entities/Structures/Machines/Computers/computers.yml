@@ -13,9 +13,18 @@
     - map: ["computerLayerKeyboard"]
       state: generic_keyboard
     - map: ["computerLayerScreen"]
-      state: alert-2
+      state: alert-0
     - map: ["computerLayerKeys"]
       state: atmos_key
+  - type: GenericVisualizer
+    visuals:
+      enum.AtmosMonitoringConsoleVisuals.ComputerLayerScreen:
+        computerLayerScreen:
+          0: { state: alert-0 }
+          1: { state: alert-0 }
+          2: { state: alert-1 }
+          3: { state: alert-2 }
+          4: { state: alert-2 }
   - type: AtmosMonitoringConsole
   - type: ActivatableUI
     singleUser: true
