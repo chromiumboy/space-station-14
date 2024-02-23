@@ -45,7 +45,7 @@ public sealed partial class AtmosMonitoringConsoleNavMapControl : NavMapControl
         if (!_entManager.TryGetComponent(MapUid, out _grid))
             return;
 
-        AtmosPipeNetwork = GetDecodedAtmosPipeChunks(console.AllChunks, _grid);
+        AtmosPipeNetwork = GetDecodedAtmosPipeChunks(console.AtmosPipeChunks, _grid);
     }
 
     public void DrawAllPipeNetworks(DrawingHandleScreen handle)

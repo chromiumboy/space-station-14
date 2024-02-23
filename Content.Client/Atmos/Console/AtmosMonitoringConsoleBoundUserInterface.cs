@@ -29,7 +29,7 @@ public sealed class AtmosMonitoringConsoleBoundUserInterface : BoundUserInterfac
             return;
 
         EntMan.TryGetComponent<TransformComponent>(Owner, out var xform);
-        _menu?.ShowEntites(xform?.Coordinates, castState.ActiveAlarms, castState.FocusData);
+        _menu?.ShowEntites(xform?.Coordinates, castState.AirAlarms, castState.FocusData);
     }
 
     public void SendAtmosMonitoringConsoleMessage(NetEntity? netEntity)

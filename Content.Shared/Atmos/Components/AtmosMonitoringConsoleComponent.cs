@@ -9,18 +9,27 @@ namespace Content.Shared.Atmos.Components;
 //[Access(typeof(AtmosMonitoringConsoleSystem))]
 public sealed partial class AtmosMonitoringConsoleComponent : Component
 {
-    [ViewVariables, AutoNetworkedField]
-    public EntityUid? FocusDevice;
-
     /// <summary>
     /// A dictionary of the all the nav map chunks that contain anchored atmos pipes
     /// </summary>
     [ViewVariables, AutoNetworkedField]
-    public Dictionary<Vector2i, AtmosPipeChunk> AllChunks = new();
+    public Dictionary<Vector2i, AtmosPipeChunk> AtmosPipeChunks = new();
 
+    /// <summary>
+    /// A list of all the atmos devices that will be used to populate the nav map
+    /// </summary>
     [ViewVariables, AutoNetworkedField]
-    public HashSet<AtmosMonitorData> AtmosMonitors = new();
+    public HashSet<AtmosDeviceNavMapData> AtmosDevices = new();
 
+    /// <summary>
+    /// The current entity of interest (selected on the console UI)
+    /// </summary>
+    [ViewVariables, AutoNetworkedField]
+    public EntityUid? FocusDevice;
+
+    /// <summary>
+    /// A list of all the air alarms that have had their alerts silenced
+    /// </summary>
     [ViewVariables]
     public HashSet<NetEntity> SilencedAlerts = new();
 }
@@ -45,14 +54,32 @@ public struct AtmosPipeChunk
 }
 
 [Serializable, NetSerializable]
-public struct AtmosMonitorData
+public struct AtmosDeviceNavMapData
 {
+    /// <summary>
+    /// The entity in question
+    /// </summary>
     public NetEntity NetEntity;
+
+    /// <summary>
+    /// Location of the entity
+    /// </summary>
     public NetCoordinates NetCoordinates;
+
+    /// <summary>
+    /// Used to determine what map icons to use
+    /// </summary>
     public AtmosMonitoringConsoleGroup Group;
+
+    /// <summary>
+    /// Pipe color (if applicable)
+    /// </summary>
     public Color? Color = null;
 
-    public AtmosMonitorData(NetEntity netEntity, NetCoordinates netCoordinates, AtmosMonitoringConsoleGroup group)
+    /// <summary>
+    /// Populate the atmos monitoring console nav map with a single entity
+    /// </summary>
+    public AtmosDeviceNavMapData(NetEntity netEntity, NetCoordinates netCoordinates, AtmosMonitoringConsoleGroup group)
     {
         NetEntity = netEntity;
         NetCoordinates = netCoordinates;
@@ -61,14 +88,32 @@ public struct AtmosMonitorData
 }
 
 [Serializable, NetSerializable]
-public struct AtmosMonitorFocusDeviceData
+public struct AtmosFocusDeviceData
 {
+    /// <summary>
+    /// Focus entity
+    /// </summary>
     public NetEntity NetEntity;
+
+    /// <summary>
+    /// Temperature (K) and related alert state
+    /// </summary>
     public (float, AtmosAlarmType) TemperatureData;
+
+    /// <summary>
+    /// Pressure (kPA) and related alert state
+    /// </summary>
     public (float, AtmosAlarmType) PressureData;
+
+    /// <summary>
+    /// Moles, percentage, and related alert state, for all detected gases 
+    /// </summary>
     public Dictionary<Gas, (float, float, AtmosAlarmType)> GasData;
 
-    public AtmosMonitorFocusDeviceData
+    /// <summary>
+    /// Populates the atmos monitoring console focus entry with atmospheric data
+    /// </summary>
+    public AtmosFocusDeviceData
         (NetEntity netEntity,
         (float, AtmosAlarmType) temperatureData,
         (float, AtmosAlarmType) pressureData,
@@ -81,31 +126,56 @@ public struct AtmosMonitorFocusDeviceData
     }
 }
 
-/// <summary>
-///     Data from by the server to the client for the power monitoring console UI
-/// </summary>
 [Serializable, NetSerializable]
 public sealed class AtmosMonitoringConsoleBoundInterfaceState : BoundUserInterfaceState
 {
-    public AtmosAlarmEntry[] ActiveAlarms;
-    public AtmosMonitorFocusDeviceData? FocusData;
+    /// <summary>
+    /// A list of all air alarms
+    /// </summary>
+    public AtmosMonitoringConsoleEntry[] AirAlarms;
 
-    public AtmosMonitoringConsoleBoundInterfaceState(AtmosAlarmEntry[] activeAlarms, AtmosMonitorFocusDeviceData? focusData)
+    /// <summary>
+    /// Data for the UI focus (if applicable)
+    /// </summary>
+    public AtmosFocusDeviceData? FocusData;
+
+    /// <summary>
+    /// Sends data from the server to the client to populate the atmos monitoring console UI
+    /// </summary>
+    public AtmosMonitoringConsoleBoundInterfaceState(AtmosMonitoringConsoleEntry[] airAlarms, AtmosFocusDeviceData? focusData)
     {
-        ActiveAlarms = activeAlarms;
+        AirAlarms = airAlarms;
         FocusData = focusData;
     }
 }
 
 [Serializable, NetSerializable]
-public struct AtmosAlarmEntry
+public struct AtmosMonitoringConsoleEntry
 {
+    /// <summary>
+    /// The entity in question
+    /// </summary>
     public NetEntity Entity;
+
+    /// <summary>
+    /// Location of the entity
+    /// </summary>
     public NetCoordinates Coordinates;
+
+    /// <summary>
+    /// Current alarm state
+    /// </summary>
     public AtmosAlarmType AlarmState;
+
+    /// <summary>
+    /// Device network address
+    /// </summary>
     public string Address;
 
-    public AtmosAlarmEntry
+    /// <summary>
+    /// Used to populate the atmos monitoring console UI with data from a single air alarm
+    /// </summary>
+    public AtmosMonitoringConsoleEntry
         (NetEntity entity,
         NetCoordinates coordinates,
         AtmosAlarmType alarmState,
@@ -141,6 +211,9 @@ public struct AtmosPipeData
     /// </summary>
     public ushort WestFacing = 0;
 
+    /// <summary>
+    /// Contains four bitmasks for a single chunk of pipes, one for each cardinal direction 
+    /// </summary>
     public AtmosPipeData()
     {
 
@@ -148,40 +221,32 @@ public struct AtmosPipeData
 }
 
 [Serializable, NetSerializable]
-public struct AtmosMonitoringConsoleEntry
-{
-    public NetEntity NetEntity;
-
-    public AtmosMonitoringConsoleEntry(NetEntity netEntity)
-    {
-        NetEntity = netEntity;
-    }
-}
-
-/// <summary>
-///     Triggers the server to send updated power monitoring console data to the client for the single player session
-/// </summary>
-[Serializable, NetSerializable]
 public sealed class AtmosMonitoringConsoleMessage : BoundUserInterfaceMessage
 {
     public NetEntity? FocusDevice;
 
+    /// <summary>
+    /// Used to inform the server that the focus for the specified atmos monitoring console has been changed by the client
+    /// </summary>
     public AtmosMonitoringConsoleMessage(NetEntity? focusDevice)
     {
         FocusDevice = focusDevice;
     }
 }
 
+/// <summary>
+/// List of all the different atmos device groups
+/// </summary>
 public enum AtmosMonitoringConsoleGroup
 {
+    Invalid,
     GasVentScrubber,
     GasVentPump,
-    AirSensor,
     AirAlarm,
 }
 
 /// <summary>
-///     UI key associated with the power monitoring console
+/// UI key associated with the atmos monitoring console
 /// </summary>
 [Serializable, NetSerializable]
 public enum AtmosMonitoringConsoleUiKey
