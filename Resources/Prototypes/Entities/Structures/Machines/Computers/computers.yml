@@ -2,7 +2,7 @@
   parent: BaseComputer
   id: ComputerAlert
   name: atmospheric monitoring console
-  description: Used to access the station's automated alert system.
+  description: Used to access the station's automated atmospheric alerts system.
   components:
   - type: Computer
     board: AlertsComputerCircuitboard
