@@ -28,9 +28,9 @@ atmos-monitoring-window-warning-state = Warning
 atmos-monitoring-window-danger-state = Danger!
 atmos-monitoring-window-invalid-state = Inactive
 
-atmos-monitoring-window-no-active-alerts = No active alerts
-atmos-monitoring-window-situation-green = Situation normal
+atmos-monitoring-window-no-active-alerts = [font size=16][color=white]No active alerts -[/color] [color={$color}]situation normal[/color][/font]
 atmos-monitoring-window-no-data-available = No data available
+atmos-monitoring-window-alerts-being-silenced = Silencing alerts...
 
 atmos-monitoring-window-toggle-overlays = Toggle map overlays
 atmos-monitoring-window-show-pipe-network = Pipe network

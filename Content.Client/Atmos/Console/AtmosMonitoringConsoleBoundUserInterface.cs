@@ -16,7 +16,6 @@ public sealed class AtmosMonitoringConsoleBoundUserInterface : BoundUserInterfac
         _menu.OnClose += Close;
 
         EntMan.TryGetComponent<TransformComponent>(Owner, out var xform);
-        //_menu?.ShowEntites(xform?.Coordinates);
     }
 
     protected override void UpdateState(BoundUserInterfaceState state)
@@ -29,12 +28,17 @@ public sealed class AtmosMonitoringConsoleBoundUserInterface : BoundUserInterfac
             return;
 
         EntMan.TryGetComponent<TransformComponent>(Owner, out var xform);
-        _menu?.ShowEntites(xform?.Coordinates, castState.AirAlarms, castState.FocusData);
+        _menu?.UpdateUI(xform?.Coordinates, castState.AirAlarms, castState.FocusData);
     }
 
-    public void SendAtmosMonitoringConsoleMessage(NetEntity? netEntity)
+    public void SendFocusChangeMessage(NetEntity? netEntity)
     {
-        SendMessage(new AtmosMonitoringConsoleMessage(netEntity));
+        SendMessage(new AtmosMonitoringConsoleFocusChangeMessage(netEntity));
+    }
+
+    public void SendDeviceSilencedMessage(NetEntity netEntity, bool silenceDevice)
+    {
+        SendMessage(new AtmosMonitoringConsoleDeviceSilencedMessage(netEntity, silenceDevice));
     }
 
     protected override void Dispose(bool disposing)

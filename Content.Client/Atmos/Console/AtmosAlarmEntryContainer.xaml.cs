@@ -17,7 +17,7 @@ namespace Content.Client.Atmos.Console;
 [GenerateTypedNameReferences]
 public sealed partial class AtmosAlarmEntryContainer : BoxContainer
 {
-    public NetEntity AirAlarmUid;
+    public NetEntity NetEntity;
     public EntityCoordinates? Coordinates;
 
     private IResourceCache _cache;
@@ -43,19 +43,40 @@ public sealed partial class AtmosAlarmEntryContainer : BoxContainer
         [Gas.WaterVapor] = "H₂O",
     };
 
-    public AtmosAlarmEntryContainer(NetEntity uid, EntityCoordinates? coordinates, AtmosMonitoringConsoleEntry entry, AtmosFocusDeviceData? focusData = null)
+    public AtmosAlarmEntryContainer(NetEntity uid, EntityCoordinates? coordinates)
     {
         RobustXamlLoader.Load(this);
 
         _cache = IoCManager.Resolve<IResourceCache>();
 
-        AirAlarmUid = uid;
+        NetEntity = uid;
         Coordinates = coordinates;
 
         // Load fonts
         var headerFont = new VectorFont(_cache.GetResource<FontResource>("/Fonts/NotoSans/NotoSans-Bold.ttf"), 11);
         var normalFont = new VectorFont(_cache.GetResource<FontResource>("/Fonts/NotoSansDisplay/NotoSansDisplay-Regular.ttf"), 11);
         var smallFont = new VectorFont(_cache.GetResource<FontResource>("/Fonts/NotoSans/NotoSans-Regular.ttf"), 10);
+
+        // Set fonts
+        TemperatureHeaderLabel.FontOverride = headerFont;
+        PressureHeaderLabel.FontOverride = headerFont;
+        OxygenationHeaderLabel.FontOverride = headerFont;
+        GasesHeaderLabel.FontOverride = headerFont;
+
+        TemperatureLabel.FontOverride = normalFont;
+        PressureLabel.FontOverride = normalFont;
+        OxygenationLabel.FontOverride = normalFont;
+
+        NoDataLabel.FontOverride = headerFont;
+
+        SilenceCheckBox.Label.FontOverride = smallFont;
+        SilenceCheckBox.Label.FontColorOverride = Color.DarkGray;
+    }
+
+    public void UpdateEntry(AtmosMonitoringConsoleEntry entry, AtmosFocusDeviceData? focusData = null)
+    {
+        // Load fonts
+        var normalFont = new VectorFont(_cache.GetResource<FontResource>("/Fonts/NotoSansDisplay/NotoSansDisplay-Regular.ttf"), 11);
 
         // Update alarm state
         if (!_alarmStrings.TryGetValue(entry.AlarmState, out var alarmString))
@@ -67,7 +88,9 @@ public sealed partial class AtmosAlarmEntryContainer : BoxContainer
         // Update alarm name
         AlarmNameLabel.Text = Loc.GetString("atmos-monitoring-window-air-alarm-label", ("address", entry.Address));
 
-        if (focusData != null && focusData.Value.NetEntity == entry.Entity)
+        FocusContainer.Visible = false;
+
+        if (focusData != null && focusData.Value.NetEntity == entry.NetEntity)
         {
             FocusContainer.Visible = true;
 
@@ -79,30 +102,20 @@ public sealed partial class AtmosAlarmEntryContainer : BoxContainer
             {
                 // No data
                 MainDataContainer.Visible = false;
-
-                NoDataLabel.FontOverride = headerFont;
                 NoDataLabel.Visible = true;
             }
 
             else
             {
-                // Set header fonts
-                TemperatureHeaderLabel.FontOverride = headerFont;
-                PressureHeaderLabel.FontOverride = headerFont;
-                OxygenationHeaderLabel.FontOverride = headerFont;
-                GasesHeaderLabel.FontOverride = headerFont;
-
                 // Update temperature
                 var tempK = (FixedPoint2) focusData.Value.TemperatureData.Item1;
                 var tempC = (FixedPoint2) TemperatureHelpers.KelvinToCelsius(tempK.Float());
 
                 TemperatureLabel.Text = Loc.GetString("atmos-monitoring-window-temperature-value", ("valueInC", tempC), ("valueInK", tempK));
-                TemperatureLabel.FontOverride = normalFont;
                 TemperatureLabel.FontColorOverride = GetAlarmLabelColor(focusData.Value.TemperatureData.Item2);
 
                 // Update pressure
                 PressureLabel.Text = Loc.GetString("atmos-monitoring-window-pressure-value", ("value", (FixedPoint2) focusData.Value.PressureData.Item1));
-                PressureLabel.FontOverride = normalFont;
                 PressureLabel.FontColorOverride = GetAlarmLabelColor(focusData.Value.PressureData.Item2);
 
                 // Update oxygenation
@@ -116,10 +129,11 @@ public sealed partial class AtmosAlarmEntryContainer : BoxContainer
                 }
 
                 OxygenationLabel.Text = Loc.GetString("atmos-monitoring-window-oxygenation-value", ("value", oxygenPercent));
-                OxygenationLabel.FontOverride = normalFont;
                 OxygenationLabel.FontColorOverride = GetAlarmLabelColor(oxygenAlert);
 
                 // Update other present gases
+                GasGridContainer.RemoveAllChildren();
+
                 var gasData = focusData.Value.GasData.Where(g => g.Key != Gas.Oxygen);
 
                 if (gasData.Count() == 0)
@@ -167,11 +181,20 @@ public sealed partial class AtmosAlarmEntryContainer : BoxContainer
                     }
                 }
             }
-
-            // Update silence checkbox
-            SilenceCheckBox.Label.FontOverride = smallFont;
-            SilenceCheckBox.Label.FontColorOverride = Color.DarkGray;
         }
+    }
+
+    public void SetAsFocus()
+    {
+        FocusButton.AddStyleClass(StyleNano.StyleClassButtonColorGreen);
+        ArrowTexture.TexturePath = "/Textures/Interface/Nano/inverted_triangle.svg.png";
+    }
+
+    public void RemoveAsFocus()
+    {
+        FocusButton.RemoveStyleClass(StyleNano.StyleClassButtonColorGreen);
+        ArrowTexture.TexturePath = "/Textures/Interface/Nano/triangle_right.png";
+        FocusContainer.Visible = false;
     }
 
     private Color GetAlarmLabelColor(AtmosAlarmType alarmType)

@@ -31,8 +31,8 @@ public sealed partial class PowerMonitoringConsoleNavMapControl : NavMapControl
     public PowerMonitoringConsoleNavMapControl() : base()
     {
         // Set colors
-        TileColor = new Color(30, 57, 67);
-        WallColor = new Color(102, 164, 217);
+        TileColor = new Color(30, 57, 67) * Color.DimGray;
+        WallColor = new Color(102, 164, 217) * Color.DimGray;
         _backgroundColor = Color.FromSrgb(TileColor.WithAlpha(_backgroundOpacity));
 
         PostWallDrawingAction += DrawAllCableNetworks;

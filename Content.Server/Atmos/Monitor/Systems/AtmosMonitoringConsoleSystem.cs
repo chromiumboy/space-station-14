@@ -42,7 +42,8 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
         SubscribeLocalEvent<AtmosMonitoringConsoleComponent, EntParentChangedMessage>(OnConsoleParentChanged);
 
         // UI events
-        SubscribeLocalEvent<AtmosMonitoringConsoleComponent, AtmosMonitoringConsoleMessage>(OnAtmosMonitoringConsoleMessage);
+        SubscribeLocalEvent<AtmosMonitoringConsoleComponent, AtmosMonitoringConsoleFocusChangeMessage>(OnFocusChangedMessage);
+        SubscribeLocalEvent<AtmosMonitoringConsoleComponent, AtmosMonitoringConsoleDeviceSilencedMessage>(OnDeviceSilencedMessage);
 
         // Grid events
         SubscribeLocalEvent<GridSplitEvent>(OnGridSplit);
@@ -64,9 +65,18 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
         InitalizeAtmosMonitoringConsole(uid, component);
     }
 
-    private void OnAtmosMonitoringConsoleMessage(EntityUid uid, AtmosMonitoringConsoleComponent component, AtmosMonitoringConsoleMessage args)
+    private void OnFocusChangedMessage(EntityUid uid, AtmosMonitoringConsoleComponent component, AtmosMonitoringConsoleFocusChangeMessage args)
     {
         component.FocusDevice = EntityManager.GetEntity(args.FocusDevice);
+    }
+
+    private void OnDeviceSilencedMessage(EntityUid uid, AtmosMonitoringConsoleComponent component, AtmosMonitoringConsoleDeviceSilencedMessage args)
+    {
+        if (args.SilenceDevice)
+            component.SilencedDevices.Add(args.AtmosDevice);
+
+        else
+            component.SilencedDevices.Remove(args.AtmosDevice);
     }
 
     private void OnGridSplit(ref GridSplitEvent args)
@@ -169,10 +179,7 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
         {
             _updateTimer -= UpdateTime;
 
-            // Save a list of console UI entries and the highest level of alert for each grid,
-            // just in case multiple console stand on the same grid
             var consoleEntriesForGrid = new Dictionary<EntityUid, AtmosMonitoringConsoleEntry[]>();
-            var highestAlertOnGrid = new Dictionary<EntityUid, AtmosAlarmType>();
 
             var query = AllEntityQuery<AtmosMonitoringConsoleComponent, TransformComponent>();
             while (query.MoveNext(out var ent, out var entConsole, out var entXform))
@@ -180,24 +187,26 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
                 if (entXform?.GridUid == null)
                     continue;
 
+                // Save a list of the console UI entries for each grid, in case multiple consoles stand on the same one
                 if (!consoleEntriesForGrid.TryGetValue(entXform.GridUid.Value, out var consoleEntries))
                 {
                     consoleEntries = GetAirAlarmStateData(entXform.GridUid.Value).ToArray();
                     consoleEntriesForGrid[entXform.GridUid.Value] = consoleEntries;
                 }
 
-                if (!highestAlertOnGrid.TryGetValue(entXform.GridUid.Value, out var highestAlert))
+                // Determine the highest level of alert the console detected (from non-silenced devices)
+                var highestAlert = AtmosAlarmType.Invalid;
+
+                if (consoleEntries.Count() > 0)
                 {
-                    if (consoleEntries.Count() == 0)
-                        highestAlert = AtmosAlarmType.Invalid;
-
-                    else
-                        highestAlert = consoleEntries.Max(x => x.AlarmState);
-
-                    highestAlertOnGrid[entXform.GridUid.Value] = highestAlert;
+                    foreach (var entry in consoleEntries)
+                    {
+                        if (entry.AlarmState > highestAlert && !entConsole.SilencedDevices.Contains(entry.NetEntity))
+                            highestAlert = entry.AlarmState;
+                    }
                 }
 
-                // Update the appearance of the console based on the highest level of alert for the grid it stands on
+                // Update the appearance of the console based on the highest recorded level of alert
                 if (TryComp<AppearanceComponent>(ent, out var appearance))
                     _appearance.SetData(ent, AtmosMonitoringConsoleVisuals.ComputerLayerScreen, (int) highestAlert, appearance);
 
@@ -249,7 +258,7 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
             // If emagged, change the alarm type to danger, I guess?
             var alarmState = (entAirAlarm.State == AtmosAlarmType.Emagged) ? AtmosAlarmType.Danger : entAirAlarm.State;
 
-            // If unpowered the alarm can't sound
+            // Unpowered alarms can't sound
             if (!entAPCPower.Powered)
                 alarmState = AtmosAlarmType.Invalid;
 
@@ -281,10 +290,11 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
         if (!_userInterfaceSystem.TryGetUi(ent, SharedAirAlarmInterfaceKey.Key, out var bui) ||
             bui.SubscribedSessions.Count == 0)
         {
+            _atmosDevNet.Register(component.FocusDevice.Value, null);
+            _atmosDevNet.Sync(component.FocusDevice.Value, null);
+
             foreach ((var address, var _) in entAirAlarm.SensorData)
-            {
-                _atmosDevNet.Sync(component.FocusDevice.Value, address);
-            }
+                _atmosDevNet.Register(uid, null);
         }
 
         var temperatureData = (_airAlarmSystem.CalculateTemperatureAverage(entAirAlarm), AtmosAlarmType.Normal);

@@ -468,9 +468,13 @@ public partial class NavMapControl : MapGridControl
                 var position = _transformSystem.GetInvWorldMatrix(_xform).Transform(mapPos.Position) - offset;
                 position = Scale(new Vector2(position.X, -position.Y));
 
-                var scalingCoefficient = 2f;
-                var positionOffsetX = scalingCoefficient * float.Sqrt(MinimapScale) * blip.Texture.Width / 32f;
-                var positionOffsetY = scalingCoefficient * float.Sqrt(MinimapScale) * blip.Texture.Height / 32f;
+                var scalingCoefficient = blip.ScalingCoefficient * MinimapScale;
+
+                if (blip.ScalingType == NavMapBlipScaling.NonLinear)
+                    scalingCoefficient = float.Sqrt(scalingCoefficient);
+
+                var positionOffsetX = scalingCoefficient * blip.Texture.Width;
+                var positionOffsetY = scalingCoefficient * blip.Texture.Height;
 
                 vertexUVs.Add(new DrawVertexUV2D(new Vector2(position.X - positionOffsetX, position.Y - positionOffsetY), new Vector2(1f, 1f)));
                 vertexUVs.Add(new DrawVertexUV2D(new Vector2(position.X - positionOffsetX, position.Y + positionOffsetY), new Vector2(1f, 0f)));
@@ -647,8 +651,10 @@ public struct NavMapBlip
     public Color Color;
     public bool Blinks;
     public bool Selectable;
+    public NavMapBlipScaling ScalingType = NavMapBlipScaling.NonLinear;
+    public float ScalingCoefficient = 0.01f;
 
-    public NavMapBlip(EntityCoordinates coordinates, Texture texture, Color color, bool blinks, bool selectable = true)
+    public NavMapBlip(EntityCoordinates coordinates, Texture texture, Color color, bool blinks = false, bool selectable = true)
     {
         Coordinates = coordinates;
         Texture = texture;
@@ -656,6 +662,12 @@ public struct NavMapBlip
         Blinks = blinks;
         Selectable = selectable;
     }
+}
+
+public enum NavMapBlipScaling
+{
+    Linear,
+    NonLinear,
 }
 
 public struct NavMapLine

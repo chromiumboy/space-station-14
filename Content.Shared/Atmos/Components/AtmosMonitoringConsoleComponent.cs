@@ -28,10 +28,10 @@ public sealed partial class AtmosMonitoringConsoleComponent : Component
     public EntityUid? FocusDevice;
 
     /// <summary>
-    /// A list of all the air alarms that have had their alerts silenced
+    /// A list of all the air alarms that have had their alerts silenced on this particular console
     /// </summary>
-    [ViewVariables]
-    public HashSet<NetEntity> SilencedAlerts = new();
+    [DataField]
+    public HashSet<NetEntity> SilencedDevices = new();
 }
 
 [Serializable, NetSerializable]
@@ -155,7 +155,7 @@ public struct AtmosMonitoringConsoleEntry
     /// <summary>
     /// The entity in question
     /// </summary>
-    public NetEntity Entity;
+    public NetEntity NetEntity;
 
     /// <summary>
     /// Location of the entity
@@ -181,7 +181,7 @@ public struct AtmosMonitoringConsoleEntry
         AtmosAlarmType alarmState,
         string address)
     {
-        Entity = entity;
+        NetEntity = entity;
         Coordinates = coordinates;
         AlarmState = alarmState;
         Address = address;
@@ -221,16 +221,32 @@ public struct AtmosPipeData
 }
 
 [Serializable, NetSerializable]
-public sealed class AtmosMonitoringConsoleMessage : BoundUserInterfaceMessage
+public sealed class AtmosMonitoringConsoleFocusChangeMessage : BoundUserInterfaceMessage
 {
     public NetEntity? FocusDevice;
 
     /// <summary>
-    /// Used to inform the server that the focus for the specified atmos monitoring console has been changed by the client
+    /// Used to inform the server that the specified focus for the atmos monitoring console has been changed by the client
     /// </summary>
-    public AtmosMonitoringConsoleMessage(NetEntity? focusDevice)
+    public AtmosMonitoringConsoleFocusChangeMessage(NetEntity? focusDevice)
     {
         FocusDevice = focusDevice;
+    }
+}
+
+[Serializable, NetSerializable]
+public sealed class AtmosMonitoringConsoleDeviceSilencedMessage : BoundUserInterfaceMessage
+{
+    public NetEntity AtmosDevice;
+    public bool SilenceDevice = true;
+
+    /// <summary>
+    /// Used to inform the server that the client has silenced alerts from the specified device to this atmos monitoring console 
+    /// </summary>
+    public AtmosMonitoringConsoleDeviceSilencedMessage(NetEntity atmosDevice, bool silenceDevice = true)
+    {
+        AtmosDevice = atmosDevice;
+        SilenceDevice = silenceDevice;
     }
 }
 
