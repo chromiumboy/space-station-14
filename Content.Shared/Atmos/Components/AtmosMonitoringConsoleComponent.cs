@@ -79,11 +79,12 @@ public struct AtmosDeviceNavMapData
     /// <summary>
     /// Populate the atmos monitoring console nav map with a single entity
     /// </summary>
-    public AtmosDeviceNavMapData(NetEntity netEntity, NetCoordinates netCoordinates, AtmosMonitoringConsoleGroup group)
+    public AtmosDeviceNavMapData(NetEntity netEntity, NetCoordinates netCoordinates, AtmosMonitoringConsoleGroup group, Color? color = null)
     {
         NetEntity = netEntity;
         NetCoordinates = netCoordinates;
         Group = group;
+        Color = color;
     }
 }
 
@@ -135,6 +136,11 @@ public sealed class AtmosMonitoringConsoleBoundInterfaceState : BoundUserInterfa
     public AtmosMonitoringConsoleEntry[] AirAlarms;
 
     /// <summary>
+    /// A list of all fire alarms
+    /// </summary>
+    public AtmosMonitoringConsoleEntry[] FireAlarms;
+
+    /// <summary>
     /// Data for the UI focus (if applicable)
     /// </summary>
     public AtmosFocusDeviceData? FocusData;
@@ -142,9 +148,10 @@ public sealed class AtmosMonitoringConsoleBoundInterfaceState : BoundUserInterfa
     /// <summary>
     /// Sends data from the server to the client to populate the atmos monitoring console UI
     /// </summary>
-    public AtmosMonitoringConsoleBoundInterfaceState(AtmosMonitoringConsoleEntry[] airAlarms, AtmosFocusDeviceData? focusData)
+    public AtmosMonitoringConsoleBoundInterfaceState(AtmosMonitoringConsoleEntry[] airAlarms, AtmosMonitoringConsoleEntry[] fireAlarms, AtmosFocusDeviceData? focusData)
     {
         AirAlarms = airAlarms;
+        FireAlarms = fireAlarms;
         FocusData = focusData;
     }
 }
@@ -168,6 +175,11 @@ public struct AtmosMonitoringConsoleEntry
     public AtmosAlarmType AlarmState;
 
     /// <summary>
+    /// Localised device name
+    /// </summary>
+    public string EntityName;
+
+    /// <summary>
     /// Device network address
     /// </summary>
     public string Address;
@@ -179,11 +191,13 @@ public struct AtmosMonitoringConsoleEntry
         (NetEntity entity,
         NetCoordinates coordinates,
         AtmosAlarmType alarmState,
+        string entityName,
         string address)
     {
         NetEntity = entity;
         Coordinates = coordinates;
         AlarmState = alarmState;
+        EntityName = entityName;
         Address = address;
     }
 }
@@ -259,6 +273,7 @@ public enum AtmosMonitoringConsoleGroup
     GasVentScrubber,
     GasVentPump,
     AirAlarm,
+    FireAlarm,
 }
 
 [NetSerializable, Serializable]

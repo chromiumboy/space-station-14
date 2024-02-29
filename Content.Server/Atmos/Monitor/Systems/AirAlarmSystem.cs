@@ -19,7 +19,6 @@ using Content.Shared.DeviceNetwork;
 using Content.Shared.DeviceNetwork.Systems;
 using Content.Shared.Interaction;
 using Content.Shared.Wires;
-using Microsoft.CodeAnalysis.FlowAnalysis.DataFlow;
 using Robust.Server.GameObjects;
 using Robust.Shared.Player;
 

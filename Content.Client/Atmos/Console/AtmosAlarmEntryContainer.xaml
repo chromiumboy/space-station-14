@@ -31,7 +31,9 @@
 
             <!-- Atmosphere status -->
             <Control>
-                <BoxContainer Name="MainDataContainer" HorizontalExpand="True" VerticalExpand="True" Orientation="Vertical" ReservesSpace="False" Visible="True">
+
+                <!-- Main container for displaying atmospheric data -->
+                <BoxContainer Name="MainDataContainer" HorizontalExpand="True" VerticalExpand="True" Orientation="Vertical" ReservesSpace="False" Visible="False">
                     <BoxContainer HorizontalExpand="True" Orientation="Horizontal">
                         <Label Name="TemperatureHeaderLabel" Text="{Loc 'atmos-monitoring-window-temperature-label'}" HorizontalAlignment="Center" HorizontalExpand="True" FontColorOverride="#a9a9a9" Margin="0 2 0 0" SetHeight="24"></Label>
                         <Label Name="PressureHeaderLabel" Text="{Loc 'atmos-monitoring-window-pressure-label'}" HorizontalAlignment="Center" HorizontalExpand="True" FontColorOverride="#a9a9a9" Margin="0 2 0 0" SetHeight="24"></Label>
@@ -60,6 +62,9 @@
                     </PanelContainer>
                 </BoxContainer>
 
+                <!-- If the alarm is inactive, this is label is diplayed instead -->
+                <Label Name="NoDataLabel" Text="{Loc 'atmos-monitoring-window-no-data-available'}" HorizontalAlignment="Center" Margin="0 15" FontColorOverride="#a9a9a9" ReservesSpace="False" Visible="False"></Label>
+
                 <!-- Silencing progress bar -->
                 <controls:StripeBack Name="SilenceAlarmProgressBar" ReservesSpace="False" Visible="False" Access="Public">
                     <PanelContainer>
@@ -67,9 +72,6 @@
                     </PanelContainer>
                 </controls:StripeBack>
             </Control>
-
-            <!-- If the alarm is inactive, this is label is diplayed instead -->
-            <Label Name="NoDataLabel" Text="{Loc 'atmos-monitoring-window-no-data-available'}" HorizontalAlignment="Center" Margin="0 15" FontColorOverride="#a9a9a9" ReservesSpace="False" Visible="False"></Label>
 
             <!-- Check box for silencing this alarm -->
             <CheckBox Name="SilenceCheckBox" Text="{Loc 'atmos-monitoring-window-silence-alerts'}" HorizontalAlignment="Left" Margin="5 5 5 5" Access="Public"></CheckBox>
