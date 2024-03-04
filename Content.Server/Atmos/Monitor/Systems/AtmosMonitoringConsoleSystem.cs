@@ -1,4 +1,5 @@
 using Content.Server.Atmos.Monitor.Components;
+using Content.Server.Atmos.Piping.Binary.Components;
 using Content.Server.Atmos.Piping.Components;
 using Content.Server.Atmos.Piping.Unary.Components;
 using Content.Server.DeviceNetwork.Components;
@@ -49,11 +50,8 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
         // Grid events
         SubscribeLocalEvent<GridSplitEvent>(OnGridSplit);
         SubscribeLocalEvent<AtmosPipeColorComponent, AtmosPipeColorChangedEvent>(OnPipeColorChanged);
-        SubscribeLocalEvent<GasVentPumpComponent, AnchorStateChangedEvent>(OnGasVentPumpAnchoringChanged);
-        SubscribeLocalEvent<GasVentScrubberComponent, AnchorStateChangedEvent>(OnGasVentScrubberAnchoringChanged);
-        SubscribeLocalEvent<AirAlarmComponent, AnchorStateChangedEvent>(OnAirAlarmAnchoringChanged);
-        SubscribeLocalEvent<FireAlarmComponent, AnchorStateChangedEvent>(OnFireAlarmAnchoringChanged);
         SubscribeLocalEvent<AtmosPipeColorComponent, NodeGroupsRebuilt>(OnPipeNodeGroupsChanged);
+        SubscribeLocalEvent<AtmosMonitoringConsoleDeviceComponent, AnchorStateChangedEvent>(OnAtmosMonitoringConsoleDeviceAnchorChanged);
     }
 
     #region Event handling 
@@ -137,27 +135,7 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
         RebuildSingleTileOfPipeNetwork(gridUid.Value, grid, xform.Coordinates);
     }
 
-    private void OnGasVentPumpAnchoringChanged(EntityUid uid, GasVentPumpComponent component, AnchorStateChangedEvent args)
-    {
-        OnMonitorDeviceAnchorChanged(uid, component);
-    }
-
-    private void OnGasVentScrubberAnchoringChanged(EntityUid uid, GasVentScrubberComponent component, AnchorStateChangedEvent args)
-    {
-        OnMonitorDeviceAnchorChanged(uid, component);
-    }
-
-    private void OnAirAlarmAnchoringChanged(EntityUid uid, AirAlarmComponent component, AnchorStateChangedEvent args)
-    {
-        OnMonitorDeviceAnchorChanged(uid, component);
-    }
-
-    private void OnFireAlarmAnchoringChanged(EntityUid uid, FireAlarmComponent component, AnchorStateChangedEvent args)
-    {
-        OnMonitorDeviceAnchorChanged(uid, component);
-    }
-
-    private void OnMonitorDeviceAnchorChanged(EntityUid uid, Component component)
+    private void OnAtmosMonitoringConsoleDeviceAnchorChanged(EntityUid uid, AtmosMonitoringConsoleDeviceComponent component, AnchorStateChangedEvent args)
     {
         var xform = Transform(uid);
         var gridUid = xform.GridUid;
@@ -173,9 +151,10 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
             if (gridUid != entXform.GridUid)
                 continue;
 
-            if (TryGetAtmosDeviceNavMapData(uid, component, xform, gridUid.Value, out var data))
+            if (args.Anchored && TryGetAtmosDeviceNavMapData(uid, component, xform, gridUid.Value, out var data))
                 entConsole.AtmosDevices.Add(data.Value);
-            else
+
+            else if (!args.Anchored)
                 entConsole.AtmosDevices.RemoveWhere(x => x.NetEntity == netEntity);
         }
     }
@@ -204,13 +183,13 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
                 // Save a list of the console UI entries for each grid, in case multiple consoles stand on the same one
                 if (!airAlarmEntriesForEachGrid.TryGetValue(entXform.GridUid.Value, out var airAlarmEntries))
                 {
-                    airAlarmEntries = GetAlarmStateData<AirAlarmComponent>(entXform.GridUid.Value).ToArray();
+                    airAlarmEntries = GetAlarmStateData(entXform.GridUid.Value, AtmosMonitoringConsoleGroup.AirAlarm).ToArray();
                     airAlarmEntriesForEachGrid[entXform.GridUid.Value] = airAlarmEntries;
                 }
 
                 if (!fireAlarmEntriesForEachGrid.TryGetValue(entXform.GridUid.Value, out var fireAlarmEntries))
                 {
-                    fireAlarmEntries = GetAlarmStateData<FireAlarmComponent>(entXform.GridUid.Value).ToArray();
+                    fireAlarmEntries = GetAlarmStateData(entXform.GridUid.Value, AtmosMonitoringConsoleGroup.FireAlarm).ToArray();
                     fireAlarmEntriesForEachGrid[entXform.GridUid.Value] = fireAlarmEntries;
                 }
 
@@ -271,12 +250,12 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
             session);
     }
 
-    private List<AtmosMonitoringConsoleEntry> GetAlarmStateData<T>(EntityUid gridUid) where T : IComponent
+    private List<AtmosMonitoringConsoleEntry> GetAlarmStateData(EntityUid gridUid, AtmosMonitoringConsoleGroup group)
     {
         var alarmStateData = new List<AtmosMonitoringConsoleEntry>();
 
-        var queryAlarms = AllEntityQuery<T, AtmosAlarmableComponent, DeviceNetworkComponent, TransformComponent>();
-        while (queryAlarms.MoveNext(out var ent, out var _, out var enAtmosAlarmable, out var entDeviceNetwork, out var entXform))
+        var queryAlarms = AllEntityQuery<AtmosMonitoringConsoleDeviceComponent, AtmosAlarmableComponent, DeviceNetworkComponent, TransformComponent>();
+        while (queryAlarms.MoveNext(out var ent, out var entDevice, out var entAtmosAlarmable, out var entDeviceNetwork, out var entXform))
         {
             if (entXform.GridUid != gridUid)
                 continue;
@@ -284,15 +263,24 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
             if (!entXform.Anchored)
                 continue;
 
+            if (entDevice.Group != group)
+                continue;
+
             // If emagged, change the alarm type to inactive, I guess?
-            var alarmState = (enAtmosAlarmable.LastAlarmState == AtmosAlarmType.Emagged) ? AtmosAlarmType.Invalid : enAtmosAlarmable.LastAlarmState;
+            var alarmState = (entAtmosAlarmable.LastAlarmState == AtmosAlarmType.Emagged) ? AtmosAlarmType.Invalid : entAtmosAlarmable.LastAlarmState;
 
             // Unpowered alarms can't sound
             if (TryComp<ApcPowerReceiverComponent>(ent, out var entAPCPower) && !entAPCPower.Powered)
                 alarmState = AtmosAlarmType.Invalid;
 
             var entry = new AtmosMonitoringConsoleEntry
-                (GetNetEntity(ent), GetNetCoordinates(entXform.Coordinates), alarmState, MetaData(ent).EntityName, entDeviceNetwork.Address);
+                (GetNetEntity(ent),
+                GetNetCoordinates(entXform.Coordinates),
+                entDevice.Group,
+                alarmState,
+                MetaData(ent).EntityName,
+                entDeviceNetwork.Address);
+
             alarmStateData.Add(entry);
         }
 
@@ -372,29 +360,8 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
     {
         var atmosDeviceNavMapData = new HashSet<AtmosDeviceNavMapData>();
 
-        var queryGasVentPumps = AllEntityQuery<GasVentPumpComponent, TransformComponent>();
-        while (queryGasVentPumps.MoveNext(out var ent, out var entComponent, out var entXform))
-        {
-            if (TryGetAtmosDeviceNavMapData(ent, entComponent, entXform, gridUid, out var data))
-                atmosDeviceNavMapData.Add(data.Value);
-        }
-
-        var queryGasVentScrubbers = AllEntityQuery<GasVentScrubberComponent, TransformComponent>();
-        while (queryGasVentScrubbers.MoveNext(out var ent, out var entComponent, out var entXform))
-        {
-            if (TryGetAtmosDeviceNavMapData(ent, entComponent, entXform, gridUid, out var data))
-                atmosDeviceNavMapData.Add(data.Value);
-        }
-
-        var queryAirAlarms = AllEntityQuery<AirAlarmComponent, TransformComponent>();
-        while (queryAirAlarms.MoveNext(out var ent, out var entComponent, out var entXform))
-        {
-            if (TryGetAtmosDeviceNavMapData(ent, entComponent, entXform, gridUid, out var data))
-                atmosDeviceNavMapData.Add(data.Value);
-        }
-
-        var queryFireAlarms = AllEntityQuery<FireAlarmComponent, TransformComponent>();
-        while (queryFireAlarms.MoveNext(out var ent, out var entComponent, out var entXform))
+        var query = AllEntityQuery<AtmosMonitoringConsoleDeviceComponent, TransformComponent>();
+        while (query.MoveNext(out var ent, out var entComponent, out var entXform))
         {
             if (TryGetAtmosDeviceNavMapData(ent, entComponent, entXform, gridUid, out var data))
                 atmosDeviceNavMapData.Add(data.Value);
@@ -403,9 +370,14 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
         return atmosDeviceNavMapData;
     }
 
-    private bool TryGetAtmosDeviceNavMapData(EntityUid uid, IComponent component, TransformComponent xform, EntityUid gridUid, [NotNullWhen(true)] out AtmosDeviceNavMapData? data)
+    private bool TryGetAtmosDeviceNavMapData
+        (EntityUid uid,
+        AtmosMonitoringConsoleDeviceComponent component,
+        TransformComponent xform,
+        EntityUid gridUid,
+        [NotNullWhen(true)] out AtmosDeviceNavMapData? output)
     {
-        data = null;
+        output = null;
 
         if (xform.GridUid != gridUid)
             return false;
@@ -413,12 +385,15 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
         if (!xform.Anchored)
             return false;
 
-        Color? color = null;
+        var device = new AtmosDeviceNavMapData(GetNetEntity(uid), GetNetCoordinates(xform.Coordinates), component.Group);
 
         if (TryComp<AtmosPipeColorComponent>(uid, out var atmosPipeColor))
-            color = atmosPipeColor.Color;
+            device.Color = atmosPipeColor.Color;
 
-        data = new AtmosDeviceNavMapData(GetNetEntity(uid), GetNetCoordinates(xform.Coordinates), GetAtmosMonitoringConsoleGroup(component), color);
+        if (component.Rotatable)
+            device.Direction = xform.LocalRotation.GetCardinalDir();
+
+        output = device;
 
         return true;
     }
@@ -560,22 +535,5 @@ public sealed class AtmosMonitoringConsoleSystem : EntitySystem
         component.AtmosDevices = GetAllAtmosDeviceNavMapData(grid);
 
         Dirty(uid, component);
-    }
-
-    private AtmosMonitoringConsoleGroup GetAtmosMonitoringConsoleGroup(IComponent component)
-    {
-        switch (component)
-        {
-            case GasVentPumpComponent:
-                return AtmosMonitoringConsoleGroup.GasVentPump;
-            case GasVentScrubberComponent:
-                return AtmosMonitoringConsoleGroup.GasVentScrubber;
-            case AirAlarmComponent:
-                return AtmosMonitoringConsoleGroup.AirAlarm;
-            case FireAlarmComponent:
-                return AtmosMonitoringConsoleGroup.FireAlarm;
-            default:
-                return AtmosMonitoringConsoleGroup.Invalid;
-        }
     }
 }

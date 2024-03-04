@@ -40,17 +40,11 @@
                                  Margin="20 0 5 0"/>
                     <Label Text="{Loc 'atmos-monitoring-window-label-gas-vent-scrubber'}"/>
                     <TextureRect Stretch="KeepAspectCentered"
-                                 TexturePath="/Textures/Interface/NavMap/beveled_triangle.png"
+                                 TexturePath="/Textures/Interface/NavMap/beveled_star.png"
                                  SetSize="16 16"
                                  Modulate="#ffcd00"
                                  Margin="20 0 5 0"/>
-                    <Label Text="{Loc 'atmos-monitoring-window-label-air-alarm'}"/>
-                    <TextureRect Stretch="KeepAspectCentered"
-                                 TexturePath="/Textures/Interface/NavMap/beveled_triangle_inverted.png"
-                                 SetSize="16 16"
-                                 Modulate="#ffcd00"
-                                 Margin="20 0 5 0"/>
-                    <Label Text="{Loc 'atmos-monitoring-window-label-fire-alarm'}"/>
+                    <Label Text="{Loc 'atmos-monitoring-window-label-alarm'}"/>
                 </BoxContainer>                
             </BoxContainer>
 

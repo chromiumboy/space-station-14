@@ -7,6 +7,7 @@ atmos-monitoring-window-tab-fire-alarms = Fire alarms
 
 atmos-monitoring-window-label-gas-vent-pump = Gas vent
 atmos-monitoring-window-label-gas-vent-scrubber = Gas scrubber
+atmos-monitoring-window-label-alarm = Active alarm
 atmos-monitoring-window-label-air-alarm = Active air alarm
 atmos-monitoring-window-label-fire-alarm = Active fire alarm
 

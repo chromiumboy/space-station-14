@@ -327,7 +327,7 @@ public partial class NavMapControl : MapGridControl
         var area = new Box2(-WorldRange, -WorldRange, WorldRange + 1f, WorldRange + 1f).Translated(offset);
 
         // Drawing lines can be rather expensive due to the number of neighbors that need to be checked in order
-        // to figure out where they should be drawn. However, we don't *need* to do check these every frame.
+        // to figure out where they should be drawn. However, we don't *need* to check these every frame.
         // Instead, lets periodically update where to draw each line and then store these points in a list.
         // Then we can just run through the list each frame and draw the lines without any extra computation.
 
@@ -448,8 +448,6 @@ public partial class NavMapControl : MapGridControl
         }
 
         // Tracked entities (can use a supplied sprite as a marker instead; should probably just replace TrackedCoordinates with this eventually)
-        var iconVertexUVs = new Dictionary<(Texture, Color), ValueList<DrawVertexUV2D>>();
-
         foreach (var blip in TrackedEntities.Values)
         {
             if (blip.Blinks && !lit)
@@ -457,9 +455,6 @@ public partial class NavMapControl : MapGridControl
 
             if (blip.Texture == null)
                 continue;
-
-            if (!iconVertexUVs.TryGetValue((blip.Texture, blip.Color), out var vertexUVs))
-                vertexUVs = new();
 
             var mapPos = blip.Coordinates.ToMap(_entManager, _transformSystem);
 
@@ -473,29 +468,10 @@ public partial class NavMapControl : MapGridControl
                 if (blip.ScalingType == NavMapBlipScaling.NonLinear)
                     scalingCoefficient = float.Sqrt(scalingCoefficient);
 
-                var positionOffsetX = scalingCoefficient * blip.Texture.Width;
-                var positionOffsetY = scalingCoefficient * blip.Texture.Height;
+                var positionOffset = new Vector2(scalingCoefficient * blip.Texture.Width, scalingCoefficient * blip.Texture.Height);
 
-                vertexUVs.Add(new DrawVertexUV2D(new Vector2(position.X - positionOffsetX, position.Y - positionOffsetY), new Vector2(1f, 1f)));
-                vertexUVs.Add(new DrawVertexUV2D(new Vector2(position.X - positionOffsetX, position.Y + positionOffsetY), new Vector2(1f, 0f)));
-                vertexUVs.Add(new DrawVertexUV2D(new Vector2(position.X + positionOffsetX, position.Y - positionOffsetY), new Vector2(0f, 1f)));
-                vertexUVs.Add(new DrawVertexUV2D(new Vector2(position.X - positionOffsetX, position.Y + positionOffsetY), new Vector2(1f, 0f)));
-                vertexUVs.Add(new DrawVertexUV2D(new Vector2(position.X + positionOffsetX, position.Y - positionOffsetY), new Vector2(0f, 1f)));
-                vertexUVs.Add(new DrawVertexUV2D(new Vector2(position.X + positionOffsetX, position.Y + positionOffsetY), new Vector2(0f, 0f)));
+                handle.DrawTextureRect(blip.Texture, new UIBox2(position - positionOffset, position + positionOffset), blip.Color);
             }
-
-            iconVertexUVs[(blip.Texture, blip.Color)] = vertexUVs;
-        }
-
-        foreach ((var (texture, color), var vertexUVs) in iconVertexUVs)
-        {
-            if (!_sRGBLookUp.TryGetValue(color, out var sRGB))
-            {
-                sRGB = Color.ToSrgb(color);
-                _sRGBLookUp[color] = sRGB;
-            }
-
-            handle.DrawPrimitives(DrawPrimitiveTopology.TriangleList, texture, vertexUVs.Span, sRGB);
         }
     }
 

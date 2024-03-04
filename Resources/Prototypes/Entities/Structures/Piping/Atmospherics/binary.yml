@@ -22,7 +22,10 @@
         !type:PipeNode
         nodeGroupID: Pipe
         pipeDirection: South
-
+  - type: AtmosMonitoringConsoleDevice
+    group: GasPump
+    rotatable: true
+  
 - type: entity
   parent: GasBinaryBase
   id: GasPressurePump
@@ -188,6 +191,9 @@
       range: 5
       sound:
         path: /Audio/Ambience/Objects/gas_hiss.ogg
+    - type: AtmosMonitoringConsoleDevice
+      group: GasValve
+      rotatable: true
 
 - type: entity
   parent: GasBinaryBase
@@ -246,6 +252,9 @@
     range: 5
     sound:
       path: /Audio/Ambience/Objects/gas_hiss.ogg
+  - type: AtmosMonitoringConsoleDevice
+    group: GasValve
+    rotatable: true
 
 - type: entity
   parent: GasBinaryBase
@@ -275,6 +284,9 @@
     - type: Construction
       graph: GasBinary
       node: port
+    - type: AtmosMonitoringConsoleDevice
+      group: GasValve
+      rotatable: true
 
 - type: entity
   parent: GasVentPump
@@ -330,6 +342,9 @@
           pipeDirection: South
     - type: AmbientSound
       enabled: true
+    - type: AtmosMonitoringConsoleDevice
+      group: GasValve
+      rotatable: true
 
 - type: entity
   parent: [ BaseMachine, ConstructibleMachine ]
@@ -391,6 +406,8 @@
         acts: ["Destruction"]
   - type: Machine
     board: GasRecyclerMachineCircuitboard
+  - type: AtmosMonitoringConsoleDevice
+    group: Invalid
 
 - type: entity
   parent: GasBinaryBase
@@ -431,3 +448,5 @@
   - type: Construction
     graph: GasBinary
     node: radiator
+  - type: AtmosMonitoringConsoleDevice
+    group: Invalid

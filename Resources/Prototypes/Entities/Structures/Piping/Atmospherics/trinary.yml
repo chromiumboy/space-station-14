@@ -26,7 +26,10 @@
           !type:PipeNode
           nodeGroupID: Pipe
           pipeDirection: South
-
+    - type: AtmosMonitoringConsoleDevice
+      group: GasPump
+      rotatable: true
+      
 - type: entity
   parent: GasTrinaryBase
   id: GasFilter
@@ -255,3 +258,6 @@
     - type: Construction
       graph: GasTrinary
       node: pneumaticvalve
+    - type: AtmosMonitoringConsoleDevice
+      group: GasValve
+      rotatable: true

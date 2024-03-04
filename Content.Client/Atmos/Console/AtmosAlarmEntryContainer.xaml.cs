@@ -73,10 +73,8 @@ public sealed partial class AtmosAlarmEntryContainer : BoxContainer
         SilenceCheckBox.Label.FontColorOverride = Color.DarkGray;
     }
 
-    public void UpdateEntry(AtmosMonitoringConsoleEntry entry, AtmosMonitoringConsoleGroup group, AtmosFocusDeviceData? focusData = null)
+    public void UpdateEntry(AtmosMonitoringConsoleEntry entry, bool isFocus, AtmosFocusDeviceData? focusData = null)
     {
-        bool isFocus = (entry.NetEntity == focusData?.NetEntity);
-
         // Load fonts
         var normalFont = new VectorFont(_cache.GetResource<FontResource>("/Fonts/NotoSansDisplay/NotoSansDisplay-Regular.ttf"), 11);
 
@@ -94,55 +92,80 @@ public sealed partial class AtmosAlarmEntryContainer : BoxContainer
         FocusContainer.Visible = isFocus;
 
         if (isFocus)
+            SetAsFocus();
+        else
+            RemoveAsFocus();
+
+        if (isFocus && entry.Group == AtmosMonitoringConsoleGroup.AirAlarm)
         {
-            // Update button
-            FocusButton.AddStyleClass(StyleNano.StyleClassButtonColorGreen);
-            ArrowTexture.TexturePath = "/Textures/Interface/Nano/inverted_triangle.svg.png";
+            MainDataContainer.Visible = (entry.AlarmState != AtmosAlarmType.Invalid);
+            NoDataLabel.Visible = (entry.AlarmState == AtmosAlarmType.Invalid);
 
-            if (group == AtmosMonitoringConsoleGroup.AirAlarm)
+            if (focusData != null)
             {
-                MainDataContainer.Visible = (entry.AlarmState != AtmosAlarmType.Invalid);
-                NoDataLabel.Visible = (entry.AlarmState == AtmosAlarmType.Invalid);
+                // Update temperature
+                var tempK = (FixedPoint2) focusData.Value.TemperatureData.Item1;
+                var tempC = (FixedPoint2) TemperatureHelpers.KelvinToCelsius(tempK.Float());
 
-                if (focusData != null)
+                TemperatureLabel.Text = Loc.GetString("atmos-monitoring-window-temperature-value", ("valueInC", tempC), ("valueInK", tempK));
+                TemperatureLabel.FontColorOverride = GetAlarmStateColor(focusData.Value.TemperatureData.Item2);
+
+                // Update pressure
+                PressureLabel.Text = Loc.GetString("atmos-monitoring-window-pressure-value", ("value", (FixedPoint2) focusData.Value.PressureData.Item1));
+                PressureLabel.FontColorOverride = GetAlarmStateColor(focusData.Value.PressureData.Item2);
+
+                // Update oxygenation
+                var oxygenPercent = (FixedPoint2) 0f;
+                var oxygenAlert = AtmosAlarmType.Invalid;
+
+                if (focusData.Value.GasData.TryGetValue(Gas.Oxygen, out var oxygenData))
                 {
-                    // Update temperature
-                    var tempK = (FixedPoint2) focusData.Value.TemperatureData.Item1;
-                    var tempC = (FixedPoint2) TemperatureHelpers.KelvinToCelsius(tempK.Float());
+                    oxygenPercent = oxygenData.Item2 * 100f;
+                    oxygenAlert = oxygenData.Item3;
+                }
 
-                    TemperatureLabel.Text = Loc.GetString("atmos-monitoring-window-temperature-value", ("valueInC", tempC), ("valueInK", tempK));
-                    TemperatureLabel.FontColorOverride = GetAlarmStateColor(focusData.Value.TemperatureData.Item2);
+                OxygenationLabel.Text = Loc.GetString("atmos-monitoring-window-oxygenation-value", ("value", oxygenPercent));
+                OxygenationLabel.FontColorOverride = GetAlarmStateColor(oxygenAlert);
 
-                    // Update pressure
-                    PressureLabel.Text = Loc.GetString("atmos-monitoring-window-pressure-value", ("value", (FixedPoint2) focusData.Value.PressureData.Item1));
-                    PressureLabel.FontColorOverride = GetAlarmStateColor(focusData.Value.PressureData.Item2);
+                // Update other present gases
+                GasGridContainer.RemoveAllChildren();
 
-                    // Update oxygenation
-                    var oxygenPercent = (FixedPoint2) 0f;
-                    var oxygenAlert = AtmosAlarmType.Invalid;
+                var gasData = focusData.Value.GasData.Where(g => g.Key != Gas.Oxygen);
 
-                    if (focusData.Value.GasData.TryGetValue(Gas.Oxygen, out var oxygenData))
+                if (gasData.Count() == 0)
+                {
+                    // No other gases
+                    var gasLabel = new Label()
                     {
-                        oxygenPercent = oxygenData.Item2 * 100f;
-                        oxygenAlert = oxygenData.Item3;
-                    }
+                        Text = Loc.GetString("atmos-monitoring-window-other-gases-value-nil"),
+                        FontOverride = normalFont,
+                        FontColorOverride = StyleNano.DisabledFore,
+                        HorizontalAlignment = HAlignment.Center,
+                        VerticalAlignment = VAlignment.Center,
+                        HorizontalExpand = true,
+                        Margin = new Thickness(0, 2, 0, 0),
+                        SetHeight = 24f,
+                    };
 
-                    OxygenationLabel.Text = Loc.GetString("atmos-monitoring-window-oxygenation-value", ("value", oxygenPercent));
-                    OxygenationLabel.FontColorOverride = GetAlarmStateColor(oxygenAlert);
+                    GasGridContainer.AddChild(gasLabel);
+                }
 
-                    // Update other present gases
-                    GasGridContainer.RemoveAllChildren();
-
-                    var gasData = focusData.Value.GasData.Where(g => g.Key != Gas.Oxygen);
-
-                    if (gasData.Count() == 0)
+                else
+                {
+                    // Add an entry for each gas
+                    foreach ((var gas, (var mol, var percent, var alert)) in gasData)
                     {
-                        // No other gases
+                        var gasPercent = (FixedPoint2) 0f;
+                        gasPercent = percent * 100f;
+
+                        if (!_gasShorthands.TryGetValue(gas, out var gasShorthand))
+                            gasShorthand = "X";
+
                         var gasLabel = new Label()
                         {
-                            Text = Loc.GetString("atmos-monitoring-window-other-gases-value-nil"),
+                            Text = Loc.GetString("atmos-monitoring-window-other-gases-value", ("shorthand", gasShorthand), ("value", gasPercent)),
                             FontOverride = normalFont,
-                            FontColorOverride = StyleNano.DisabledFore,
+                            FontColorOverride = GetAlarmStateColor(alert),
                             HorizontalAlignment = HAlignment.Center,
                             VerticalAlignment = VAlignment.Center,
                             HorizontalExpand = true,
@@ -151,33 +174,6 @@ public sealed partial class AtmosAlarmEntryContainer : BoxContainer
                         };
 
                         GasGridContainer.AddChild(gasLabel);
-                    }
-
-                    else
-                    {
-                        // Add an entry for each gas
-                        foreach ((var gas, (var mol, var percent, var alert)) in gasData)
-                        {
-                            var gasPercent = (FixedPoint2) 0f;
-                            gasPercent = percent * 100f;
-
-                            if (!_gasShorthands.TryGetValue(gas, out var gasShorthand))
-                                gasShorthand = "X";
-
-                            var gasLabel = new Label()
-                            {
-                                Text = Loc.GetString("atmos-monitoring-window-other-gases-value", ("shorthand", gasShorthand), ("value", gasPercent)),
-                                FontOverride = normalFont,
-                                FontColorOverride = GetAlarmStateColor(alert),
-                                HorizontalAlignment = HAlignment.Center,
-                                VerticalAlignment = VAlignment.Center,
-                                HorizontalExpand = true,
-                                Margin = new Thickness(0, 2, 0, 0),
-                                SetHeight = 24f,
-                            };
-
-                            GasGridContainer.AddChild(gasLabel);
-                        }
                     }
                 }
             }

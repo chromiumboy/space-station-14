@@ -88,6 +88,8 @@
       sound:
         path: /Audio/Ambience/Objects/gas_vent.ogg
     - type: Weldable
+    - type: AtmosMonitoringConsoleDevice
+      group: GasOutlet
 
 - type: entity
   parent: GasUnaryBase
@@ -113,6 +115,8 @@
     - type: Construction
       graph: GasUnary
       node: passivevent
+    - type: AtmosMonitoringConsoleDevice
+      group: GasOutlet
 
 - type: entity
   parent: GasUnaryBase
@@ -180,6 +184,8 @@
       sound:
         path: /Audio/Ambience/Objects/gas_vent.ogg
     - type: Weldable
+    - type: AtmosMonitoringConsoleDevice
+      group: GasInlet
 
 - type: entity
   parent: GasUnaryBase
@@ -219,6 +225,8 @@
       visibleLayers:
       - enum.SubfloorLayers.FirstLayer
       - enum.LightLayers.Unshaded
+    - type: AtmosMonitoringConsoleDevice
+      group: GasOutlet
 
 - type: entity
   parent: [ BaseMachinePowered, ConstructibleMachine ]

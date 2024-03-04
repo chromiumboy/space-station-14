@@ -77,14 +77,18 @@ public struct AtmosDeviceNavMapData
     public Color? Color = null;
 
     /// <summary>
+    /// Direction of the entity (if applicable)
+    /// </summary>
+    public Direction? Direction = null;
+
+    /// <summary>
     /// Populate the atmos monitoring console nav map with a single entity
     /// </summary>
-    public AtmosDeviceNavMapData(NetEntity netEntity, NetCoordinates netCoordinates, AtmosMonitoringConsoleGroup group, Color? color = null)
+    public AtmosDeviceNavMapData(NetEntity netEntity, NetCoordinates netCoordinates, AtmosMonitoringConsoleGroup group)
     {
         NetEntity = netEntity;
         NetCoordinates = netCoordinates;
         Group = group;
-        Color = color;
     }
 }
 
@@ -170,6 +174,11 @@ public struct AtmosMonitoringConsoleEntry
     public NetCoordinates Coordinates;
 
     /// <summary>
+    /// The type of entity
+    /// </summary>
+    public AtmosMonitoringConsoleGroup Group;
+
+    /// <summary>
     /// Current alarm state
     /// </summary>
     public AtmosAlarmType AlarmState;
@@ -190,12 +199,14 @@ public struct AtmosMonitoringConsoleEntry
     public AtmosMonitoringConsoleEntry
         (NetEntity entity,
         NetCoordinates coordinates,
+        AtmosMonitoringConsoleGroup group,
         AtmosAlarmType alarmState,
         string entityName,
         string address)
     {
         NetEntity = entity;
         Coordinates = coordinates;
+        Group = group;
         AlarmState = alarmState;
         EntityName = entityName;
         Address = address;
@@ -270,8 +281,10 @@ public sealed class AtmosMonitoringConsoleDeviceSilencedMessage : BoundUserInter
 public enum AtmosMonitoringConsoleGroup
 {
     Invalid,
-    GasVentScrubber,
-    GasVentPump,
+    GasInlet,
+    GasPump,
+    GasValve,
+    GasOutlet,
     AirAlarm,
     FireAlarm,
 }
