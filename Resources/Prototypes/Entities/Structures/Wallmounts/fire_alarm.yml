@@ -42,7 +42,7 @@
   - type: Clickable
   - type: InteractionOutline
   - type: FireAlarm
-  - type: AtmosMonitoringConsoleDevice
+  - type: AtmosAlertsDevice
     group: FireAlarm
   - type: ContainerFill
     containers:

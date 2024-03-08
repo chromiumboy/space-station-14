@@ -53,7 +53,7 @@
       - AirAlarm
   - type: AtmosDevice
   - type: AirAlarm
-  - type: AtmosMonitoringConsoleDevice
+  - type: AtmosAlertsDevice
     group: AirAlarm
   - type: Clickable
   - type: InteractionOutline

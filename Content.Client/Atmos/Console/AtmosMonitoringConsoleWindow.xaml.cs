@@ -26,13 +26,7 @@ public sealed partial class AtmosMonitoringConsoleWindow : FancyWindow
     private EntityUid? _owner;
     private NetEntity? _trackedEntity;
 
-    private AtmosMonitoringConsoleEntry[]? _airAlarms = null;
-    private AtmosMonitoringConsoleEntry[]? _fireAlarms = null;
-    private IEnumerable<AtmosMonitoringConsoleEntry>? _activeAlarms = null;
-    private Dictionary<NetEntity, float> _deviceSilencingProgress = new();
-
     public event Action<NetEntity?>? SendFocusChangeMessageAction;
-    public event Action<NetEntity, bool>? SendDeviceSilencedMessageAction;
 
     private bool _autoScrollActive = false;
     private bool _autoScrollAwaitsUpdate = false;
@@ -79,17 +73,15 @@ public sealed partial class AtmosMonitoringConsoleWindow : FancyWindow
         NavMap.ForceNavMapUpdate();
 
         // Set tab container headers
-        MasterTabContainer.SetTabTitle(0, Loc.GetString("atmos-monitoring-window-tab-no-alerts"));
-        MasterTabContainer.SetTabTitle(1, Loc.GetString("atmos-monitoring-window-tab-air-alarms"));
-        MasterTabContainer.SetTabTitle(2, Loc.GetString("atmos-monitoring-window-tab-fire-alarms"));
+        //MasterTabContainer.SetTabTitle(0, Loc.GetString("atmos-monitoring-window-tab-no-alerts"));
+        //MasterTabContainer.SetTabTitle(1, Loc.GetString("atmos-monitoring-window-tab-air-alarms"));
+        //MasterTabContainer.SetTabTitle(2, Loc.GetString("atmos-monitoring-window-tab-fire-alarms"));
 
         // Set UI toggles
         ShowPipeNetwork.OnToggled += _ => OnShowPipeNetworkToggled();
-        ShowInactiveAlarms.OnToggled += _ => OnInactiveAlarmsToggled();
 
         // Set atmos monitoring message action
         SendFocusChangeMessageAction += userInterface.SendFocusChangeMessage;
-        SendDeviceSilencedMessageAction += userInterface.SendDeviceSilencedMessage;
     }
 
     #region Toggle handling
@@ -106,9 +98,6 @@ public sealed partial class AtmosMonitoringConsoleWindow : FancyWindow
 
         foreach (var device in console.AtmosDevices)
         {
-            if (IsAlarm(device.Group))
-                continue;
-
             if (ShowPipeNetwork.Pressed)
                 AddTrackedEntityToNavMap(device);
 
@@ -117,59 +106,9 @@ public sealed partial class AtmosMonitoringConsoleWindow : FancyWindow
         }
     }
 
-    private void OnInactiveAlarmsToggled()
-    {
-        if (_owner == null)
-            return;
-
-        if (!_entManager.TryGetComponent<AtmosMonitoringConsoleComponent>(_owner.Value, out var console))
-            return;
-
-        foreach (var device in console.AtmosDevices)
-        {
-            if (!IsAlarm(device.Group))
-                continue;
-
-            var alarmState = GetAlarmState(device.NetEntity, device.Group);
-
-            if (ShowInactiveAlarms.Pressed)
-                AddTrackedEntityToNavMap(device, alarmState);
-
-            else if (alarmState <= AtmosAlarmType.Normal)
-                NavMap.TrackedEntities.Remove(device.NetEntity);
-        }
-    }
-
-    private void OnSilenceAlertsToggled(NetEntity netEntity, bool toggleState)
-    {
-        if (!_entManager.TryGetComponent<AtmosMonitoringConsoleComponent>(_owner, out var console))
-            return;
-
-        if (toggleState)
-        {
-            console.SilencedDevices.Add(netEntity);
-            _deviceSilencingProgress[netEntity] = SilencingDuration;
-        }
-
-        else
-        {
-            console.SilencedDevices.Remove(netEntity);
-            _deviceSilencingProgress.Remove(netEntity);
-        }
-
-        // Update values and UI elements
-        foreach (AtmosAlarmEntryContainer entryContainer in AlertsTable.Children)
-        {
-            if (entryContainer.NetEntity == netEntity)
-                entryContainer.SilenceAlarmProgressBar.Visible = toggleState;
-        }
-
-        SendDeviceSilencedMessageAction?.Invoke(netEntity, toggleState);
-    }
-
     #endregion
 
-    public void UpdateUI(EntityCoordinates? consoleCoords, AtmosMonitoringConsoleEntry[] airAlarms, AtmosMonitoringConsoleEntry[] fireAlarms, AtmosFocusDeviceData? focusData)
+    public void UpdateUI(EntityCoordinates? consoleCoords, AtmosFocusDeviceData? focusData)
     {
         if (_owner == null)
             return;
@@ -183,14 +122,6 @@ public sealed partial class AtmosMonitoringConsoleWindow : FancyWindow
             focusData = null;
         }
 
-        // Retain alarm data for use between updates
-        _airAlarms = airAlarms;
-        _fireAlarms = fireAlarms;
-
-        var allAlarms = airAlarms.Concat(fireAlarms).ToArray();
-        _activeAlarms = allAlarms.Where(x => x.AlarmState > AtmosAlarmType.Normal &&
-            (!console.SilencedDevices.Contains(x.NetEntity) || _deviceSilencingProgress.ContainsKey(x.NetEntity)));
-
         // Reset nav map values
         NavMap.TrackedCoordinates.Clear();
         NavMap.TrackedEntities.Clear();
@@ -201,26 +132,14 @@ public sealed partial class AtmosMonitoringConsoleWindow : FancyWindow
             if (!NavMap.Visible)
                 continue;
 
-            AtmosAlarmType? alarmState = null;
-
-            if (IsAlarm(device.Group))
-                alarmState = GetAlarmState(device.NetEntity, device.Group);
-
             if (_trackedEntity != device.NetEntity)
             {
-                // Skip inactive air alarms if the appropriate overlay is off
-                if (!ShowInactiveAlarms.Pressed &&
-                    IsAlarm(device.Group) &&
-                    (alarmState == null || alarmState <= AtmosAlarmType.Normal))
-                    continue;
-
                 // Skip atmos devices if the pipe network is toggled off
-                if (!ShowPipeNetwork.Pressed &&
-                    !IsAlarm(device.Group))
+                if (!ShowPipeNetwork.Pressed)
                     continue;
             }
 
-            AddTrackedEntityToNavMap(device, alarmState);
+            AddTrackedEntityToNavMap(device);
         }
 
         // Show the monitor location
@@ -236,60 +155,6 @@ public sealed partial class AtmosMonitoringConsoleWindow : FancyWindow
         // Update the nav map
         NavMap.ForceNavMapUpdate();
 
-        // Clear excess children from the tables
-        var activeAlarmCount = _activeAlarms.Count();
-
-        while (AlertsTable.ChildCount > activeAlarmCount)
-            AlertsTable.RemoveChild(AlertsTable.GetChild(AlertsTable.ChildCount - 1));
-
-        while (AirAlarmsTable.ChildCount > airAlarms.Length)
-            AirAlarmsTable.RemoveChild(AirAlarmsTable.GetChild(AirAlarmsTable.ChildCount - 1));
-
-        while (FireAlarmsTable.ChildCount > fireAlarms.Length)
-            FireAlarmsTable.RemoveChild(FireAlarmsTable.GetChild(FireAlarmsTable.ChildCount - 1));
-
-        // Update all entries in each table
-        for (int index = 0; index < _activeAlarms.Count(); index++)
-        {
-            var entry = _activeAlarms.ElementAt(index);
-            UpdateUIEntry(entry, index, AlertsTable, console, focusData);
-        }
-
-        for (int index = 0; index < airAlarms.Count(); index++)
-        {
-            var entry = airAlarms.ElementAt(index);
-            UpdateUIEntry(entry, index, AirAlarmsTable, console, focusData);
-        }
-
-        for (int index = 0; index < fireAlarms.Count(); index++)
-        {
-            var entry = fireAlarms.ElementAt(index);
-            UpdateUIEntry(entry, index, FireAlarmsTable, console, focusData);
-        }
-
-        // If no alerts are active, display a message
-        if (MasterTabContainer.CurrentTab == 0 && activeAlarmCount == 0)
-        {
-            var label = new RichTextLabel()
-            {
-                HorizontalExpand = true,
-                VerticalExpand = true,
-                HorizontalAlignment = HAlignment.Center,
-                VerticalAlignment = VAlignment.Center,
-            };
-
-            label.SetMarkup(Loc.GetString("atmos-monitoring-window-no-active-alerts", ("color", StyleNano.GoodGreenFore.ToHexNoAlpha())));
-
-            AlertsTable.AddChild(label);
-        }
-
-        // Update the alerts tab with the number of active alerts
-        if (activeAlarmCount == 0)
-            MasterTabContainer.SetTabTitle(0, Loc.GetString("atmos-monitoring-window-tab-no-alerts"));
-
-        else
-            MasterTabContainer.SetTabTitle(0, Loc.GetString("atmos-monitoring-window-tab-alerts", ("value", activeAlarmCount)));
-
         // Auto-scroll re-enable
         if (_autoScrollAwaitsUpdate)
         {
@@ -298,7 +163,7 @@ public sealed partial class AtmosMonitoringConsoleWindow : FancyWindow
         }
     }
 
-    private void AddTrackedEntityToNavMap(AtmosDeviceNavMapData metaData, AtmosAlarmType? alarmState = null)
+    private void AddTrackedEntityToNavMap(AtmosDeviceNavMapData metaData)
     {
         var data = GetBlipTexture(metaData.Group, metaData.Direction);
 
@@ -309,35 +174,11 @@ public sealed partial class AtmosMonitoringConsoleWindow : FancyWindow
         var color = (metaData.Color != null) ? metaData.Color * data.Value.Item2 : data.Value.Item2;
         var coords = _entManager.GetCoordinates(metaData.NetCoordinates);
 
-        if (alarmState != null)
-        {
-            switch (alarmState)
-            {
-                case AtmosAlarmType.Normal:
-                    color = StyleNano.GoodGreenFore; break;
-                case AtmosAlarmType.Warning:
-                    color = StyleNano.ConcerningOrangeFore; break;
-                case AtmosAlarmType.Danger:
-                    color = StyleNano.DangerousRedFore; break;
-                default:
-                    color = StyleNano.DisabledFore; break;
-            }
-
-            if (_trackedEntity != null && _trackedEntity != metaData.NetEntity)
-                color = color.Value * Color.DimGray;
-        }
-
         if (color == null)
             color = Color.White;
 
-        var selectable = IsAlarm(metaData.Group);
+        var selectable = false;
         var blip = new NavMapBlip(coords, _spriteSystem.Frame0(texture), color.Value, _trackedEntity == metaData.NetEntity, selectable);
-
-        if (!IsAlarm(metaData.Group))
-        {
-            blip.ScalingCoefficient = 0.015f;
-            blip.ScalingType = NavMapBlipScaling.Linear;
-        }
 
         NavMap.TrackedEntities[metaData.NetEntity] = blip;
     }
@@ -367,15 +208,8 @@ public sealed partial class AtmosMonitoringConsoleWindow : FancyWindow
 
                 // Send message to console that the focus has changed
                 SendFocusChangeMessageAction?.Invoke(_trackedEntity);
-
-                // Update affected UI elements across all tables
-                UpdateConsoleTable(console, AlertsTable, _trackedEntity, prevTrackedEntity);
-                UpdateConsoleTable(console, AirAlarmsTable, _trackedEntity, prevTrackedEntity);
-                UpdateConsoleTable(console, FireAlarmsTable, _trackedEntity, prevTrackedEntity);
             };
 
-            // On toggling the silence check box
-            newEntryContainer.SilenceCheckBox.OnToggled += _ => OnSilenceAlertsToggled(entry.NetEntity, newEntryContainer.SilenceCheckBox.Pressed);
 
             // Add the entry to the current table
             table.AddChild(newEntryContainer);
@@ -391,15 +225,6 @@ public sealed partial class AtmosMonitoringConsoleWindow : FancyWindow
 
             return;
         }
-
-        var entryContainer = tableChild as AtmosAlarmEntryContainer;
-
-        if (entryContainer == null)
-            return;
-
-        entryContainer.UpdateEntry(entry, entry.NetEntity == _trackedEntity, focusData);
-        entryContainer.SilenceCheckBox.Pressed = console.SilencedDevices.Contains(entry.NetEntity);
-        entryContainer.SilenceAlarmProgressBar.Visible = (table == AlertsTable && _deviceSilencingProgress.ContainsKey(entry.NetEntity));
     }
 
     private void UpdateConsoleTable(AtmosMonitoringConsoleComponent console, Control table, NetEntity? currTrackedEntity, NetEntity? prevTrackedEntity)
@@ -425,14 +250,7 @@ public sealed partial class AtmosMonitoringConsoleWindow : FancyWindow
             if (device == null)
                 continue;
 
-            var alarmState = GetAlarmState(device.Value.NetEntity, device.Value.Group);
-
-            if (currTrackedEntity != device.Value.NetEntity &&
-                !ShowInactiveAlarms.Pressed &&
-                alarmState <= AtmosAlarmType.Normal)
-                continue;
-
-            AddTrackedEntityToNavMap(device.Value, alarmState);
+            AddTrackedEntityToNavMap(device.Value);
         }
     }
 
@@ -448,20 +266,6 @@ public sealed partial class AtmosMonitoringConsoleWindow : FancyWindow
 
         if (netEntity != null)
         {
-            // Tab switching
-            if (MasterTabContainer.CurrentTab != 0 || _activeAlarms?.Any(x => x.NetEntity == netEntity) == false)
-            {
-                var device = console.AtmosDevices.FirstOrNull(x => x.NetEntity == netEntity);
-
-                switch (device?.Group)
-                {
-                    case AtmosMonitoringConsoleGroup.AirAlarm:
-                        MasterTabContainer.CurrentTab = 1; break;
-                    case AtmosMonitoringConsoleGroup.FireAlarm:
-                        MasterTabContainer.CurrentTab = 2; break;
-                }
-            }
-
             // Get the scroll position of the selected entity on the selected button the UI
             ActivateAutoScrollToFocus();
         }
@@ -473,18 +277,6 @@ public sealed partial class AtmosMonitoringConsoleWindow : FancyWindow
     protected override void FrameUpdate(FrameEventArgs args)
     {
         AutoScrollToFocus();
-
-        // Device silencing update
-        foreach ((var device, var remainingTime) in _deviceSilencingProgress)
-        {
-            var t = remainingTime - args.DeltaSeconds;
-
-            if (t <= 0)
-                _deviceSilencingProgress.Remove(device);
-
-            else
-                _deviceSilencingProgress[device] = t;
-        }
     }
 
     private void ActivateAutoScrollToFocus()
@@ -570,22 +362,6 @@ public sealed partial class AtmosMonitoringConsoleWindow : FancyWindow
         return false;
     }
 
-    private bool IsAlarm(AtmosMonitoringConsoleGroup group)
-    {
-        return group == AtmosMonitoringConsoleGroup.AirAlarm || group == AtmosMonitoringConsoleGroup.FireAlarm;
-    }
-
-    private AtmosAlarmType GetAlarmState(NetEntity netEntity, AtmosMonitoringConsoleGroup group)
-    {
-        var alarms = (group == AtmosMonitoringConsoleGroup.AirAlarm) ? _airAlarms : _fireAlarms;
-        var alarmState = alarms?.FirstOrNull(x => x.NetEntity == netEntity)?.AlarmState;
-
-        if (alarmState == null)
-            return AtmosAlarmType.Invalid;
-
-        return alarmState.Value;
-    }
-
     private (SpriteSpecifier.Texture, Color)? GetBlipTexture(AtmosMonitoringConsoleGroup group, Direction? direction = null)
     {
         (SpriteSpecifier.Texture, Color)? output = null;
@@ -617,13 +393,13 @@ public sealed partial class AtmosMonitoringConsoleWindow : FancyWindow
                         output = (new SpriteSpecifier.Texture(new ResPath("/Textures/Interface/AtmosMonitoring/valve_east_west.png")), Color.DarkGray); break;
                 }; break;
             case AtmosMonitoringConsoleGroup.GasOutlet:
-                output = (new SpriteSpecifier.Texture(new ResPath("/Textures/Interface/AtmosMonitoring/gas_vent.png")), Color.DarkGray); break;
+                output = (new SpriteSpecifier.Texture(new ResPath("/Textures/Interface/NavMap/beveled_square.png")), Color.DarkGray); break;
             case AtmosMonitoringConsoleGroup.GasInlet:
-                output = (new SpriteSpecifier.Texture(new ResPath("/Textures/Interface/AtmosMonitoring/gas_scrubber.png")), Color.DarkGray); break;
-            case AtmosMonitoringConsoleGroup.AirAlarm:
-                output = (new SpriteSpecifier.Texture(new ResPath("/Textures/Interface/NavMap/beveled_star.png")), Color.White); break;
-            case AtmosMonitoringConsoleGroup.FireAlarm:
-                output = (new SpriteSpecifier.Texture(new ResPath("/Textures/Interface/NavMap/beveled_star.png")), Color.White); break;
+                output = (new SpriteSpecifier.Texture(new ResPath("/Textures/Interface/NavMap/beveled_circle.png")), Color.DarkGray); break;
+            case AtmosMonitoringConsoleGroup.GasOpening:
+                output = (new SpriteSpecifier.Texture(new ResPath("/Textures/Interface/AtmosMonitoring/opening.png")), Color.DarkGray); break;
+            case AtmosMonitoringConsoleGroup.GasRegulator:
+                output = (new SpriteSpecifier.Texture(new ResPath("/Textures/Interface/AtmosMonitoring/regulator.png")), Color.DarkGray); break;
         }
 
         return output;

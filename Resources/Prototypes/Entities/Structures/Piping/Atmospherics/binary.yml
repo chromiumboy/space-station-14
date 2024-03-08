@@ -285,7 +285,7 @@
       graph: GasBinary
       node: port
     - type: AtmosMonitoringConsoleDevice
-      group: GasValve
+      group: GasOpening
       rotatable: true
 
 - type: entity
@@ -449,4 +449,4 @@
     graph: GasBinary
     node: radiator
   - type: AtmosMonitoringConsoleDevice
-    group: Invalid
+    group: GasRegulator

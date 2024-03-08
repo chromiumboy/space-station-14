@@ -24,10 +24,10 @@ public sealed partial class AtmosAlarmEntryContainer : BoxContainer
 
     private Dictionary<AtmosAlarmType, string> _alarmStrings = new Dictionary<AtmosAlarmType, string>()
     {
-        [AtmosAlarmType.Invalid] = "atmos-monitoring-window-invalid-state",
-        [AtmosAlarmType.Normal] = "atmos-monitoring-window-normal-state",
-        [AtmosAlarmType.Warning] = "atmos-monitoring-window-warning-state",
-        [AtmosAlarmType.Danger] = "atmos-monitoring-window-danger-state",
+        [AtmosAlarmType.Invalid] = "atmos-alerts-window-invalid-state",
+        [AtmosAlarmType.Normal] = "atmos-alerts-window-normal-state",
+        [AtmosAlarmType.Warning] = "atmos-alerts-window-warning-state",
+        [AtmosAlarmType.Danger] = "atmos-alerts-window-danger-state",
     };
 
     private Dictionary<Gas, string> _gasShorthands = new Dictionary<Gas, string>()
@@ -73,20 +73,20 @@ public sealed partial class AtmosAlarmEntryContainer : BoxContainer
         SilenceCheckBox.Label.FontColorOverride = Color.DarkGray;
     }
 
-    public void UpdateEntry(AtmosMonitoringConsoleEntry entry, bool isFocus, AtmosFocusDeviceData? focusData = null)
+    public void UpdateEntry(AtmosAlertsComputerEntry entry, bool isFocus, AtmosAlertsFocusDeviceData? focusData = null)
     {
         // Load fonts
         var normalFont = new VectorFont(_cache.GetResource<FontResource>("/Fonts/NotoSansDisplay/NotoSansDisplay-Regular.ttf"), 11);
 
         // Update alarm state
         if (!_alarmStrings.TryGetValue(entry.AlarmState, out var alarmString))
-            alarmString = "atmos-monitoring-window-invalid-state";
+            alarmString = "atmos-alerts-window-invalid-state";
 
         AlarmStateLabel.Text = Loc.GetString(alarmString);
         AlarmStateLabel.FontColorOverride = GetAlarmStateColor(entry.AlarmState);
 
         // Update alarm name
-        AlarmNameLabel.Text = Loc.GetString("atmos-monitoring-window-alarm-label", ("name", entry.EntityName), ("address", entry.Address));
+        AlarmNameLabel.Text = Loc.GetString("atmos-alerts-window-alarm-label", ("name", entry.EntityName), ("address", entry.Address));
 
         // Focus updates
         FocusContainer.Visible = isFocus;
@@ -96,7 +96,7 @@ public sealed partial class AtmosAlarmEntryContainer : BoxContainer
         else
             RemoveAsFocus();
 
-        if (isFocus && entry.Group == AtmosMonitoringConsoleGroup.AirAlarm)
+        if (isFocus && entry.Group == AtmosAlertsComputerGroup.AirAlarm)
         {
             MainDataContainer.Visible = (entry.AlarmState != AtmosAlarmType.Invalid);
             NoDataLabel.Visible = (entry.AlarmState == AtmosAlarmType.Invalid);
@@ -107,11 +107,11 @@ public sealed partial class AtmosAlarmEntryContainer : BoxContainer
                 var tempK = (FixedPoint2) focusData.Value.TemperatureData.Item1;
                 var tempC = (FixedPoint2) TemperatureHelpers.KelvinToCelsius(tempK.Float());
 
-                TemperatureLabel.Text = Loc.GetString("atmos-monitoring-window-temperature-value", ("valueInC", tempC), ("valueInK", tempK));
+                TemperatureLabel.Text = Loc.GetString("atmos-alerts-window-temperature-value", ("valueInC", tempC), ("valueInK", tempK));
                 TemperatureLabel.FontColorOverride = GetAlarmStateColor(focusData.Value.TemperatureData.Item2);
 
                 // Update pressure
-                PressureLabel.Text = Loc.GetString("atmos-monitoring-window-pressure-value", ("value", (FixedPoint2) focusData.Value.PressureData.Item1));
+                PressureLabel.Text = Loc.GetString("atmos-alerts-window-pressure-value", ("value", (FixedPoint2) focusData.Value.PressureData.Item1));
                 PressureLabel.FontColorOverride = GetAlarmStateColor(focusData.Value.PressureData.Item2);
 
                 // Update oxygenation
@@ -124,7 +124,7 @@ public sealed partial class AtmosAlarmEntryContainer : BoxContainer
                     oxygenAlert = oxygenData.Item3;
                 }
 
-                OxygenationLabel.Text = Loc.GetString("atmos-monitoring-window-oxygenation-value", ("value", oxygenPercent));
+                OxygenationLabel.Text = Loc.GetString("atmos-alerts-window-oxygenation-value", ("value", oxygenPercent));
                 OxygenationLabel.FontColorOverride = GetAlarmStateColor(oxygenAlert);
 
                 // Update other present gases
@@ -137,7 +137,7 @@ public sealed partial class AtmosAlarmEntryContainer : BoxContainer
                     // No other gases
                     var gasLabel = new Label()
                     {
-                        Text = Loc.GetString("atmos-monitoring-window-other-gases-value-nil"),
+                        Text = Loc.GetString("atmos-alerts-window-other-gases-value-nil"),
                         FontOverride = normalFont,
                         FontColorOverride = StyleNano.DisabledFore,
                         HorizontalAlignment = HAlignment.Center,
@@ -163,7 +163,7 @@ public sealed partial class AtmosAlarmEntryContainer : BoxContainer
 
                         var gasLabel = new Label()
                         {
-                            Text = Loc.GetString("atmos-monitoring-window-other-gases-value", ("shorthand", gasShorthand), ("value", gasPercent)),
+                            Text = Loc.GetString("atmos-alerts-window-other-gases-value", ("shorthand", gasShorthand), ("value", gasPercent)),
                             FontOverride = normalFont,
                             FontColorOverride = GetAlarmStateColor(alert),
                             HorizontalAlignment = HAlignment.Center,

@@ -21,11 +21,20 @@
 - type: entity
   parent: BaseComputerCircuitboard
   id: AlertsComputerCircuitboard
+  name: atmospheric alerts computer board
+  description: A computer printed circuit board for an atmospheric alerts computer.
+  components:
+    - type: ComputerBoard
+      prototype: ComputerAlert
+      
+- type: entity
+  parent: BaseComputerCircuitboard
+  id: AtmosMonitoringConsoleCircuitboard
   name: atmospheric monitoring console board
   description: A computer printed circuit board for an atmospheric monitoring console.
   components:
     - type: ComputerBoard
-      prototype: ComputerAlert
+      prototype: ComputerAtmosMonitor
 
 - type: entity
   parent: BaseComputerCircuitboard

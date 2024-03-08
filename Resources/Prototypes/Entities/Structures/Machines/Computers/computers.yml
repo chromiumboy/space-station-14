@@ -1,7 +1,7 @@
 - type: entity
   parent: BaseComputer
   id: ComputerAlert
-  name: atmospheric monitoring console
+  name: atmospheric alerts computer
   description: Used to access the station's automated atmospheric alerts system.
   components:
   - type: Computer
@@ -18,13 +18,40 @@
       state: atmos_key
   - type: GenericVisualizer
     visuals:
-      enum.AtmosMonitoringConsoleVisuals.ComputerLayerScreen:
+      enum.AtmosAlertsComputerVisuals.ComputerLayerScreen:
         computerLayerScreen:
           0: { state: alert-0 }
           1: { state: alert-0 }
           2: { state: alert-1 }
           3: { state: alert-2 }
           4: { state: alert-2 }
+  - type: AtmosAlertsComputer
+  - type: ActivatableUI
+    singleUser: true
+    key: enum.AtmosAlertsComputerUiKey.Key
+  - type: UserInterface
+    interfaces:
+    - key: enum.AtmosAlertsComputerUiKey.Key
+      type: AtmosAlertsComputerBoundUserInterface
+      
+- type: entity
+  parent: BaseComputer
+  id: ComputerAtmosMonitor
+  name: atmospheric monitoring console
+  description: Used to monitor the station's atmospheric networks.
+  components:
+  - type: Computer
+    board: AlertsComputerCircuitboard
+  - type: Sprite
+    layers:
+    - map: ["computerLayerBody"]
+      state: computer
+    - map: ["computerLayerKeyboard"]
+      state: generic_keyboard
+    - map: ["computerLayerScreen"]
+      state: tank
+    - map: ["computerLayerKeys"]
+      state: atmos_key
   - type: AtmosMonitoringConsole
   - type: ActivatableUI
     singleUser: true

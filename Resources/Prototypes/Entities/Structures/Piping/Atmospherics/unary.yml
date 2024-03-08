@@ -116,7 +116,7 @@
       graph: GasUnary
       node: passivevent
     - type: AtmosMonitoringConsoleDevice
-      group: GasOutlet
+      group: GasOpening
 
 - type: entity
   parent: GasUnaryBase
@@ -273,6 +273,8 @@
       examinableAddress: true
     - type: WiredNetworkConnection
     - type: PowerSwitch
+    - type: AtmosMonitoringConsoleDevice
+      group: GasRegulator
 
 - type: entity
   parent: BaseGasThermoMachine

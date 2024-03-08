@@ -2,16 +2,16 @@ using Content.Shared.Atmos.Components;
 
 namespace Content.Client.Atmos.Console;
 
-public sealed class AtmosMonitoringConsoleBoundUserInterface : BoundUserInterface
+public sealed class AtmosAlertsComputerBoundUserInterface : BoundUserInterface
 {
     [ViewVariables]
-    private AtmosMonitoringConsoleWindow? _menu;
+    private AtmosAlertsComputerWindow? _menu;
 
-    public AtmosMonitoringConsoleBoundUserInterface(EntityUid owner, Enum uiKey) : base(owner, uiKey) { }
+    public AtmosAlertsComputerBoundUserInterface(EntityUid owner, Enum uiKey) : base(owner, uiKey) { }
 
     protected override void Open()
     {
-        _menu = new AtmosMonitoringConsoleWindow(this, Owner);
+        _menu = new AtmosAlertsComputerWindow(this, Owner);
         _menu.OpenCentered();
         _menu.OnClose += Close;
 
@@ -22,18 +22,23 @@ public sealed class AtmosMonitoringConsoleBoundUserInterface : BoundUserInterfac
     {
         base.UpdateState(state);
 
-        var castState = (AtmosMonitoringConsoleBoundInterfaceState) state;
+        var castState = (AtmosAlertsComputerBoundInterfaceState) state;
 
         if (castState == null)
             return;
 
         EntMan.TryGetComponent<TransformComponent>(Owner, out var xform);
-        _menu?.UpdateUI(xform?.Coordinates, castState.FocusData);
+        _menu?.UpdateUI(xform?.Coordinates, castState.AirAlarms, castState.FireAlarms, castState.FocusData);
     }
 
     public void SendFocusChangeMessage(NetEntity? netEntity)
     {
-        SendMessage(new AtmosMonitoringConsoleFocusChangeMessage(netEntity));
+        SendMessage(new AtmosAlertsComputerFocusChangeMessage(netEntity));
+    }
+
+    public void SendDeviceSilencedMessage(NetEntity netEntity, bool silenceDevice)
+    {
+        SendMessage(new AtmosAlertsComputerDeviceSilencedMessage(netEntity, silenceDevice));
     }
 
     protected override void Dispose(bool disposing)
