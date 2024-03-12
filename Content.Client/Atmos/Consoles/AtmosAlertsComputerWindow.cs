@@ -21,6 +21,7 @@ namespace Content.Client.Atmos.Consoles;
 public sealed partial class AtmosAlertsComputerWindow : FancyWindow
 {
     private readonly IEntityManager _entManager;
+    private readonly SharedTransformSystem _transformSystem;
     private readonly SpriteSystem _spriteSystem;
 
     private EntityUid? _owner;
@@ -43,6 +44,7 @@ public sealed partial class AtmosAlertsComputerWindow : FancyWindow
     {
         RobustXamlLoader.Load(this);
         _entManager = IoCManager.Resolve<IEntityManager>();
+        _transformSystem = _entManager.System<SharedTransformSystem>();
         _spriteSystem = _entManager.System<SpriteSystem>();
 
         // Pass the owner to nav map
@@ -145,7 +147,7 @@ public sealed partial class AtmosAlertsComputerWindow : FancyWindow
 
     #endregion
 
-    public void UpdateUI(EntityCoordinates? consoleCoords, AtmosAlertsComputerEntry[] airAlarms, AtmosAlertsComputerEntry[] fireAlarms, AtmosAlertsFocusDeviceData? focusData)
+    public void UpdateUI(TransformComponent? xform, EntityCoordinates? consoleCoords, AtmosAlertsComputerEntry[] airAlarms, AtmosAlertsComputerEntry[] fireAlarms, AtmosAlertsFocusDeviceData? focusData)
     {
         if (_owner == null)
             return;
@@ -172,6 +174,17 @@ public sealed partial class AtmosAlertsComputerWindow : FancyWindow
         // Reset nav map data
         NavMap.TrackedCoordinates.Clear();
         NavMap.TrackedEntities.Clear();
+        NavMap.FloodSeeds.Clear();
+
+        if (consoleCoords != null && xform != null)
+        {
+            var mapPos = consoleCoords.Value.ToMap(_entManager, _transformSystem);
+
+            if (mapPos.MapId != MapId.Nullspace)
+            {
+                NavMap.FloodSeeds.Add(new Vector2i((int) (consoleCoords.Value.Position.X - 0.5f), (int) (consoleCoords.Value.Position.Y - 0.5f)));
+            }
+        }
 
         // Add tracked entities to the nav map
         foreach (var device in console.AtmosDevices)

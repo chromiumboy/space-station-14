@@ -3,6 +3,7 @@ using Content.Shared.Atmos.Monitor;
 using Robust.Shared.GameStates;
 using Robust.Shared.Map;
 using Robust.Shared.Serialization;
+using System.Numerics;
 
 namespace Content.Shared.Atmos.Components;
 
@@ -158,6 +159,8 @@ public struct AtmosAlertsComputerEntry
     /// Device network address
     /// </summary>
     public string Address;
+
+    public List<Vector2>? AlarmRegionSeeds = null;
 
     /// <summary>
     /// Used to populate the atmos monitoring console UI with data from a single air alarm
