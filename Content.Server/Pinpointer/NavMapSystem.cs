@@ -242,7 +242,7 @@ public sealed class NavMapSystem : SharedNavMapSystem
 
         var airlockQuery = EntityQueryEnumerator<NavMapDoorComponent, TransformComponent>();
         var airlocks = new List<NavMapAirlock>();
-        while (airlockQuery.MoveNext(out _, out _, out var xform))
+        while (airlockQuery.MoveNext(out _, out var navMapDoor, out var xform))
         {
             if (xform.GridUid != uid || !xform.Anchored)
                 continue;
@@ -270,7 +270,7 @@ public sealed class NavMapSystem : SharedNavMapSystem
             if (wallPresent)
                 continue;
 
-            airlocks.Add(new NavMapAirlock(xform.LocalPosition));
+            airlocks.Add(new NavMapAirlock(xform.LocalPosition, navMapDoor.Visible));
         }
 
         // TODO: Diffs

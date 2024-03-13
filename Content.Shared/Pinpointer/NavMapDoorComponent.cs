@@ -9,5 +9,6 @@ namespace Content.Shared.Pinpointer;
 [Access(typeof(SharedNavMapSystem))]
 public sealed partial class NavMapDoorComponent : Component
 {
-
+    [DataField]
+    public bool Visible = true;
 }

@@ -6,12 +6,15 @@ using Content.Shared.Atmos.Components;
 using Content.Shared.Atmos.Consoles;
 using Content.Shared.Atmos.Monitor;
 using Content.Shared.Atmos.Monitor.Components;
+using Content.Shared.DeviceNetwork.Components;
 using Content.Shared.Pinpointer;
+using Content.Shared.Tag;
 using Robust.Server.GameObjects;
 using Robust.Shared.Map.Components;
 using Robust.Shared.Player;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Numerics;
 
 namespace Content.Server.Atmos.Monitor.Systems;
 
@@ -158,8 +161,8 @@ public sealed class AtmosAlertsComputerSystem : SharedAtmosAlertsComputerSystem
                 }
 
                 // Update the appearance of the console based on the highest recorded level of alert
-                if (TryComp<AppearanceComponent>(ent, out var appearance))
-                    _appearance.SetData(ent, AtmosAlertsComputerVisuals.ComputerLayerScreen, (int) highestAlert, appearance);
+                if (TryComp<AppearanceComponent>(ent, out var entAppearance))
+                    _appearance.SetData(ent, AtmosAlertsComputerVisuals.ComputerLayerScreen, (int) highestAlert, entAppearance);
 
                 // If the console UI is open, send UI data to each subscribed session
                 if (!_userInterfaceSystem.TryGetUi(ent, AtmosAlertsComputerUiKey.Key, out var bui))
@@ -229,6 +232,28 @@ public sealed class AtmosAlertsComputerSystem : SharedAtmosAlertsComputerSystem
                 alarmState,
                 MetaData(ent).EntityName,
                 entDeviceNetwork.Address);
+
+            if (group == AtmosAlertsComputerGroup.AirAlarm &&
+                TryComp<DeviceListComponent>(ent, out var entDeviceList))
+            {
+                var alarmRegionSeeds = new List<Vector2>();
+
+                foreach (var device in entDeviceList.Devices)
+                {
+                    if (!TryComp<TagComponent>(device, out var deviceTags))
+                        continue;
+
+                    if (!deviceTags.Tags.Contains("AirSensor"))
+                        continue;
+
+                    var deviceXform = Transform(device);
+
+                    if (deviceXform.GridUid == entXform.GridUid)
+                        alarmRegionSeeds.Add(deviceXform.LocalPosition);
+                }
+
+                entry.AlarmRegionSeeds = alarmRegionSeeds;
+            }
 
             alarmStateData.Add(entry);
         }

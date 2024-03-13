@@ -16,6 +16,9 @@ using Robust.Shared.Physics.Components;
 using Robust.Shared.Timing;
 using System.Numerics;
 using JetBrains.Annotations;
+using System.Linq;
+using System.Reflection.Metadata;
+using Robust.Shared.Utility;
 
 namespace Content.Client.Pinpointer.UI;
 
@@ -93,10 +96,9 @@ public partial class NavMapControl : MapGridControl
         Pressed = true,
     };
 
-    private List<Vector2i> _wallLocations = new();
-    private List<Vector2i> _regionLocations = new();
-    private List<Vector2i> _airlockLocations = new();
-    public List<Vector2i> FloodSeeds = new();
+    public Dictionary<Vector2i, Color> RegionOverlays = new();
+    public Dictionary<Vector2i, NavMapChunk> RegionFloorChunks = new();
+    public Dictionary<Vector2i, NavMapChunk> RegionBoundaryChunks = new();
 
     public NavMapControl() : base(MinDisplayedRange, MaxDisplayedRange, DefaultDisplayedRange)
     {
@@ -285,6 +287,19 @@ public partial class NavMapControl : MapGridControl
 
         var area = new Box2(-WorldRange, -WorldRange, WorldRange + 1f, WorldRange + 1f).Translated(offset);
 
+        // Draw region overlays
+        /*if (_grid != null)
+        {
+            foreach ((var region, var color) in RegionOverlays)
+            {
+                var positionTopLeft = ScalePosition(new Vector2(region.X, -region.Y) - new Vector2(offset.X, -offset.Y));
+                var positionBottomRight = ScalePosition(new Vector2(region.X, -region.Y) + new Vector2(_grid.TileSize, -_grid.TileSize) - new Vector2(offset.X, -offset.Y));
+                var box = new UIBox2(positionTopLeft, positionBottomRight);
+
+                handle.DrawRect(box, color);
+            }
+        }*/
+
         // Drawing lines can be rather expensive due to the number of neighbors that need to be checked in order
         // to figure out where they should be drawn. However, we don't *need* to do check these every frame.
         // Instead, lets periodically update where to draw each line and then store these points in a list.
@@ -333,6 +348,9 @@ public partial class NavMapControl : MapGridControl
 
         foreach (var airlock in _navMap.Airlocks)
         {
+            if (!airlock.Visible)
+                continue;
+
             var position = airlock.Position - offset;
             position = ScalePosition(position with { Y = -position.Y });
             airlockLines.Add(position + airlockBuffer);
@@ -406,15 +424,6 @@ public partial class NavMapControl : MapGridControl
             }
         }
 
-        /*if (_navMap != null)
-        {
-            foreach (var airlock in _navMap.Airlocks)
-            {
-                var position = ScalePosition(new Vector2(airlock.Position.X, -airlock.Position.Y) - new Vector2(offset.X, -offset.Y));
-                handle.DrawCircle(position, float.Sqrt(MinimapScale), Color.Green);
-            }
-        }*/
-
         // Tracked entities (can use a supplied sprite as a marker instead; should probably just replace TrackedCoordinates with this eventually)
         var iconVertexUVs = new Dictionary<(Texture, Color), ValueList<DrawVertexUV2D>>();
 
@@ -460,12 +469,6 @@ public partial class NavMapControl : MapGridControl
 
             handle.DrawPrimitives(DrawPrimitiveTopology.TriangleList, texture, vertexUVs.Span, sRGB);
         }
-
-        foreach (var coord in _regionLocations)
-        {
-            var position = ScalePosition(new Vector2(coord.X + 0.5f, -coord.Y - 0.5f) - new Vector2(offset.X, -offset.Y));
-            handle.DrawCircle(position, float.Sqrt(MinimapScale), Color.Red);
-        }
     }
 
     protected override void FrameUpdate(FrameEventArgs args)
@@ -487,22 +490,52 @@ public partial class NavMapControl : MapGridControl
             return;
 
         TileGrid = GetDecodedWallChunks(_navMap.Chunks, _grid);
+    }
 
-        _regionLocations = new();
+    public List<Vector2i> AddFloodFilledRegionOverlay(Vector2i regionSeed, Color regionColor, int regionMaxSize = 100)
+    {
+        var count = 0;
+        List<Vector2i> visited = new();
+        Stack<Vector2i> toVisit = new Stack<Vector2i>();
+        toVisit.Push(regionSeed);
 
-        foreach (var seed in FloodSeeds)
+        while (toVisit.Count > 0)
         {
-            //var output = FloodFill(seed);
-            //_regionLocations.AddRange(output);
+            if (count >= regionMaxSize)
+                return visited;
+
+            var current = toVisit.Pop();
+
+            var chunkOrigin = SharedMapSystem.GetChunkIndices(current, SharedNavMapSystem.ChunkSize);
+            var relative = SharedMapSystem.GetChunkRelative(current, SharedNavMapSystem.ChunkSize);
+            var flag = SharedNavMapSystem.GetFlag(relative);
+
+            if (!RegionFloorChunks.TryGetValue(chunkOrigin, out var floorChunk) || (flag & floorChunk.TileData) == 0)
+                continue;
+
+            if (RegionBoundaryChunks.TryGetValue(chunkOrigin, out var boundaryChunk) && (flag & boundaryChunk.TileData) > 0)
+                continue;
+
+            if (RegionOverlays.TryGetValue(current, out var color) && color == regionColor)
+                continue;
+
+            RegionOverlays[current] = regionColor;
+
+            toVisit.Push(new Vector2i(current.X - 1, current.Y));
+            toVisit.Push(new Vector2i(current.X + 1, current.Y));
+            toVisit.Push(new Vector2i(current.X, current.Y - 1));
+            toVisit.Push(new Vector2i(current.X, current.Y + 1));
+
+            count++;
         }
+
+        return visited;
     }
 
     public Dictionary<Vector2i, List<NavMapLine>> GetDecodedWallChunks
         (Dictionary<Vector2i, NavMapChunk> chunks,
         MapGridComponent grid)
     {
-        _wallLocations = new();
-
         var decodedOutput = new Dictionary<Vector2i, List<NavMapLine>>();
 
         foreach ((var chunkOrigin, var chunk) in chunks)
@@ -525,8 +558,6 @@ public partial class NavMapControl : MapGridControl
                 var position = new Vector2(tile.X, -tile.Y);
                 NavMapChunk? neighborChunk;
                 bool neighbor;
-
-                _wallLocations.Add(tile);
 
                 // North edge
                 if (relativeTile.Y == SharedNavMapSystem.ChunkSize - 1)
@@ -612,54 +643,6 @@ public partial class NavMapControl : MapGridControl
         }
 
         return decodedOutput;
-    }
-
-    public List<Vector2i> FloodFill(Vector2i tilePosition)
-    {
-        List<Vector2i> airlockPositions = new();
-
-        if (_navMap == null)
-            return airlockPositions;
-
-        foreach (var airlock in _navMap.Airlocks)
-        {
-            airlockPositions.Add((Vector2i) (airlock.Position - new Vector2(0.5f, 0.5f)));
-        }
-
-        List<Vector2i> actualPositions = new();
-        Stack<Vector2i> tilePositions = new Stack<Vector2i>();
-        tilePositions.Push(tilePosition);
-
-        var count = 0;
-        var maxCount = 13 * 13;
-
-        while (tilePositions.Count > 0)
-        {
-            if (count >= maxCount)
-                return actualPositions;
-
-            var currPosition = tilePositions.Pop();
-
-            if (_wallLocations.Contains(currPosition))
-                continue;
-
-            if (actualPositions.Contains(currPosition))
-                continue;
-
-            if (airlockPositions.Contains(currPosition))
-                continue;
-
-            actualPositions.Add(currPosition);
-
-            tilePositions.Push(new Vector2i(currPosition.X - 1, currPosition.Y));
-            tilePositions.Push(new Vector2i(currPosition.X + 1, currPosition.Y));
-            tilePositions.Push(new Vector2i(currPosition.X, currPosition.Y - 1));
-            tilePositions.Push(new Vector2i(currPosition.X, currPosition.Y + 1));
-
-            count++;
-        }
-
-        return actualPositions;
     }
 
     protected Vector2 GetOffset()
