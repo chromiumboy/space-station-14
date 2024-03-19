@@ -183,27 +183,13 @@ public sealed partial class AtmosAlertsComputerWindow : FancyWindow
         // Reset nav map data
         NavMap.TrackedCoordinates.Clear();
         NavMap.TrackedEntities.Clear();
+        NavMap.RegionOverlays.Clear();
         NavMap.RegionFloorChunks.Clear();
         NavMap.RegionBoundaryChunks.Clear();
 
         // Re-establish region floor
-        var tileEnumerator = _mapSystem.GetAllTilesEnumerator(xform.GridUid.Value, mapGrid);
-
-        while (tileEnumerator.MoveNext(out var tileRef))
-        {
-            var tile = new Vector2i(tileRef.Value.X, tileRef.Value.Y);
-            var chunkOrigin = SharedMapSystem.GetChunkIndices(tile, SharedNavMapSystem.ChunkSize);
-            var relative = SharedMapSystem.GetChunkRelative(tile, SharedNavMapSystem.ChunkSize);
-
-            if (!NavMap.RegionFloorChunks.TryGetValue(chunkOrigin, out var chunk))
-                chunk = new(chunkOrigin);
-
-            var existing = chunk.TileData;
-            var flag = SharedNavMapSystem.GetFlag(relative);
-
-            chunk.TileData |= flag;
-            NavMap.RegionFloorChunks[chunkOrigin] = chunk;
-        }
+        var tileRefs = _mapSystem.GetAllTiles(xform.GridUid.Value, mapGrid).Select(x => x.GridIndices);
+        NavMap.RegionFloorTiles = tileRefs;
 
         // Re-establish region boundaries
         if (_entManager.TryGetComponent<NavMapComponent>(xform.GridUid, out var navMap))
@@ -270,9 +256,6 @@ public sealed partial class AtmosAlertsComputerWindow : FancyWindow
             var blip = new NavMapBlip(consoleCoords.Value, texture, Color.Cyan, true, false);
             NavMap.TrackedEntities[consoleUid.Value] = blip;
         }
-
-        // Update the nav map
-        NavMap.ForceNavMapUpdate();
 
         // Clear excess children from the tables
         var activeAlarmCount = _activeAlarms.Count();

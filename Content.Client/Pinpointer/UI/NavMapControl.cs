@@ -98,6 +98,7 @@ public partial class NavMapControl : MapGridControl
 
     public Dictionary<Vector2i, Color> RegionOverlays = new();
     public Dictionary<Vector2i, NavMapChunk> RegionFloorChunks = new();
+    public IEnumerable<Vector2i> RegionFloorTiles = default!;
     public Dictionary<Vector2i, NavMapChunk> RegionBoundaryChunks = new();
 
     public NavMapControl() : base(MinDisplayedRange, MaxDisplayedRange, DefaultDisplayedRange)
@@ -254,7 +255,7 @@ public partial class NavMapControl : MapGridControl
         // Map re-centering
         _recenter.Disabled = DrawRecenter();
 
-        _zoom.Text = Loc.GetString("navmap-zoom", ("value", $"{(DefaultDisplayedRange / WorldRange ):0.0}"));
+        _zoom.Text = Loc.GetString("navmap-zoom", ("value", $"{(DefaultDisplayedRange / WorldRange):0.0}"));
 
         if (_navMap == null || _xform == null)
             return;
@@ -288,7 +289,7 @@ public partial class NavMapControl : MapGridControl
         var area = new Box2(-WorldRange, -WorldRange, WorldRange + 1f, WorldRange + 1f).Translated(offset);
 
         // Draw region overlays
-        /*if (_grid != null)
+        if (_grid != null)
         {
             foreach ((var region, var color) in RegionOverlays)
             {
@@ -298,7 +299,7 @@ public partial class NavMapControl : MapGridControl
 
                 handle.DrawRect(box, color);
             }
-        }*/
+        }
 
         // Drawing lines can be rather expensive due to the number of neighbors that need to be checked in order
         // to figure out where they should be drawn. However, we don't *need* to do check these every frame.
@@ -510,13 +511,13 @@ public partial class NavMapControl : MapGridControl
             var relative = SharedMapSystem.GetChunkRelative(current, SharedNavMapSystem.ChunkSize);
             var flag = SharedNavMapSystem.GetFlag(relative);
 
-            if (!RegionFloorChunks.TryGetValue(chunkOrigin, out var floorChunk) || (flag & floorChunk.TileData) == 0)
+            if (RegionOverlays.TryGetValue(current, out var color) && color == regionColor)
                 continue;
 
             if (RegionBoundaryChunks.TryGetValue(chunkOrigin, out var boundaryChunk) && (flag & boundaryChunk.TileData) > 0)
                 continue;
 
-            if (RegionOverlays.TryGetValue(current, out var color) && color == regionColor)
+            if (!RegionFloorTiles.Contains(current))
                 continue;
 
             RegionOverlays[current] = regionColor;
