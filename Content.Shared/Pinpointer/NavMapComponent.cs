@@ -1,4 +1,5 @@
 using Robust.Shared.GameStates;
+using Robust.Shared.Serialization;
 
 namespace Content.Shared.Pinpointer;
 
@@ -20,6 +21,7 @@ public sealed partial class NavMapComponent : Component
     [ViewVariables] public readonly List<SharedNavMapSystem.NavMapAirlock> Airlocks = new();
 }
 
+[Serializable, NetSerializable]
 public sealed class NavMapChunk
 {
     public readonly Vector2i Origin;

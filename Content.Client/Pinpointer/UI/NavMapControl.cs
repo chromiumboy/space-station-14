@@ -17,8 +17,6 @@ using Robust.Shared.Timing;
 using System.Numerics;
 using JetBrains.Annotations;
 using System.Linq;
-using System.Reflection.Metadata;
-using Robust.Shared.Utility;
 
 namespace Content.Client.Pinpointer.UI;
 
@@ -96,10 +94,7 @@ public partial class NavMapControl : MapGridControl
         Pressed = true,
     };
 
-    public Dictionary<Vector2i, Color> RegionOverlays = new();
-    public Dictionary<Vector2i, NavMapChunk> RegionFloorChunks = new();
-    public IEnumerable<Vector2i> RegionFloorTiles = default!;
-    public Dictionary<Vector2i, NavMapChunk> RegionBoundaryChunks = new();
+    public Dictionary<NetEntity, Color> RegionColors = new();
 
     public NavMapControl() : base(MinDisplayedRange, MaxDisplayedRange, DefaultDisplayedRange)
     {
@@ -289,15 +284,21 @@ public partial class NavMapControl : MapGridControl
         var area = new Box2(-WorldRange, -WorldRange, WorldRange + 1f, WorldRange + 1f).Translated(offset);
 
         // Draw region overlays
-        if (_grid != null)
+        if (_grid != null && EntManager.TryGetComponent<NavMapRegionsComponent>(_xform.GridUid, out var navMapRegions))
         {
-            foreach ((var region, var color) in RegionOverlays)
+            foreach ((var region, var points) in navMapRegions.FloodedRegions)
             {
-                var positionTopLeft = ScalePosition(new Vector2(region.X, -region.Y) - new Vector2(offset.X, -offset.Y));
-                var positionBottomRight = ScalePosition(new Vector2(region.X, -region.Y) + new Vector2(_grid.TileSize, -_grid.TileSize) - new Vector2(offset.X, -offset.Y));
-                var box = new UIBox2(positionTopLeft, positionBottomRight);
+                if (!RegionColors.TryGetValue(region, out var color))
+                    continue;
 
-                handle.DrawRect(box, color);
+                foreach (var point in points)
+                {
+                    var positionTopLeft = ScalePosition(new Vector2(point.X, -point.Y) - new Vector2(offset.X, -offset.Y));
+                    var positionBottomRight = ScalePosition(new Vector2(point.X, -point.Y) + new Vector2(_grid.TileSize, -_grid.TileSize) - new Vector2(offset.X, -offset.Y));
+                    var box = new UIBox2(positionTopLeft, positionBottomRight);
+
+                    handle.DrawRect(box, color);
+                }
             }
         }
 
@@ -500,7 +501,7 @@ public partial class NavMapControl : MapGridControl
         Stack<Vector2i> toVisit = new Stack<Vector2i>();
         toVisit.Push(regionSeed);
 
-        while (toVisit.Count > 0)
+        /*while (toVisit.Count > 0)
         {
             if (count >= regionMaxSize)
                 return visited;
@@ -514,10 +515,10 @@ public partial class NavMapControl : MapGridControl
             if (RegionOverlays.TryGetValue(current, out var color) && color == regionColor)
                 continue;
 
-            if (RegionBoundaryChunks.TryGetValue(chunkOrigin, out var boundaryChunk) && (flag & boundaryChunk.TileData) > 0)
-                continue;
+            //if (RegionBoundaryChunks.TryGetValue(chunkOrigin, out var boundaryChunk) && (flag & boundaryChunk.TileData) > 0)
+            //   continue;
 
-            if (!RegionFloorTiles.Contains(current))
+            if (!RegionFloorChunks.TryGetValue(chunkOrigin, out var floorChunk) || (flag & floorChunk.TileData) == 0)
                 continue;
 
             RegionOverlays[current] = regionColor;
@@ -528,7 +529,7 @@ public partial class NavMapControl : MapGridControl
             toVisit.Push(new Vector2i(current.X, current.Y + 1));
 
             count++;
-        }
+        }*/
 
         return visited;
     }

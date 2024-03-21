@@ -205,6 +205,13 @@ public sealed class AtmosAlertsComputerSystem : SharedAtmosAlertsComputerSystem
     private List<AtmosAlertsComputerEntry> GetAlarmStateData(EntityUid gridUid, AtmosAlertsComputerGroup group)
     {
         var alarmStateData = new List<AtmosAlertsComputerEntry>();
+        var update = false;
+
+        if (!TryComp<MapGridComponent>(gridUid, out var mapGrid))
+            return new();
+
+        if (!TryComp<NavMapRegionsComponent>(gridUid, out var navMapRegions))
+            return new();
 
         var queryAlarms = AllEntityQuery<AtmosAlertsDeviceComponent, AtmosAlarmableComponent, DeviceNetworkComponent, TransformComponent>();
         while (queryAlarms.MoveNext(out var ent, out var entDevice, out var entAtmosAlarmable, out var entDeviceNetwork, out var entXform))
@@ -236,29 +243,45 @@ public sealed class AtmosAlertsComputerSystem : SharedAtmosAlertsComputerSystem
             if (group == AtmosAlertsComputerGroup.AirAlarm &&
                 TryComp<DeviceListComponent>(ent, out var entDeviceList))
             {
-                var alarmRegionSeeds = new List<Vector2>();
+                var alarmRegionSeeds = new List<Vector2i>();
 
                 foreach (var device in entDeviceList.Devices)
                 {
-                    if (!TryComp<TagComponent>(device, out var deviceTags))
-                        continue;
-
-                    if (!deviceTags.Tags.Contains("AirSensor"))
+                    if (!TryComp<TagComponent>(device, out var deviceTags) ||
+                        !deviceTags.Tags.Contains("AirSensor"))
                         continue;
 
                     var deviceXform = Transform(device);
 
                     if (deviceXform.GridUid == entXform.GridUid)
-                        alarmRegionSeeds.Add(deviceXform.LocalPosition);
+                        alarmRegionSeeds.Add(CoordinatesToTile(deviceXform.LocalPosition, mapGrid));
                 }
 
-                entry.AlarmRegionSeeds = alarmRegionSeeds;
+                var netEnt = GetNetEntity(ent);
+
+                if (!navMapRegions.RegionPropagationSeeds.TryGetValue(netEnt, out var list) || !list.SequenceEqual(alarmRegionSeeds))
+                {
+                    update = true;
+                }
+
+                navMapRegions.RegionPropagationSeeds[netEnt] = alarmRegionSeeds;
             }
 
             alarmStateData.Add(entry);
         }
 
+        if (update)
+            Dirty(gridUid, navMapRegions);
+
         return alarmStateData;
+    }
+
+    public Vector2i CoordinatesToTile(Vector2 position, MapGridComponent grid)
+    {
+        var x = (int) Math.Floor(position.X / grid.TileSize);
+        var y = (int) Math.Floor(position.Y / grid.TileSize);
+
+        return new Vector2i(x, y);
     }
 
     private AtmosAlertsFocusDeviceData? GetFocusAlarmData(EntityUid uid, EntityUid? focusDevice, EntityUid gridUid)

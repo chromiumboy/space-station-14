@@ -25,7 +25,6 @@ public sealed partial class AtmosAlertsComputerWindow : FancyWindow
 {
     private readonly IEntityManager _entManager;
     private readonly SpriteSystem _spriteSystem;
-    private readonly SharedMapSystem _mapSystem;
 
     private EntityUid? _owner;
     private NetEntity? _trackedEntity;
@@ -48,7 +47,6 @@ public sealed partial class AtmosAlertsComputerWindow : FancyWindow
         RobustXamlLoader.Load(this);
         _entManager = IoCManager.Resolve<IEntityManager>();
         _spriteSystem = _entManager.System<SpriteSystem>();
-        _mapSystem = _entManager.System<SharedMapSystem>();
 
         // Pass the owner to nav map
         _owner = owner;
@@ -183,42 +181,6 @@ public sealed partial class AtmosAlertsComputerWindow : FancyWindow
         // Reset nav map data
         NavMap.TrackedCoordinates.Clear();
         NavMap.TrackedEntities.Clear();
-        NavMap.RegionOverlays.Clear();
-        NavMap.RegionFloorChunks.Clear();
-        NavMap.RegionBoundaryChunks.Clear();
-
-        // Re-establish region floor
-        var tileRefs = _mapSystem.GetAllTiles(xform.GridUid.Value, mapGrid).Select(x => x.GridIndices);
-        NavMap.RegionFloorTiles = tileRefs;
-
-        // Re-establish region boundaries
-        if (_entManager.TryGetComponent<NavMapComponent>(xform.GridUid, out var navMap))
-        {
-            foreach ((var chunkOrigin, var chunk) in navMap.Chunks)
-            {
-                if (!NavMap.RegionBoundaryChunks.TryGetValue(chunkOrigin, out var copiedChunk))
-                    copiedChunk = new(chunkOrigin);
-
-                copiedChunk.TileData |= chunk.TileData;
-                NavMap.RegionBoundaryChunks[chunkOrigin] = copiedChunk;
-            }
-
-            foreach (var airlock in navMap.Airlocks)
-            {
-                var tile = CoordinatesToTile(airlock.Position, mapGrid);
-                var chunkOrigin = SharedMapSystem.GetChunkIndices(tile, SharedNavMapSystem.ChunkSize);
-                var relative = SharedMapSystem.GetChunkRelative(tile, SharedNavMapSystem.ChunkSize);
-
-                if (!NavMap.RegionBoundaryChunks.TryGetValue(chunkOrigin, out var chunk))
-                    chunk = new(chunkOrigin);
-
-                var existing = chunk.TileData;
-                var flag = SharedNavMapSystem.GetFlag(relative);
-
-                chunk.TileData |= flag;
-                NavMap.RegionBoundaryChunks[chunkOrigin] = chunk;
-            }
-        }
 
         // Add tracked entities to the nav map
         foreach (var device in console.AtmosDevices)
@@ -227,6 +189,13 @@ public sealed partial class AtmosAlertsComputerWindow : FancyWindow
                 continue;
 
             var alarmState = GetAlarmState(device.NetEntity, device.Group);
+            var color = GetBlipTexture(alarmState)?.Item2;
+
+            if (device.Group == AtmosAlertsComputerGroup.AirAlarm && color != null)
+            {
+                color = (_trackedEntity == null || device.NetEntity == _trackedEntity) ? color * Color.DimGray : color * new Color(43, 43, 43);
+                NavMap.RegionColors[device.NetEntity] = color.Value;
+            }
 
             if (_trackedEntity != device.NetEntity)
             {
@@ -280,12 +249,6 @@ public sealed partial class AtmosAlertsComputerWindow : FancyWindow
         {
             var entry = airAlarms.ElementAt(index);
             UpdateUIEntry(entry, index, AirAlarmsTable, console, focusData);
-
-            if (entry.AlarmRegionSeeds != null)
-            {
-                foreach (var seed in entry.AlarmRegionSeeds)
-                    AddFloodFilledRegionOverlay(seed, entry.AlarmState, mapGrid);
-            }
         }
 
         for (int index = 0; index < fireAlarms.Count(); index++)
