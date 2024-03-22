@@ -42,6 +42,13 @@ public sealed partial class AtmosAlertsComputerWindow : FancyWindow
 
     private const float SilencingDuration = 2.5f;
 
+    private readonly Color _inactiveGray = Color.Gray;
+    private readonly Color _normalGreen = Color.LimeGreen;
+    private readonly Color _warningOrange = new Color(239, 179, 65);
+    private readonly Color _dangerRed = new Color(222, 58, 58);
+    private readonly Color _nonFocusModifier = Color.DimGray;
+    private readonly Color _overlayModifier = Color.Gray;
+
     public AtmosAlertsComputerWindow(AtmosAlertsComputerBoundUserInterface userInterface, EntityUid? owner)
     {
         RobustXamlLoader.Load(this);
@@ -92,9 +99,9 @@ public sealed partial class AtmosAlertsComputerWindow : FancyWindow
 
         // Set UI toggles
         ShowInactiveAlarms.OnToggled += _ => OnShowAlarmsToggled(ShowInactiveAlarms, AtmosAlarmType.Invalid);
-        ShowNormalAlarms.OnToggled += _ => OnShowAlarmsToggled(ShowInactiveAlarms, AtmosAlarmType.Normal);
-        ShowWarningAlarms.OnToggled += _ => OnShowAlarmsToggled(ShowInactiveAlarms, AtmosAlarmType.Warning);
-        ShowDangerAlarms.OnToggled += _ => OnShowAlarmsToggled(ShowInactiveAlarms, AtmosAlarmType.Danger);
+        ShowNormalAlarms.OnToggled += _ => OnShowAlarmsToggled(ShowNormalAlarms, AtmosAlarmType.Normal);
+        ShowWarningAlarms.OnToggled += _ => OnShowAlarmsToggled(ShowWarningAlarms, AtmosAlarmType.Warning);
+        ShowDangerAlarms.OnToggled += _ => OnShowAlarmsToggled(ShowDangerAlarms, AtmosAlarmType.Danger);
 
         // Set atmos monitoring message action
         SendFocusChangeMessageAction += userInterface.SendFocusChangeMessage;
@@ -181,6 +188,15 @@ public sealed partial class AtmosAlertsComputerWindow : FancyWindow
         // Reset nav map data
         NavMap.TrackedCoordinates.Clear();
         NavMap.TrackedEntities.Clear();
+        NavMap.RegionOverlays.Clear();
+        NavMap.RegionColors.Clear();
+
+        // Update region overlays
+        if (_entManager.TryGetComponent<NavMapRegionsComponent>(xform.GridUid, out var navMapRegions))
+        {
+            foreach (var (regionOwner, tiles) in navMapRegions.FloodedRegions)
+                NavMap.RegionOverlays[regionOwner] = tiles;
+        }
 
         // Add tracked entities to the nav map
         foreach (var device in console.AtmosDevices)
@@ -191,9 +207,12 @@ public sealed partial class AtmosAlertsComputerWindow : FancyWindow
             var alarmState = GetAlarmState(device.NetEntity, device.Group);
             var color = GetBlipTexture(alarmState)?.Item2;
 
+            // Record alarm state colors for the region overlays
             if (device.Group == AtmosAlertsComputerGroup.AirAlarm && color != null)
             {
-                color = (_trackedEntity == null || device.NetEntity == _trackedEntity) ? color * Color.DimGray : color * new Color(43, 43, 43);
+                color *= _overlayModifier;
+                color = (_trackedEntity == null || device.NetEntity == _trackedEntity) ? color : color * _nonFocusModifier;
+
                 NavMap.RegionColors[device.NetEntity] = color.Value;
             }
 
@@ -300,7 +319,7 @@ public sealed partial class AtmosAlertsComputerWindow : FancyWindow
         var coords = _entManager.GetCoordinates(metaData.NetCoordinates);
 
         if (_trackedEntity != null && _trackedEntity != metaData.NetEntity)
-            color *= Color.DimGray;
+            color *= _nonFocusModifier;
 
         var selectable = true;
         var blip = new NavMapBlip(coords, _spriteSystem.Frame0(texture), color, _trackedEntity == metaData.NetEntity, selectable);
@@ -437,16 +456,6 @@ public sealed partial class AtmosAlertsComputerWindow : FancyWindow
         SendFocusChangeMessageAction?.Invoke(_trackedEntity);
     }
 
-    private void AddFloodFilledRegionOverlay(Vector2 seedPosition, AtmosAlarmType alarmState, MapGridComponent mapGrid)
-    {
-        var blip = GetBlipTexture(alarmState);
-
-        if (blip == null)
-            return;
-
-        NavMap.AddFloodFilledRegionOverlay(CoordinatesToTile(seedPosition, mapGrid), blip.Value.Item2 * Color.DimGray, 300);
-    }
-
     public Vector2i CoordinatesToTile(Vector2 position, MapGridComponent grid)
     {
         var x = (int) Math.Floor(position.X / grid.TileSize);
@@ -573,13 +582,13 @@ public sealed partial class AtmosAlertsComputerWindow : FancyWindow
         switch (alarmState)
         {
             case AtmosAlarmType.Invalid:
-                output = (new SpriteSpecifier.Texture(new ResPath("/Textures/Interface/NavMap/beveled_circle.png")), StyleNano.DisabledFore); break;
+                output = (new SpriteSpecifier.Texture(new ResPath("/Textures/Interface/NavMap/beveled_circle.png")), _inactiveGray); break;
             case AtmosAlarmType.Normal:
-                output = (new SpriteSpecifier.Texture(new ResPath("/Textures/Interface/NavMap/beveled_circle.png")), Color.LimeGreen); break;
+                output = (new SpriteSpecifier.Texture(new ResPath("/Textures/Interface/NavMap/beveled_circle.png")), _normalGreen); break;
             case AtmosAlarmType.Warning:
-                output = (new SpriteSpecifier.Texture(new ResPath("/Textures/Interface/NavMap/beveled_triangle.png")), new Color(255, 182, 72)); break;
+                output = (new SpriteSpecifier.Texture(new ResPath("/Textures/Interface/NavMap/beveled_triangle.png")), _warningOrange); break;
             case AtmosAlarmType.Danger:
-                output = (new SpriteSpecifier.Texture(new ResPath("/Textures/Interface/NavMap/beveled_square.png")), new Color(255, 67, 67)); break;
+                output = (new SpriteSpecifier.Texture(new ResPath("/Textures/Interface/NavMap/beveled_square.png")), _dangerRed); break;
         }
 
         return output;

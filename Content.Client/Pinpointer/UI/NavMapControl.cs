@@ -43,6 +43,9 @@ public partial class NavMapControl : MapGridControl
     public Dictionary<NetEntity, NavMapBlip> TrackedEntities = new();
     public Dictionary<Vector2i, List<NavMapLine>>? TileGrid = default!;
 
+    public Dictionary<NetEntity, HashSet<Vector2i>> RegionOverlays = new();
+    public Dictionary<NetEntity, Color> RegionColors = new();
+
     // Default colors
     public Color WallColor = new(102, 217, 102);
     public Color TileColor = new(30, 67, 30);
@@ -93,8 +96,6 @@ public partial class NavMapControl : MapGridControl
         HorizontalAlignment = HAlignment.Center,
         Pressed = true,
     };
-
-    public Dictionary<NetEntity, Color> RegionColors = new();
 
     public NavMapControl() : base(MinDisplayedRange, MaxDisplayedRange, DefaultDisplayedRange)
     {
@@ -284,17 +285,17 @@ public partial class NavMapControl : MapGridControl
         var area = new Box2(-WorldRange, -WorldRange, WorldRange + 1f, WorldRange + 1f).Translated(offset);
 
         // Draw region overlays
-        if (_grid != null && EntManager.TryGetComponent<NavMapRegionsComponent>(_xform.GridUid, out var navMapRegions))
+        if (_grid != null)
         {
-            foreach ((var region, var points) in navMapRegions.FloodedRegions)
+            foreach ((var regionOwner, var tiles) in RegionOverlays)
             {
-                if (!RegionColors.TryGetValue(region, out var color))
+                if (!RegionColors.TryGetValue(regionOwner, out var color))
                     continue;
 
-                foreach (var point in points)
+                foreach (var tile in tiles)
                 {
-                    var positionTopLeft = ScalePosition(new Vector2(point.X, -point.Y) - new Vector2(offset.X, -offset.Y));
-                    var positionBottomRight = ScalePosition(new Vector2(point.X, -point.Y) + new Vector2(_grid.TileSize, -_grid.TileSize) - new Vector2(offset.X, -offset.Y));
+                    var positionTopLeft = ScalePosition(new Vector2(tile.X, -tile.Y) - new Vector2(offset.X, -offset.Y));
+                    var positionBottomRight = ScalePosition(new Vector2(tile.X, -tile.Y) + new Vector2(_grid.TileSize, -_grid.TileSize) - new Vector2(offset.X, -offset.Y));
                     var box = new UIBox2(positionTopLeft, positionBottomRight);
 
                     handle.DrawRect(box, color);
@@ -492,46 +493,6 @@ public partial class NavMapControl : MapGridControl
             return;
 
         TileGrid = GetDecodedWallChunks(_navMap.Chunks, _grid);
-    }
-
-    public List<Vector2i> AddFloodFilledRegionOverlay(Vector2i regionSeed, Color regionColor, int regionMaxSize = 100)
-    {
-        var count = 0;
-        List<Vector2i> visited = new();
-        Stack<Vector2i> toVisit = new Stack<Vector2i>();
-        toVisit.Push(regionSeed);
-
-        /*while (toVisit.Count > 0)
-        {
-            if (count >= regionMaxSize)
-                return visited;
-
-            var current = toVisit.Pop();
-
-            var chunkOrigin = SharedMapSystem.GetChunkIndices(current, SharedNavMapSystem.ChunkSize);
-            var relative = SharedMapSystem.GetChunkRelative(current, SharedNavMapSystem.ChunkSize);
-            var flag = SharedNavMapSystem.GetFlag(relative);
-
-            if (RegionOverlays.TryGetValue(current, out var color) && color == regionColor)
-                continue;
-
-            //if (RegionBoundaryChunks.TryGetValue(chunkOrigin, out var boundaryChunk) && (flag & boundaryChunk.TileData) > 0)
-            //   continue;
-
-            if (!RegionFloorChunks.TryGetValue(chunkOrigin, out var floorChunk) || (flag & floorChunk.TileData) == 0)
-                continue;
-
-            RegionOverlays[current] = regionColor;
-
-            toVisit.Push(new Vector2i(current.X - 1, current.Y));
-            toVisit.Push(new Vector2i(current.X + 1, current.Y));
-            toVisit.Push(new Vector2i(current.X, current.Y - 1));
-            toVisit.Push(new Vector2i(current.X, current.Y + 1));
-
-            count++;
-        }*/
-
-        return visited;
     }
 
     public Dictionary<Vector2i, List<NavMapLine>> GetDecodedWallChunks

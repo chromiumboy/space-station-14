@@ -9,7 +9,7 @@ using System.Numerics;
 
 namespace Content.Server.Pinpointer;
 
-public sealed class NavMapRegionsSystem : EntitySystem
+public sealed class NavMapRegionsSystem : SharedNavMapRegionsSystem
 {
     [Dependency] private readonly SharedMapSystem _mapSystem = default!;
 
@@ -42,9 +42,9 @@ public sealed class NavMapRegionsSystem : EntitySystem
         }
 
         // Collect seed data for region propagation
-        var seedsData = new Dictionary<NetEntity, List<Vector2i>>(component.RegionPropagationSeeds.Count);
+        var seedsData = new Dictionary<NetEntity, HashSet<Vector2i>>(component.RegionOwners.Count);
 
-        foreach (var (netEntity, seeds) in component.RegionPropagationSeeds)
+        foreach (var (netEntity, seeds) in component.RegionOwners)
         {
             seedsData.Add(netEntity, seeds);
         }
@@ -53,7 +53,7 @@ public sealed class NavMapRegionsSystem : EntitySystem
         args.State = new NavMapRegionsComponentState()
         {
             RegionPropagationTiles = tileData,
-            RegionPropagationSeeds = seedsData,
+            RegionOwners = seedsData,
         };
     }
 
@@ -107,7 +107,8 @@ public sealed class NavMapRegionsSystem : EntitySystem
 
         navMapRegions.RegionPropagationTiles[chunkOrigin] = chunk;
 
-        Dirty(ev.NewTile.GridUid, navMapRegions);
+        RaiseNetworkEvent(new NavMapRegionsChunkChangedEvent(GetNetEntity(ev.NewTile.GridUid), chunkOrigin, chunk.TileData));
+        //Dirty(ev.NewTile.GridUid, navMapRegions);
     }
 
     private void OnAnchorStateChanged(ref AnchorStateChangedEvent args)
@@ -158,7 +159,8 @@ public sealed class NavMapRegionsSystem : EntitySystem
 
         navMapRegions.RegionPropagationTiles[chunkOrigin] = chunk;
 
-        Dirty(xform.GridUid.Value, navMapRegions);
+        RaiseNetworkEvent(new NavMapRegionsChunkChangedEvent(GetNetEntity(xform.GridUid.Value), chunkOrigin, chunk.TileData));
+        //Dirty(xform.GridUid.Value, navMapRegions);
     }
 
     private Vector2i CoordinatesToTile(Vector2 position, MapGridComponent grid)

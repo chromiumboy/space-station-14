@@ -44,13 +44,13 @@
                     <TextureRect Stretch="KeepAspectCentered"
                                 TexturePath="/Textures/Interface/NavMap/beveled_triangle.png"
                                 SetSize="16 16"
-                                Modulate="#ffb648"
+                                Modulate="#EFB341"
                                 Margin="20 0 5 0"/>
                     <Label Text="{Loc 'atmos-alerts-window-warning-state'}"/>
                     <TextureRect Stretch="KeepAspectCentered"
                                 TexturePath="/Textures/Interface/NavMap/beveled_square.png"
                                 SetSize="16 16"
-                                Modulate="#ff4343"
+                                Modulate="#DE3A3A"
                                 Margin="20 0 5 0"/>
                     <Label Text="{Loc 'atmos-alerts-window-danger-state'}"/>
                 </BoxContainer>
