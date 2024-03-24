@@ -13,6 +13,11 @@ public sealed class NavMapRegionsSystem : SharedNavMapRegionsSystem
 {
     [Dependency] private readonly SharedMapSystem _mapSystem = default!;
 
+    private List<AtmosDirection> _atmosDirections = new List<AtmosDirection>()
+    {
+        AtmosDirection.North, AtmosDirection.East, AtmosDirection.South, AtmosDirection.West
+    };
+
     public override void Initialize()
     {
         base.Initialize();
@@ -77,7 +82,7 @@ public sealed class NavMapRegionsSystem : SharedNavMapRegionsSystem
             if (!navMapRegions.RegionPropagationTiles.TryGetValue(chunkOrigin, out var chunk))
                 chunk = new(chunkOrigin);
 
-            var flag = SharedNavMapSystem.GetFlag(relative);
+            var flag = (ushort) SharedNavMapSystem.GetFlag(relative);
             chunk.TileData[AtmosDirection.All] |= flag;
 
             navMapRegions.RegionPropagationTiles[chunkOrigin] = chunk;
@@ -98,17 +103,19 @@ public sealed class NavMapRegionsSystem : SharedNavMapRegionsSystem
         if (!navMapRegions.RegionPropagationTiles.TryGetValue(chunkOrigin, out var chunk))
             chunk = new(chunkOrigin);
 
-        var flag = SharedNavMapSystem.GetFlag(relative);
-        chunk.TileData[AtmosDirection.All] &= ~flag;
+        var flag = (ushort) SharedNavMapSystem.GetFlag(relative);
+        var invFlag = (ushort) ~flag;
 
         // If the tile is not open space, regions can propagate over it
         if (!ev.NewTile.IsSpace())
             chunk.TileData[AtmosDirection.All] |= flag;
 
+        else
+            chunk.TileData[AtmosDirection.All] &= invFlag;
+
         navMapRegions.RegionPropagationTiles[chunkOrigin] = chunk;
 
         RaiseNetworkEvent(new NavMapRegionsChunkChangedEvent(GetNetEntity(ev.NewTile.GridUid), chunkOrigin, chunk.TileData));
-        //Dirty(ev.NewTile.GridUid, navMapRegions);
     }
 
     private void OnAnchorStateChanged(ref AnchorStateChangedEvent args)
@@ -135,14 +142,13 @@ public sealed class NavMapRegionsSystem : SharedNavMapRegionsSystem
         if (!navMapRegions.RegionPropagationTiles.TryGetValue(chunkOrigin, out var chunk))
             chunk = new(chunkOrigin);
 
-        if (!chunk.TileData.ContainsKey(airtight.AirBlockedDirection))
-            chunk.TileData[airtight.AirBlockedDirection] = 0;
+        var flag = (ushort) SharedNavMapSystem.GetFlag(relative);
+        var invFlag = (ushort) ~flag;
 
-        var flag = SharedNavMapSystem.GetFlag(relative);
-        chunk.TileData[AtmosDirection.All] &= ~flag;
-        chunk.TileData[airtight.AirBlockedDirection] &= ~flag;
+        chunk.TileData[AtmosDirection.All] &= invFlag;
+        chunk.TileData[airtight.AirBlockedDirection] &= invFlag;
 
-        if (!tileRef.IsSpace())
+        if (tileRef.IsSpace() || args.Anchored)
         {
             // If the entity was removed, regions can propagate over the vacated tile
             if (!args.Anchored)
@@ -160,7 +166,34 @@ public sealed class NavMapRegionsSystem : SharedNavMapRegionsSystem
         navMapRegions.RegionPropagationTiles[chunkOrigin] = chunk;
 
         RaiseNetworkEvent(new NavMapRegionsChunkChangedEvent(GetNetEntity(xform.GridUid.Value), chunkOrigin, chunk.TileData));
-        //Dirty(xform.GridUid.Value, navMapRegions);
+    }
+
+    private NavMapRegionsChunk AddPropagationTilesToChunk(NavMapRegionsChunk chunk, AtmosDirection blockedDirection, ushort flag)
+    {
+        foreach (var direction in _atmosDirections)
+        {
+            if ((direction & blockedDirection) == 0)
+                continue;
+
+            chunk.TileData[direction] |= flag;
+        }
+
+        return chunk;
+    }
+
+    private NavMapRegionsChunk RemovePropagationTilesFromChunk(NavMapRegionsChunk chunk, AtmosDirection blockedDirection, ushort flag)
+    {
+        var invFlag = (ushort) ~flag;
+
+        foreach (var direction in _atmosDirections)
+        {
+            if ((direction & blockedDirection) == 0)
+                continue;
+
+            chunk.TileData[direction] &= invFlag;
+        }
+
+        return chunk;
     }
 
     private Vector2i CoordinatesToTile(Vector2 position, MapGridComponent grid)

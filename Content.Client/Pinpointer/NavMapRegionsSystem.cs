@@ -177,7 +177,7 @@ public sealed class NavMapRegionsSystem : SharedNavMapRegionsSystem
 
                 var chunkOrigin = SharedMapSystem.GetChunkIndices(current, SharedNavMapSystem.ChunkSize);
                 var relative = SharedMapSystem.GetChunkRelative(current, SharedNavMapSystem.ChunkSize);
-                var flag = SharedNavMapSystem.GetFlag(relative);
+                var flag = (ushort) SharedNavMapSystem.GetFlag(relative);
 
                 if (visitedTiles.Contains(current))
                     continue;

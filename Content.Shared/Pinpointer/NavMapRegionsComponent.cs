@@ -45,12 +45,19 @@ public sealed class NavMapRegionsComponentState : ComponentState
 public sealed class NavMapRegionsChunk
 {
     public readonly Vector2i Origin;
-    public Dictionary<AtmosDirection, int> TileData = new();
+    public Dictionary<AtmosDirection, ushort> TileData;
 
     public NavMapRegionsChunk(Vector2i origin)
     {
         Origin = origin;
-        TileData[AtmosDirection.All] = 0;
+
+        TileData = new()
+        {
+            [AtmosDirection.North] = 0,
+            [AtmosDirection.East] = 0,
+            [AtmosDirection.South] = 0,
+            [AtmosDirection.West] = 0,
+        };
     }
 }
 
@@ -87,9 +94,9 @@ public sealed class NavMapRegionsChunkChangedEvent : EntityEventArgs
 {
     public NetEntity Grid;
     public Vector2i ChunkOrigin;
-    public Dictionary<AtmosDirection, int> TileData;
+    public Dictionary<AtmosDirection, ushort> TileData;
 
-    public NavMapRegionsChunkChangedEvent(NetEntity grid, Vector2i chunkOrigin, Dictionary<AtmosDirection, int> tileData)
+    public NavMapRegionsChunkChangedEvent(NetEntity grid, Vector2i chunkOrigin, Dictionary<AtmosDirection, ushort> tileData)
     {
         Grid = grid;
         ChunkOrigin = chunkOrigin;
