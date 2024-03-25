@@ -349,7 +349,7 @@ public partial class NavMapControl : MapGridControl
         var airlockLines = new ValueList<Vector2>();
         var foobarVec = new Vector2(1, -1);
 
-        foreach (var airlock in _navMap.Airlocks)
+        foreach (var airlock in _navMap.AirlockChunks)
         {
             if (!airlock.Visible)
                 continue;
@@ -492,7 +492,7 @@ public partial class NavMapControl : MapGridControl
         if (_navMap == null || _grid == null)
             return;
 
-        TileGrid = GetDecodedWallChunks(_navMap.Chunks, _grid);
+        TileGrid = GetDecodedWallChunks(_navMap.WallChunks, _grid);
     }
 
     public Dictionary<Vector2i, List<NavMapLine>> GetDecodedWallChunks

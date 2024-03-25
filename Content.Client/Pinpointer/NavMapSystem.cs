@@ -3,7 +3,7 @@ using Robust.Shared.GameStates;
 
 namespace Content.Client.Pinpointer;
 
-public sealed class NavMapSystem : SharedNavMapSystem
+public sealed partial class NavMapSystem : SharedNavMapSystem
 {
     public override void Initialize()
     {
@@ -16,11 +16,11 @@ public sealed class NavMapSystem : SharedNavMapSystem
         if (args.Current is not NavMapComponentState state)
             return;
 
-        component.Chunks.Clear();
+        component.WallChunks.Clear();
 
         foreach (var (origin, data) in state.TileData)
         {
-            component.Chunks.Add(origin, new NavMapChunk(origin)
+            component.WallChunks.Add(origin, new NavMapChunk(origin)
             {
                 TileData = data,
             });
@@ -29,7 +29,7 @@ public sealed class NavMapSystem : SharedNavMapSystem
         component.Beacons.Clear();
         component.Beacons.AddRange(state.Beacons);
 
-        component.Airlocks.Clear();
-        component.Airlocks.AddRange(state.Airlocks);
+        component.AirlockChunks.Clear();
+        component.AirlockChunks.AddRange(state.Airlocks);
     }
 }

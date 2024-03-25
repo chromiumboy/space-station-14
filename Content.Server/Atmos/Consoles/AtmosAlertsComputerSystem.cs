@@ -210,7 +210,7 @@ public sealed class AtmosAlertsComputerSystem : SharedAtmosAlertsComputerSystem
         if (!TryComp<MapGridComponent>(gridUid, out var mapGrid))
             return new();
 
-        if (!TryComp<NavMapRegionsComponent>(gridUid, out var navMapRegions))
+        if (!TryComp<NavMapComponent>(gridUid, out var navMapRegions))
             return new();
 
         var queryAlarms = AllEntityQuery<AtmosAlertsDeviceComponent, AtmosAlarmableComponent, DeviceNetworkComponent, TransformComponent>();

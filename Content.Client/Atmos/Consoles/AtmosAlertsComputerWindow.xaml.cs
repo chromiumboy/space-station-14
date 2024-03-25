@@ -192,7 +192,7 @@ public sealed partial class AtmosAlertsComputerWindow : FancyWindow
         NavMap.RegionColors.Clear();
 
         // Update region overlays
-        if (_entManager.TryGetComponent<NavMapRegionsComponent>(xform.GridUid, out var navMapRegions))
+        if (_entManager.TryGetComponent<NavMapComponent>(xform.GridUid, out var navMapRegions))
         {
             foreach (var (regionOwner, tiles) in navMapRegions.FloodedRegions)
                 NavMap.RegionOverlays[regionOwner] = tiles;

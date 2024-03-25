@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace Content.Client.Pinpointer;
 
-public sealed class NavMapRegionsSystem : SharedNavMapRegionsSystem
+public sealed partial class NavMapSystem
 {
     public const int RegionMaxSize = 625;
 
@@ -16,27 +16,27 @@ public sealed class NavMapRegionsSystem : SharedNavMapRegionsSystem
     {
         base.Initialize();
 
-        SubscribeLocalEvent<NavMapRegionsComponent, ComponentHandleState>(OnHandleState);
+        SubscribeLocalEvent<NavMapComponent, ComponentHandleState>(OnHandleState);
         SubscribeNetworkEvent<NavMapRegionsOwnerRemovedEvent>(OnRegionOwnerRemoved);
         SubscribeNetworkEvent<NavMapRegionsOwnerChangedEvent>(OnRegionOwnerChanged);
         SubscribeNetworkEvent<NavMapRegionsChunkChangedEvent>(OnRegionChunkChanged);
 
     }
 
-    private void OnHandleState(EntityUid uid, NavMapRegionsComponent component, ref ComponentHandleState args)
+    private void OnHandleState(EntityUid uid, NavMapComponent component, ref ComponentHandleState args)
     {
         if (args.Current is not NavMapRegionsComponentState state)
             return;
 
         // Clear stale values
         component.RegionPropagationTiles.Clear();
-        component.RegionOwners.Clear();
+        component.RegionProperties.Clear();
         component.QueuedRegionsToFlood.Clear();
 
         // Update what tiles regions can propagate over
         foreach (var (origin, chunk) in state.RegionPropagationTiles)
         {
-            var newChunk = new NavMapRegionsChunk(origin);
+            var newChunk = new NavMapChunk(origin);
 
             foreach (var (atmosDirection, value) in chunk.TileData)
                 newChunk.TileData[atmosDirection] = value;
@@ -47,7 +47,7 @@ public sealed class NavMapRegionsSystem : SharedNavMapRegionsSystem
         // Update the lists of region owners and their seeds and enqueue them for flood filling
         foreach (var (regionOwner, regionSeeds) in state.RegionOwners)
         {
-            component.RegionOwners[regionOwner] = regionSeeds;
+            component.RegionProperties[regionOwner] = regionSeeds;
             component.QueuedRegionsToFlood.Enqueue(regionOwner);
         }
     }
@@ -56,10 +56,10 @@ public sealed class NavMapRegionsSystem : SharedNavMapRegionsSystem
     {
         var gridUid = GetEntity(ev.Grid);
 
-        if (!TryComp<NavMapRegionsComponent>(gridUid, out var component))
+        if (!TryComp<NavMapComponent>(gridUid, out var component))
             return;
 
-        component.RegionOwners[ev.RegionOwner] = ev.RegionSeeds;
+        component.RegionProperties[ev.RegionOwner] = ev.RegionSeeds;
         component.QueuedRegionsToFlood.Enqueue(ev.RegionOwner);
     }
 
@@ -67,20 +67,20 @@ public sealed class NavMapRegionsSystem : SharedNavMapRegionsSystem
     {
         var gridUid = GetEntity(ev.Grid);
 
-        if (!TryComp<NavMapRegionsComponent>(gridUid, out var component))
+        if (!TryComp<NavMapComponent>(gridUid, out var component))
             return;
 
-        component.RegionOwners.Remove(ev.RegionOwner);
+        component.RegionProperties.Remove(ev.RegionOwner);
     }
 
     private void OnRegionChunkChanged(NavMapRegionsChunkChangedEvent ev)
     {
         var gridUid = GetEntity(ev.Grid);
 
-        if (!TryComp<NavMapRegionsComponent>(gridUid, out var component))
+        if (!TryComp<NavMapComponent>(gridUid, out var component))
             return;
 
-        var chunk = new NavMapRegionsChunk(ev.ChunkOrigin);
+        var chunk = new NavMapChunk(ev.ChunkOrigin);
         chunk.TileData = ev.TileData;
 
         component.RegionPropagationTiles[ev.ChunkOrigin] = chunk;
@@ -90,7 +90,7 @@ public sealed class NavMapRegionsSystem : SharedNavMapRegionsSystem
 
         foreach (var affectedOwner in affectedOwners)
         {
-            if (!component.RegionOwners.ContainsKey(affectedOwner))
+            if (!component.RegionProperties.ContainsKey(affectedOwner))
                 continue;
 
             component.QueuedRegionsToFlood.Enqueue(affectedOwner);
@@ -100,13 +100,13 @@ public sealed class NavMapRegionsSystem : SharedNavMapRegionsSystem
     public override void Update(float frameTime)
     {
         // To prevent compute spikes, only one region is flood filled per frame 
-        var query = AllEntityQuery<NavMapRegionsComponent>();
+        var query = AllEntityQuery<NavMapComponent>();
 
         while (query.MoveNext(out var ent, out var entNavMapRegions))
             FloodFillNextEnqueuedRegion(ent, entNavMapRegions);
     }
 
-    private void FloodFillNextEnqueuedRegion(EntityUid uid, NavMapRegionsComponent component)
+    private void FloodFillNextEnqueuedRegion(EntityUid uid, NavMapComponent component)
     {
         if (!component.QueuedRegionsToFlood.Any())
             return;
@@ -114,7 +114,7 @@ public sealed class NavMapRegionsSystem : SharedNavMapRegionsSystem
         var regionOwner = component.QueuedRegionsToFlood.Dequeue();
 
         // If the region is no longer valid, flood the next one in the queue
-        if (!component.RegionOwners.TryGetValue(regionOwner, out var regionSeeds) ||
+        if (!component.RegionProperties.TryGetValue(regionOwner, out var regionSeeds) ||
             !regionSeeds.Any())
         {
             FloodFillNextEnqueuedRegion(uid, component);
@@ -154,7 +154,7 @@ public sealed class NavMapRegionsSystem : SharedNavMapRegionsSystem
         }
     }
 
-    private (HashSet<Vector2i>, HashSet<Vector2i>) FloodFillRegion(HashSet<Vector2i> regionSeeds, NavMapRegionsComponent component, int regionMaxSize = 100)
+    private (HashSet<Vector2i>, HashSet<Vector2i>) FloodFillRegion(HashSet<Vector2i> regionSeeds, NavMapComponent component, int regionMaxSize = 100)
     {
         if (!regionSeeds.Any())
             return (new(), new());
@@ -235,7 +235,7 @@ public sealed class NavMapRegionsSystem : SharedNavMapRegionsSystem
         return (visitedTiles, visitedChunks);
     }
 
-    private bool CanMoveIntoTile(Dictionary<Vector2i, NavMapRegionsChunk> chunks, Vector2i tile, AtmosDirection direction)
+    private bool CanMoveIntoTile(Dictionary<Vector2i, NavMapChunk> chunks, Vector2i tile, AtmosDirection direction)
     {
         var chunkOrigin = SharedMapSystem.GetChunkIndices(tile, SharedNavMapSystem.ChunkSize);
 

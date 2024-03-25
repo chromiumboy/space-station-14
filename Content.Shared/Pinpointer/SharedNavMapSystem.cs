@@ -1,4 +1,6 @@
+using System.Linq;
 using System.Numerics;
+using Content.Shared.Atmos;
 using Robust.Shared.Serialization;
 using Robust.Shared.Utility;
 
@@ -45,14 +47,30 @@ public abstract class SharedNavMapSystem : EntitySystem
         Dirty(uid, component);
     }
 
+    public bool RegionOwnerIsValid(EntityUid uid, NavMapComponent component, NetEntity regionOwner)
+    {
+        return component.RegionProperties.ContainsKey(regionOwner);
+    }
+
+    public void AddRegionOwner(EntityUid uid, NavMapComponent component, NetEntity regionOwner, HashSet<Vector2i> regionSeeds)
+    {
+        var ev = new NavMapRegionsOwnerChangedEvent(GetNetEntity(uid), regionOwner, regionSeeds);
+
+        if (!component.RegionProperties.TryGetValue(regionOwner, out var oldSeeds))
+            RaiseNetworkEvent(ev);
+
+        else if (!oldSeeds.SequenceEqual(regionSeeds))
+            RaiseNetworkEvent(ev);
+
+        component.RegionProperties[regionOwner] = regionSeeds;
+    }
+
     [Serializable, NetSerializable]
     protected sealed class NavMapComponentState : ComponentState
     {
-        public Dictionary<Vector2i, int> TileData = new();
-
+        public Dictionary<(NavMapChunkType, Vector2i), Dictionary<AtmosDirection, ushort>> ChunkData = new();
         public List<NavMapBeacon> Beacons = new();
-
-        public List<NavMapAirlock> Airlocks = new();
+        public Dictionary<NetEntity, HashSet<Vector2i>> RegionProperties = new();
     }
 
     [Serializable, NetSerializable]
