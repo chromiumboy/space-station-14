@@ -12,46 +12,6 @@ public sealed partial class NavMapSystem
     private Dictionary<Vector2i, HashSet<NetEntity>> _chunkToRegionOwnerTable = new();
     private Dictionary<NetEntity, HashSet<Vector2i>> _regionOwnerToChunkTable = new();
 
-    public override void Initialize()
-    {
-        base.Initialize();
-
-        SubscribeLocalEvent<NavMapComponent, ComponentHandleState>(OnHandleState);
-        SubscribeNetworkEvent<NavMapRegionsOwnerRemovedEvent>(OnRegionOwnerRemoved);
-        SubscribeNetworkEvent<NavMapRegionsOwnerChangedEvent>(OnRegionOwnerChanged);
-        SubscribeNetworkEvent<NavMapRegionsChunkChangedEvent>(OnRegionChunkChanged);
-
-    }
-
-    private void OnHandleState(EntityUid uid, NavMapComponent component, ref ComponentHandleState args)
-    {
-        if (args.Current is not NavMapRegionsComponentState state)
-            return;
-
-        // Clear stale values
-        component.RegionPropagationTiles.Clear();
-        component.RegionProperties.Clear();
-        component.QueuedRegionsToFlood.Clear();
-
-        // Update what tiles regions can propagate over
-        foreach (var (origin, chunk) in state.RegionPropagationTiles)
-        {
-            var newChunk = new NavMapChunk(origin);
-
-            foreach (var (atmosDirection, value) in chunk.TileData)
-                newChunk.TileData[atmosDirection] = value;
-
-            component.RegionPropagationTiles.Add(origin, newChunk);
-        }
-
-        // Update the lists of region owners and their seeds and enqueue them for flood filling
-        foreach (var (regionOwner, regionSeeds) in state.RegionOwners)
-        {
-            component.RegionProperties[regionOwner] = regionSeeds;
-            component.QueuedRegionsToFlood.Enqueue(regionOwner);
-        }
-    }
-
     private void OnRegionOwnerChanged(NavMapRegionsOwnerChangedEvent ev)
     {
         var gridUid = GetEntity(ev.Grid);
@@ -71,30 +31,6 @@ public sealed partial class NavMapSystem
             return;
 
         component.RegionProperties.Remove(ev.RegionOwner);
-    }
-
-    private void OnRegionChunkChanged(NavMapRegionsChunkChangedEvent ev)
-    {
-        var gridUid = GetEntity(ev.Grid);
-
-        if (!TryComp<NavMapComponent>(gridUid, out var component))
-            return;
-
-        var chunk = new NavMapChunk(ev.ChunkOrigin);
-        chunk.TileData = ev.TileData;
-
-        component.RegionPropagationTiles[ev.ChunkOrigin] = chunk;
-
-        if (!_chunkToRegionOwnerTable.TryGetValue(ev.ChunkOrigin, out var affectedOwners))
-            return;
-
-        foreach (var affectedOwner in affectedOwners)
-        {
-            if (!component.RegionProperties.ContainsKey(affectedOwner))
-                continue;
-
-            component.QueuedRegionsToFlood.Enqueue(affectedOwner);
-        }
     }
 
     public override void Update(float frameTime)
@@ -163,7 +99,7 @@ public sealed partial class NavMapSystem
         HashSet<Vector2i> visitedTiles = new();
         Stack<Vector2i> tilesToVisit = new Stack<Vector2i>();
 
-        foreach (var regionSeed in regionSeeds)
+        /*foreach (var regionSeed in regionSeeds)
         {
             tilesToVisit.Push(regionSeed);
 
@@ -230,7 +166,7 @@ public sealed partial class NavMapSystem
                         tilesToVisit.Push(tile);
                 }
             }
-        }
+        }*/
 
         return (visitedTiles, visitedChunks);
     }

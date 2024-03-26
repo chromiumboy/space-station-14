@@ -17,6 +17,7 @@ using Robust.Shared.Timing;
 using System.Numerics;
 using JetBrains.Annotations;
 using System.Linq;
+using Content.Shared.Atmos;
 
 namespace Content.Client.Pinpointer.UI;
 
@@ -349,27 +350,43 @@ public partial class NavMapControl : MapGridControl
         var airlockLines = new ValueList<Vector2>();
         var foobarVec = new Vector2(1, -1);
 
-        foreach (var airlock in _navMap.AirlockChunks)
+        foreach (var ((category, chuckOrigin), chunk) in _navMap.Chunks)
         {
-            if (!airlock.Visible)
+            if (category != NavMapChunkType.VisibleDoor)
                 continue;
 
-            var position = airlock.Position - offset;
-            position = ScalePosition(position with { Y = -position.Y });
-            airlockLines.Add(position + airlockBuffer);
-            airlockLines.Add(position - airlockBuffer * foobarVec);
+            if (_grid == null)
+                continue;
 
-            airlockLines.Add(position + airlockBuffer);
-            airlockLines.Add(position + airlockBuffer * foobarVec);
+            for (var i = 0; i < SharedNavMapSystem.ChunkSize * SharedNavMapSystem.ChunkSize; i++)
+            {
+                var value = (int) Math.Pow(2, i);
+                var mask = GetFlattenedChunk(chunk.TileData) & value;
 
-            airlockLines.Add(position - airlockBuffer);
-            airlockLines.Add(position + airlockBuffer * foobarVec);
+                if (mask == 0x0)
+                    continue;
 
-            airlockLines.Add(position - airlockBuffer);
-            airlockLines.Add(position - airlockBuffer * foobarVec);
+                // Alright now we'll work out our edges
+                var relativeTile = SharedNavMapSystem.GetTile(mask);
+                var tile = (chunk.Origin * SharedNavMapSystem.ChunkSize + relativeTile) * _grid.TileSize;
+                var position = new Vector2(tile.X + 0.5f, tile.Y + 0.5f) - offset;
 
-            airlockLines.Add(position + airlockBuffer * -Vector2.UnitY);
-            airlockLines.Add(position - airlockBuffer * -Vector2.UnitY);
+                position = ScalePosition(position with { Y = -position.Y });
+                airlockLines.Add(position + airlockBuffer);
+                airlockLines.Add(position - airlockBuffer * foobarVec);
+
+                airlockLines.Add(position + airlockBuffer);
+                airlockLines.Add(position + airlockBuffer * foobarVec);
+
+                airlockLines.Add(position - airlockBuffer);
+                airlockLines.Add(position + airlockBuffer * foobarVec);
+
+                airlockLines.Add(position - airlockBuffer);
+                airlockLines.Add(position - airlockBuffer * foobarVec);
+
+                airlockLines.Add(position + airlockBuffer * -Vector2.UnitY);
+                airlockLines.Add(position - airlockBuffer * -Vector2.UnitY);
+            }
         }
 
         if (airlockLines.Count > 0)
@@ -492,25 +509,39 @@ public partial class NavMapControl : MapGridControl
         if (_navMap == null || _grid == null)
             return;
 
-        TileGrid = GetDecodedWallChunks(_navMap.WallChunks, _grid);
+        TileGrid = GetDecodedWallChunks(_navMap.Chunks, _grid);
+    }
+
+    private ushort GetFlattenedChunk(Dictionary<AtmosDirection, ushort> tile)
+    {
+        ushort flattened = 0;
+
+        foreach (var (_, value) in tile)
+        {
+            flattened |= value;
+        }
+
+        return flattened;
     }
 
     public Dictionary<Vector2i, List<NavMapLine>> GetDecodedWallChunks
-        (Dictionary<Vector2i, NavMapChunk> chunks,
+        (Dictionary<(NavMapChunkType, Vector2i), NavMapChunk> chunks,
         MapGridComponent grid)
     {
         var decodedOutput = new Dictionary<Vector2i, List<NavMapLine>>();
 
-        foreach ((var chunkOrigin, var chunk) in chunks)
+        foreach ((var (catergory, chunkOrigin), var chunk) in chunks)
         {
+            if (catergory != NavMapChunkType.Wall)
+                continue;
+
             var list = new List<NavMapLine>();
 
             // TODO: Okay maybe I should just use ushorts lmao...
             for (var i = 0; i < SharedNavMapSystem.ChunkSize * SharedNavMapSystem.ChunkSize; i++)
             {
                 var value = (int) Math.Pow(2, i);
-
-                var mask = chunk.TileData & value;
+                var mask = GetFlattenedChunk(chunk.TileData) & value;
 
                 if (mask == 0x0)
                     continue;
@@ -525,14 +556,14 @@ public partial class NavMapControl : MapGridControl
                 // North edge
                 if (relativeTile.Y == SharedNavMapSystem.ChunkSize - 1)
                 {
-                    neighbor = chunks.TryGetValue(chunkOrigin + new Vector2i(0, 1), out neighborChunk) &&
-                                  (neighborChunk.TileData &
+                    neighbor = chunks.TryGetValue((NavMapChunkType.Wall, chunkOrigin + new Vector2i(0, 1)), out neighborChunk) &&
+                                  (GetFlattenedChunk(neighborChunk.TileData) &
                                    SharedNavMapSystem.GetFlag(new Vector2i(relativeTile.X, 0))) != 0x0;
                 }
                 else
                 {
                     var flag = SharedNavMapSystem.GetFlag(relativeTile + new Vector2i(0, 1));
-                    neighbor = (chunk.TileData & flag) != 0x0;
+                    neighbor = (GetFlattenedChunk(chunk.TileData) & flag) != 0x0;
                 }
 
                 if (!neighbor)
@@ -544,14 +575,14 @@ public partial class NavMapControl : MapGridControl
                 // East edge
                 if (relativeTile.X == SharedNavMapSystem.ChunkSize - 1)
                 {
-                    neighbor = chunks.TryGetValue(chunkOrigin + new Vector2i(1, 0), out neighborChunk) &&
-                               (neighborChunk.TileData &
+                    neighbor = chunks.TryGetValue((NavMapChunkType.Wall, chunkOrigin + new Vector2i(1, 0)), out neighborChunk) &&
+                               (GetFlattenedChunk(neighborChunk.TileData) &
                                 SharedNavMapSystem.GetFlag(new Vector2i(0, relativeTile.Y))) != 0x0;
                 }
                 else
                 {
                     var flag = SharedNavMapSystem.GetFlag(relativeTile + new Vector2i(1, 0));
-                    neighbor = (chunk.TileData & flag) != 0x0;
+                    neighbor = (GetFlattenedChunk(chunk.TileData) & flag) != 0x0;
                 }
 
                 if (!neighbor)
@@ -563,14 +594,14 @@ public partial class NavMapControl : MapGridControl
                 // South edge
                 if (relativeTile.Y == 0)
                 {
-                    neighbor = chunks.TryGetValue(chunkOrigin + new Vector2i(0, -1), out neighborChunk) &&
-                               (neighborChunk.TileData &
+                    neighbor = chunks.TryGetValue((NavMapChunkType.Wall, chunkOrigin + new Vector2i(0, -1)), out neighborChunk) &&
+                               (GetFlattenedChunk(neighborChunk.TileData) &
                                 SharedNavMapSystem.GetFlag(new Vector2i(relativeTile.X, SharedNavMapSystem.ChunkSize - 1))) != 0x0;
                 }
                 else
                 {
                     var flag = SharedNavMapSystem.GetFlag(relativeTile + new Vector2i(0, -1));
-                    neighbor = (chunk.TileData & flag) != 0x0;
+                    neighbor = (GetFlattenedChunk(chunk.TileData) & flag) != 0x0;
                 }
 
                 if (!neighbor)
@@ -582,14 +613,14 @@ public partial class NavMapControl : MapGridControl
                 // West edge
                 if (relativeTile.X == 0)
                 {
-                    neighbor = chunks.TryGetValue(chunkOrigin + new Vector2i(-1, 0), out neighborChunk) &&
-                               (neighborChunk.TileData &
+                    neighbor = chunks.TryGetValue((NavMapChunkType.Wall, chunkOrigin + new Vector2i(-1, 0)), out neighborChunk) &&
+                               (GetFlattenedChunk(neighborChunk.TileData) &
                                 SharedNavMapSystem.GetFlag(new Vector2i(SharedNavMapSystem.ChunkSize - 1, relativeTile.Y))) != 0x0;
                 }
                 else
                 {
                     var flag = SharedNavMapSystem.GetFlag(relativeTile + new Vector2i(-1, 0));
-                    neighbor = (chunk.TileData & flag) != 0x0;
+                    neighbor = (GetFlattenedChunk(chunk.TileData) & flag) != 0x0;
                 }
 
                 if (!neighbor)

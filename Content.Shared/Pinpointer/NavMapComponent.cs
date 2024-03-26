@@ -124,7 +124,7 @@ public sealed class NavMapChunkChangedEvent : EntityEventArgs
     }
 };
 
-public enum NavMapChunkType
+public enum NavMapChunkType : byte
 {
     Invalid,
     Floor,
