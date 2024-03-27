@@ -1,6 +1,7 @@
 using Content.Shared.Atmos;
 using Content.Shared.Pinpointer;
 using Robust.Shared.GameStates;
+using Robust.Shared.Maths;
 using System.Linq;
 
 namespace Content.Client.Pinpointer;
@@ -11,6 +12,8 @@ public sealed partial class NavMapSystem
 
     private Dictionary<Vector2i, HashSet<NetEntity>> _chunkToRegionOwnerTable = new();
     private Dictionary<NetEntity, HashSet<Vector2i>> _regionOwnerToChunkTable = new();
+
+    #region: Event handling
 
     private void OnRegionOwnerChanged(NavMapRegionsOwnerChangedEvent ev)
     {
@@ -32,6 +35,8 @@ public sealed partial class NavMapSystem
 
         component.RegionProperties.Remove(ev.RegionOwner);
     }
+
+    #endregion
 
     public override void Update(float frameTime)
     {
@@ -58,7 +63,7 @@ public sealed partial class NavMapSystem
         }
 
         // Get the tiles and chunks affected by the flood fill and assign the tiles to the component
-        var (floodedTiles, floodedChunks) = FloodFillRegion(regionSeeds, component, RegionMaxSize);
+        var (floodedTiles, floodedChunks) = FloodFillRegion(uid, component, regionSeeds, RegionMaxSize);
         component.FloodedRegions[regionOwner] = floodedTiles;
 
         // To reduce unnecessary future flood fills, track which chunks have been flooded by a region owner 
@@ -90,16 +95,18 @@ public sealed partial class NavMapSystem
         }
     }
 
-    private (HashSet<Vector2i>, HashSet<Vector2i>) FloodFillRegion(HashSet<Vector2i> regionSeeds, NavMapComponent component, int regionMaxSize = 100)
+    private (HashSet<Vector2i>, HashSet<Vector2i>) FloodFillRegion(EntityUid uid, NavMapComponent component, HashSet<Vector2i> regionSeeds, int regionMaxSize = 100)
     {
         if (!regionSeeds.Any())
             return (new(), new());
 
-        HashSet<Vector2i> visitedChunks = new();
-        HashSet<Vector2i> visitedTiles = new();
-        Stack<Vector2i> tilesToVisit = new Stack<Vector2i>();
+        var regionBlockingChunkTypes = new List<NavMapChunkType>() { NavMapChunkType.Wall, NavMapChunkType.VisibleDoor, NavMapChunkType.NonVisibleDoor };
 
-        /*foreach (var regionSeed in regionSeeds)
+        var visitedChunks = new HashSet<Vector2i>();
+        var visitedTiles = new HashSet<Vector2i>();
+        var tilesToVisit = new Stack<Vector2i>();
+
+        foreach (var regionSeed in regionSeeds)
         {
             tilesToVisit.Push(regionSeed);
 
@@ -111,17 +118,24 @@ public sealed partial class NavMapSystem
 
                 var current = tilesToVisit.Pop();
 
-                var chunkOrigin = SharedMapSystem.GetChunkIndices(current, SharedNavMapSystem.ChunkSize);
-                var relative = SharedMapSystem.GetChunkRelative(current, SharedNavMapSystem.ChunkSize);
-                var flag = (ushort) SharedNavMapSystem.GetFlag(relative);
+                var chunkOrigin = SharedMapSystem.GetChunkIndices(current, ChunkSize);
+                var relative = SharedMapSystem.GetChunkRelative(current, ChunkSize);
+                var flag = (ushort) GetFlag(relative);
 
                 if (visitedTiles.Contains(current))
                     continue;
 
-                if (!component.RegionPropagationTiles.TryGetValue(chunkOrigin, out var chunk))
+                if (!component.Chunks.TryGetValue((NavMapChunkType.Floor, chunkOrigin), out var floorChunk))
                     continue;
 
-                if (!chunk.TileData.TryGetValue(AtmosDirection.All, out var all) || (all & flag) == 0)
+                var combinedFloorChunk = GetCombinedEdgesForChunk(floorChunk.TileData);
+
+                if ((combinedFloorChunk & flag) == 0)
+                    continue;
+
+                var regionBlockingTileData = GetRegionBlockingTileData(uid, component, current, regionBlockingChunkTypes);
+
+                if (AllTileEdgesAreOccupied(regionBlockingTileData, relative))
                     continue;
 
                 // Tile can be included in this region
@@ -129,61 +143,88 @@ public sealed partial class NavMapSystem
                 visitedChunks.Add(chunkOrigin);
 
                 // Determine if we can propagate the region into its cardinally adjacent neighbors
-                // To propagate to a neighbor, movement in towards that neighbor must not be blocked,
-                // and movement from the neighbor to the current tile must not be blocked.
+                // To propagate to a neighbor, movement into the neighbors closest edge must not be 
+                // blocked, and vice versa.
 
-                // These considerations are generally only necessary for tiles containing thin entities.
-
-                if (!chunk.TileData.TryGetValue(AtmosDirection.West, out var east) || (east & flag) == 0)
+                if (!regionBlockingTileData.TryGetValue(AtmosDirection.East, out var east) || (east & flag) == 0)
                 {
-                    var tile = new Vector2i(current.X - 1, current.Y);
+                    var neighbor = new Vector2i(current.X + 1, current.Y);
+                    var neighborBlockingTileData = GetRegionBlockingTileData(uid, component, neighbor, regionBlockingChunkTypes);
 
-                    if (CanMoveIntoTile(component.RegionPropagationTiles, tile, AtmosDirection.East))
-                        tilesToVisit.Push(tile);
+                    if (CanMoveIntoTile(neighborBlockingTileData, neighbor, AtmosDirection.West))
+                        tilesToVisit.Push(neighbor);
                 }
 
-                if (!chunk.TileData.TryGetValue(AtmosDirection.East, out var west) || (west & flag) == 0)
+                if (!regionBlockingTileData.TryGetValue(AtmosDirection.West, out var west) || (west & flag) == 0)
                 {
-                    var tile = new Vector2i(current.X + 1, current.Y);
+                    var neighbor = new Vector2i(current.X - 1, current.Y);
+                    var neighborBlockingTileData = GetRegionBlockingTileData(uid, component, neighbor, regionBlockingChunkTypes);
 
-                    if (CanMoveIntoTile(component.RegionPropagationTiles, tile, AtmosDirection.West))
-                        tilesToVisit.Push(tile);
+                    if (CanMoveIntoTile(neighborBlockingTileData, neighbor, AtmosDirection.East))
+                        tilesToVisit.Push(neighbor);
                 }
 
-                if (!chunk.TileData.TryGetValue(AtmosDirection.South, out var south) || (south & flag) == 0)
+                if (!regionBlockingTileData.TryGetValue(AtmosDirection.South, out var south) || (south & flag) == 0)
                 {
-                    var tile = new Vector2i(current.X, current.Y - 1);
+                    var neighbor = new Vector2i(current.X, current.Y - 1);
+                    var neighborBlockingTileData = GetRegionBlockingTileData(uid, component, neighbor, regionBlockingChunkTypes);
 
-                    if (CanMoveIntoTile(component.RegionPropagationTiles, tile, AtmosDirection.North))
-                        tilesToVisit.Push(tile);
+                    if (CanMoveIntoTile(neighborBlockingTileData, neighbor, AtmosDirection.North))
+                        tilesToVisit.Push(neighbor);
                 }
 
-                if (!chunk.TileData.TryGetValue(AtmosDirection.North, out var north) || (north & flag) == 0)
+                if (!regionBlockingTileData.TryGetValue(AtmosDirection.North, out var north) || (north & flag) == 0)
                 {
-                    var tile = new Vector2i(current.X, current.Y + 1);
+                    var neighbor = new Vector2i(current.X, current.Y + 1);
+                    var neighborBlockingTileData = GetRegionBlockingTileData(uid, component, neighbor, regionBlockingChunkTypes);
 
-                    if (CanMoveIntoTile(component.RegionPropagationTiles, tile, AtmosDirection.South))
-                        tilesToVisit.Push(tile);
+                    if (CanMoveIntoTile(neighborBlockingTileData, neighbor, AtmosDirection.South))
+                        tilesToVisit.Push(neighbor);
                 }
             }
-        }*/
+        }
 
         return (visitedTiles, visitedChunks);
     }
 
-    private bool CanMoveIntoTile(Dictionary<Vector2i, NavMapChunk> chunks, Vector2i tile, AtmosDirection direction)
+    private Dictionary<AtmosDirection, ushort> GetRegionBlockingTileData(EntityUid uid, NavMapComponent component, Vector2i tile, List<NavMapChunkType> regionBlockingChunkTypes)
     {
-        var chunkOrigin = SharedMapSystem.GetChunkIndices(tile, SharedNavMapSystem.ChunkSize);
+        var chunkOrigin = SharedMapSystem.GetChunkIndices(tile, ChunkSize);
 
-        if (!chunks.TryGetValue(chunkOrigin, out var chunk))
-            return false;
+        var regionBlockTileData = new Dictionary<AtmosDirection, ushort>()
+        {
+            [AtmosDirection.North] = 0,
+            [AtmosDirection.East] = 0,
+            [AtmosDirection.South] = 0,
+            [AtmosDirection.West] = 0,
+        };
 
-        var relative = SharedMapSystem.GetChunkRelative(tile, SharedNavMapSystem.ChunkSize);
-        var flag = SharedNavMapSystem.GetFlag(relative);
+        foreach (var regionBlockingChunkType in regionBlockingChunkTypes)
+        {
+            if (component.Chunks.TryGetValue((regionBlockingChunkType, chunkOrigin), out var blockerChunk))
+            {
+                foreach (var (direction, blockerFlag) in blockerChunk.TileData)
+                {
+                    if (!regionBlockTileData.TryGetValue(direction, out var existing))
+                        continue;
 
-        if (chunk.TileData.TryGetValue(direction, out var value) && (value & flag) > 0)
-            return false;
+                    existing |= blockerFlag;
+                    regionBlockTileData[direction] = existing;
+                }
+            }
+        }
 
-        return true;
+        return regionBlockTileData;
+    }
+
+    private bool CanMoveIntoTile(Dictionary<AtmosDirection, ushort> tileData, Vector2i tile, AtmosDirection direction)
+    {
+        var relative = SharedMapSystem.GetChunkRelative(tile, ChunkSize);
+        var flag = GetFlag(relative);
+
+        if (tileData.TryGetValue(direction, out var value) && (value & flag) == 0)
+            return true;
+
+        return false;
     }
 }

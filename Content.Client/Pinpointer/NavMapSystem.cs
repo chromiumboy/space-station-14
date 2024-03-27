@@ -70,7 +70,8 @@ public sealed partial class NavMapSystem : SharedNavMapSystem
             if (!component.RegionProperties.ContainsKey(affectedOwner))
                 continue;
 
-            component.QueuedRegionsToFlood.Enqueue(affectedOwner);
+            if (!component.QueuedRegionsToFlood.Contains(affectedOwner))
+                component.QueuedRegionsToFlood.Enqueue(affectedOwner);
         }
     }
 }

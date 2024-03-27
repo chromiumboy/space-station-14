@@ -17,6 +17,17 @@ public abstract class SharedNavMapSystem : EntitySystem
         SubscribeLocalEvent<NavMapBeaconComponent, MapInitEvent>(OnNavMapBeaconMapInit);
     }
 
+    #region: Event handling
+    private void OnNavMapBeaconMapInit(EntityUid uid, NavMapBeaconComponent component, MapInitEvent args)
+    {
+        component.Text ??= string.Empty;
+        component.Text = Loc.GetString(component.Text);
+
+        Dirty(uid, component);
+    }
+
+    #endregion
+
     /// <summary>
     /// Converts the chunk's tile into a bitflag for the slot.
     /// </summary>
@@ -40,30 +51,78 @@ public abstract class SharedNavMapSystem : EntitySystem
         return new Vector2i(x, y);
     }
 
-    private void OnNavMapBeaconMapInit(EntityUid uid, NavMapBeaconComponent component, MapInitEvent args)
+    public NavMapChunk SetAllEdgesForChunkTile(NavMapChunk chunk, Vector2i tile)
     {
-        component.Text ??= string.Empty;
-        component.Text = Loc.GetString(component.Text);
-        Dirty(uid, component);
+        var flag = (ushort) GetFlag(tile);
+
+        foreach (var (direction, _) in chunk.TileData)
+            chunk.TileData[direction] |= flag;
+
+        return chunk;
     }
 
-    public bool RegionOwnerIsValid(EntityUid uid, NavMapComponent component, NetEntity regionOwner)
+    public NavMapChunk UnsetAllEdgesForChunkTile(NavMapChunk chunk, Vector2i tile)
     {
-        return component.RegionProperties.ContainsKey(regionOwner);
+        var flag = (ushort) GetFlag(tile);
+        var invFlag = (ushort) ~flag;
+
+        foreach (var (direction, _) in chunk.TileData)
+            chunk.TileData[direction] &= invFlag;
+
+        return chunk;
     }
 
-    public void AddRegionOwner(EntityUid uid, NavMapComponent component, NetEntity regionOwner, HashSet<Vector2i> regionSeeds)
+    public ushort GetCombinedEdgesForChunk(Dictionary<AtmosDirection, ushort> tile)
     {
-        var ev = new NavMapRegionsOwnerChangedEvent(GetNetEntity(uid), regionOwner, regionSeeds);
+        ushort combined = 0;
 
-        if (!component.RegionProperties.TryGetValue(regionOwner, out var oldSeeds))
-            RaiseNetworkEvent(ev);
+        foreach (var (_, value) in tile)
+            combined |= value;
 
-        else if (!oldSeeds.SequenceEqual(regionSeeds))
-            RaiseNetworkEvent(ev);
-
-        component.RegionProperties[regionOwner] = regionSeeds;
+        return combined;
     }
+
+    public bool AllTileEdgesAreOccupied(Dictionary<AtmosDirection, ushort> tileData, Vector2i tile)
+    {
+        var flag = (ushort) GetFlag(tile);
+
+        foreach (var (direction, _) in tileData)
+        {
+            if ((tileData[direction] & flag) == 0)
+                return false;
+        }
+
+        return true;
+    }
+
+    public bool AddNavMapRegion(EntityUid uid, NavMapComponent component, NetEntity regionOwner, HashSet<Vector2i> regionSeeds)
+    {
+        if (!component.RegionProperties.TryGetValue(regionOwner, out var oldSeeds) ||
+            !oldSeeds.SequenceEqual(regionSeeds))
+        {
+            component.RegionProperties[regionOwner] = regionSeeds;
+            RaiseNetworkEvent(new NavMapRegionsOwnerChangedEvent(GetNetEntity(uid), regionOwner, regionSeeds));
+
+            return true;
+        }
+
+        return false;
+    }
+
+    public bool RemoveNavMapRegion(EntityUid uid, NavMapComponent component, NetEntity regionOwner)
+    {
+        if (component.RegionProperties.ContainsKey(regionOwner))
+        {
+            component.RegionProperties.Remove(regionOwner);
+            RaiseNetworkEvent(new NavMapRegionsOwnerRemovedEvent(GetNetEntity(uid), regionOwner));
+
+            return true;
+        }
+
+        return false;
+    }
+
+    #region: System messages
 
     [Serializable, NetSerializable]
     protected sealed class NavMapComponentState : ComponentState
@@ -77,5 +136,49 @@ public abstract class SharedNavMapSystem : EntitySystem
     public readonly record struct NavMapBeacon(Color Color, string Text, Vector2 Position);
 
     [Serializable, NetSerializable]
-    public readonly record struct NavMapAirlock(Vector2 Position, bool Visible = true);
+    public sealed class NavMapRegionsOwnerRemovedEvent : EntityEventArgs
+    {
+        public NetEntity Grid;
+        public NetEntity RegionOwner;
+
+        public NavMapRegionsOwnerRemovedEvent(NetEntity grid, NetEntity regionOwner)
+        {
+            Grid = grid;
+            RegionOwner = regionOwner;
+        }
+    };
+
+    [Serializable, NetSerializable]
+    public sealed class NavMapRegionsOwnerChangedEvent : EntityEventArgs
+    {
+        public NetEntity Grid;
+        public NetEntity RegionOwner;
+        public HashSet<Vector2i> RegionSeeds;
+
+        public NavMapRegionsOwnerChangedEvent(NetEntity grid, NetEntity regionOwner, HashSet<Vector2i> regionSeeds)
+        {
+            Grid = grid;
+            RegionOwner = regionOwner;
+            RegionSeeds = regionSeeds;
+        }
+    };
+
+    [Serializable, NetSerializable]
+    public sealed class NavMapChunkChangedEvent : EntityEventArgs
+    {
+        public NetEntity Grid;
+        public NavMapChunkType Category;
+        public Vector2i ChunkOrigin;
+        public Dictionary<AtmosDirection, ushort> TileData;
+
+        public NavMapChunkChangedEvent(NetEntity grid, NavMapChunkType category, Vector2i chunkOrigin, Dictionary<AtmosDirection, ushort> tileData)
+        {
+            Grid = grid;
+            Category = category;
+            ChunkOrigin = chunkOrigin;
+            TileData = tileData;
+        }
+    };
+
+    #endregion
 }

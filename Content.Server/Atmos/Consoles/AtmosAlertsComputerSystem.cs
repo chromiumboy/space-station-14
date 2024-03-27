@@ -24,6 +24,7 @@ public sealed class AtmosAlertsComputerSystem : SharedAtmosAlertsComputerSystem
     [Dependency] private readonly AirAlarmSystem _airAlarmSystem = default!;
     [Dependency] private readonly AtmosDeviceNetworkSystem _atmosDevNet = default!;
     [Dependency] private readonly SharedAppearanceSystem _appearance = default!;
+    [Dependency] private readonly SharedNavMapSystem _navMap = default!;
 
     private const float UpdateTime = 1.0f;
 
@@ -257,7 +258,7 @@ public sealed class AtmosAlertsComputerSystem : SharedAtmosAlertsComputerSystem
                 }
 
                 var netEnt = GetNetEntity(ent);
-                //_navMapRegions.AddRegionOwner(gridUid, navMapRegions, netEnt, alarmRegionSeeds);
+                _navMap.AddNavMapRegion(gridUid, navMapRegions, netEnt, alarmRegionSeeds);
             }
 
             alarmStateData.Add(entry);

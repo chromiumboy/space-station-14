@@ -96,6 +96,8 @@
       fixVacuum: true
       airBlocked: false
       noAirWhenFullyAirBlocked: true
+    - type: NavMapDoor
+      visible: false
     - type: RadiationBlocker
       enabled: false
     - type: Occluder

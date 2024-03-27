@@ -59,9 +59,8 @@ public sealed class NavMapChunk
     public readonly Vector2i Origin;
 
     /// <summary>
-    /// Bitmask for tiles, 1 for occupied and 0 for empty.
-    /// There is a bitmask for each direction, in case the
-    /// entity does not fill the whole tile
+    /// Bitmask for tiles, 1 for occupied and 0 for empty. There is a bitmask for each direction,
+    /// in case the entity does not fill the whole tile
     /// </summary>
     public Dictionary<AtmosDirection, ushort> TileData;
 
@@ -78,51 +77,6 @@ public sealed class NavMapChunk
         };
     }
 }
-
-[Serializable, NetSerializable]
-public sealed class NavMapRegionsOwnerRemovedEvent : EntityEventArgs
-{
-    public NetEntity Grid;
-    public NetEntity RegionOwner;
-
-    public NavMapRegionsOwnerRemovedEvent(NetEntity grid, NetEntity regionOwner)
-    {
-        Grid = grid;
-        RegionOwner = regionOwner;
-    }
-};
-
-[Serializable, NetSerializable]
-public sealed class NavMapRegionsOwnerChangedEvent : EntityEventArgs
-{
-    public NetEntity Grid;
-    public NetEntity RegionOwner;
-    public HashSet<Vector2i> RegionSeeds;
-
-    public NavMapRegionsOwnerChangedEvent(NetEntity grid, NetEntity regionOwner, HashSet<Vector2i> regionSeeds)
-    {
-        Grid = grid;
-        RegionOwner = regionOwner;
-        RegionSeeds = regionSeeds;
-    }
-};
-
-[Serializable, NetSerializable]
-public sealed class NavMapChunkChangedEvent : EntityEventArgs
-{
-    public NetEntity Grid;
-    public NavMapChunkType Category;
-    public Vector2i ChunkOrigin;
-    public Dictionary<AtmosDirection, ushort> TileData;
-
-    public NavMapChunkChangedEvent(NetEntity grid, NavMapChunkType category, Vector2i chunkOrigin, Dictionary<AtmosDirection, ushort> tileData)
-    {
-        Grid = grid;
-        Category = category;
-        ChunkOrigin = chunkOrigin;
-        TileData = tileData;
-    }
-};
 
 public enum NavMapChunkType : byte
 {
