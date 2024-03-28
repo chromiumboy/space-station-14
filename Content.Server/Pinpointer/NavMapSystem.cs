@@ -235,7 +235,7 @@ public sealed partial class NavMapSystem : SharedNavMapSystem
                     name = MetaData(beaconUid).EntityName;
             }
 
-            beacons.Add(new NavMapBeacon(beacon.Color, name, xform.LocalPosition));
+            beacons.Add(new NavMapBeacon(GetNetEntity(beaconUid), beacon.Color, name, xform.LocalPosition));
         }
 
         // Get the region properties

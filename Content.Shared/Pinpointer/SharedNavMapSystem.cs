@@ -27,7 +27,7 @@ public abstract class SharedNavMapSystem : EntitySystem
     {
         base.Initialize();
 
-        SubscribeLocalEvent<NavMapBeaconComponent, MapInitEvent>(OnNavMapBeaconMapInit);
+        //SubscribeLocalEvent<NavMapBeaconComponent, MapInitEvent>(OnNavMapBeaconMapInit);
     }
 
     #region: Event handling
@@ -148,7 +148,7 @@ public abstract class SharedNavMapSystem : EntitySystem
     }
 
     [Serializable, NetSerializable]
-    public readonly record struct NavMapBeacon(Color Color, string Text, Vector2 Position);
+    public readonly record struct NavMapBeacon(NetEntity NetEnt, Color Color, string Text, Vector2 Position);
 
     [Serializable, NetSerializable]
     public sealed class NavMapRegionsOwnerRemovedEvent : EntityEventArgs
