@@ -93,7 +93,6 @@
     - type: Physics
       canCollide: false
     - type: Airtight
-      fixVacuum: true
       airBlocked: false
       noAirWhenFullyAirBlocked: true
     - type: NavMapDoor
@@ -160,7 +159,6 @@
       sprite: Structures/Doors/edge_door_hazard.rsi
       snapCardinals: false
     - type: Airtight
-      fixVacuum: true
       airBlocked: false
       noAirWhenFullyAirBlocked: false
       airBlockedDirection:
