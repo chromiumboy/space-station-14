@@ -353,7 +353,7 @@ public partial class NavMapControl : MapGridControl
         var airlockLines = new ValueList<Vector2>();
         var foobarVec = new Vector2(1, -1);
 
-        foreach (var ((category, chuckOrigin), chunk) in _navMap.Chunks)
+        foreach (var ((category, _), chunk) in _navMap.Chunks)
         {
             if (category != NavMapChunkType.VisibleDoor)
                 continue;
@@ -528,10 +528,9 @@ public partial class NavMapControl : MapGridControl
 
             var list = new List<NavMapLine>();
 
-            // TODO: Okay maybe I should just use ushorts lmao...
             for (var i = 0; i < SharedNavMapSystem.ChunkSize * SharedNavMapSystem.ChunkSize; i++)
             {
-                var value = (int) Math.Pow(2, i);
+                var value = (ushort) Math.Pow(2, i);
                 var mask = _navMapSystem.GetCombinedEdgesForChunk(chunk.TileData) & value;
 
                 if (mask == 0x0)

@@ -59,8 +59,8 @@ public sealed class NavMapChunk
     public readonly Vector2i Origin;
 
     /// <summary>
-    /// Bitmask for tiles, 1 for occupied and 0 for empty. There is a bitmask for each direction,
-    /// in case the entity does not fill the whole tile
+    /// Bitmask for tiles, 1 for occupied and 0 for empty. There is a bitmask for each cardinal direction,
+    /// representing each edge of the tile, in case the entities inside it do not entirely fill it
     /// </summary>
     public Dictionary<AtmosDirection, ushort> TileData;
 

@@ -10,6 +10,19 @@ public abstract class SharedNavMapSystem : EntitySystem
 {
     public const byte ChunkSize = 4;
 
+    public readonly NavMapChunkType[] RegionBlockingChunkTypes =
+    {
+        NavMapChunkType.Wall,
+        NavMapChunkType.VisibleDoor,
+        NavMapChunkType.NonVisibleDoor,
+    };
+
+    public readonly NavMapChunkType[] DoorChunkTypes =
+    {
+        NavMapChunkType.VisibleDoor,
+        NavMapChunkType.NonVisibleDoor,
+    };
+
     public override void Initialize()
     {
         base.Initialize();
@@ -53,7 +66,8 @@ public abstract class SharedNavMapSystem : EntitySystem
 
     public NavMapChunk SetAllEdgesForChunkTile(NavMapChunk chunk, Vector2i tile)
     {
-        var flag = (ushort) GetFlag(tile);
+        var relative = SharedMapSystem.GetChunkRelative(tile, ChunkSize);
+        var flag = (ushort) GetFlag(relative);
 
         foreach (var (direction, _) in chunk.TileData)
             chunk.TileData[direction] |= flag;
@@ -63,7 +77,8 @@ public abstract class SharedNavMapSystem : EntitySystem
 
     public NavMapChunk UnsetAllEdgesForChunkTile(NavMapChunk chunk, Vector2i tile)
     {
-        var flag = (ushort) GetFlag(tile);
+        var relative = SharedMapSystem.GetChunkRelative(tile, ChunkSize);
+        var flag = (ushort) GetFlag(relative);
         var invFlag = (ushort) ~flag;
 
         foreach (var (direction, _) in chunk.TileData)

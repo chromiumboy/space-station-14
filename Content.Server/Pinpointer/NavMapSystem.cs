@@ -121,8 +121,8 @@ public sealed partial class NavMapSystem : SharedNavMapSystem
 
         RefreshTile(gridUid.Value, navMap, mapGrid, chunkOrigin, tile);
 
-        // Update potentially affected chunks
-        foreach (NavMapChunkType category in Enum.GetValues(typeof(NavMapChunkType)))
+        // Update potentially affected chunks (i.e., walls and doors)
+        foreach (NavMapChunkType category in RegionBlockingChunkTypes)
         {
             if (!navMap.Chunks.TryGetValue((category, chunkOrigin), out var chunk))
                 continue;
@@ -265,17 +265,11 @@ public sealed partial class NavMapSystem : SharedNavMapSystem
         {
             var tile = tileRef.GridIndices;
             var chunkOrigin = SharedMapSystem.GetChunkIndices(tile, ChunkSize);
-            var relative = SharedMapSystem.GetChunkRelative(tile, ChunkSize);
 
             if (!component.Chunks.TryGetValue((NavMapChunkType.Floor, chunkOrigin), out var chunk))
                 chunk = new(chunkOrigin);
 
-            var flag = (ushort) GetFlag(relative);
-
-            foreach (var (direction, _) in chunk.TileData)
-                chunk.TileData[direction] |= flag;
-
-            component.Chunks[(NavMapChunkType.Floor, chunkOrigin)] = chunk;
+            component.Chunks[(NavMapChunkType.Floor, chunkOrigin)] = SetAllEdgesForChunkTile(chunk, tile);
 
             // Refresh the contents of the tile
             RefreshTile(uid, component, mapGrid, chunkOrigin, tile);
@@ -288,40 +282,54 @@ public sealed partial class NavMapSystem : SharedNavMapSystem
     {
         var relative = SharedMapSystem.GetChunkRelative(tile, ChunkSize);
         var flag = (ushort) GetFlag(relative);
+        var invFlag = (ushort) ~flag;
 
-        // Update the tile data based on what entities are still anchored to it
+        // Clear stale data from the tile across all associated chunks
+        foreach (var category in RegionBlockingChunkTypes)
+        {
+            if (!component.Chunks.TryGetValue((category, chunkOrigin), out var chunk))
+                chunk = new(chunkOrigin);
+
+            foreach (var (direction, _) in chunk.TileData)
+                chunk.TileData[direction] &= invFlag;
+
+            component.Chunks[(category, chunkOrigin)] = chunk;
+        }
+
+        // Update the tile data based on what entities are still anchored to the tile
         var enumerator = _mapSystem.GetAnchoredEntitiesEnumerator(uid, mapGrid, tile);
 
         while (enumerator.MoveNext(out var ent))
         {
-            if (!HasComp<AirtightComponent>(ent))
+            if (!TryComp<AirtightComponent>(ent, out var entAirtight))
                 continue;
 
             var category = GetAssociatedChunkType(ent.Value);
 
             if (!component.Chunks.TryGetValue((category, chunkOrigin), out var chunk))
-                chunk = new(chunkOrigin);
+                continue;
 
             foreach (var (direction, _) in chunk.TileData)
-                chunk.TileData[direction] |= flag;
+            {
+                if ((direction & entAirtight.AirBlockedDirection) > 0)
+                    chunk.TileData[direction] |= flag;
+            }
 
             component.Chunks[(category, chunkOrigin)] = chunk;
         }
 
-        // Walls should not intersect with doors (unless they can both physically fit on the same tile)
+        // Remove walls that intersect with doors (unless they can both physically fit on the same tile)
         if (component.Chunks.TryGetValue((NavMapChunkType.Wall, chunkOrigin), out var wallChunk))
         {
-            var doors = new List<NavMapChunkType>() { NavMapChunkType.VisibleDoor, NavMapChunkType.NonVisibleDoor };
-
-            foreach (var door in doors)
+            foreach (var door in DoorChunkTypes)
             {
                 if (!component.Chunks.TryGetValue((door, chunkOrigin), out var doorChunk))
                     continue;
 
                 foreach (var (direction, _) in wallChunk.TileData)
                 {
-                    var doorFlag = (ushort) ~doorChunk.TileData[direction];
-                    wallChunk.TileData[direction] &= doorFlag;
+                    var doorInvFlag = (ushort) ~doorChunk.TileData[direction];
+                    wallChunk.TileData[direction] &= doorInvFlag;
                 }
             }
 
