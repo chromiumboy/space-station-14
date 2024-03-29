@@ -11,8 +11,8 @@ public sealed partial class NavMapSystem : SharedNavMapSystem
 
         SubscribeLocalEvent<NavMapComponent, ComponentHandleState>(OnHandleState);
 
-        SubscribeNetworkEvent<NavMapRegionsOwnerRemovedEvent>(OnRegionOwnerRemoved);
-        SubscribeNetworkEvent<NavMapRegionsOwnerChangedEvent>(OnRegionOwnerChanged);
+        SubscribeNetworkEvent<NavMapRegionRemovedEvent>(OnRegionRemoved);
+        SubscribeNetworkEvent<NavMapRegionPropertiesChangedEvent>(OnRegionPropertiesChanged);
         SubscribeNetworkEvent<NavMapChunkChangedEvent>(OnChunkChanged);
     }
 

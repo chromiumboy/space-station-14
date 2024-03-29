@@ -31,7 +31,7 @@ public sealed partial class NavMapComponent : Component
     /// It is indexed by the entity assigned as the region owner.
     /// </summary>
     [ViewVariables(VVAccess.ReadOnly)]
-    public Dictionary<NetEntity, HashSet<Vector2i>> RegionProperties = new();
+    public Dictionary<NetEntity, NavMapRegionProperties> RegionProperties = new();
 
     /// <summary>
     /// All flood filled regions.
@@ -75,6 +75,25 @@ public sealed class NavMapChunk
             [AtmosDirection.South] = 0,
             [AtmosDirection.West] = 0,
         };
+    }
+}
+
+[Serializable, NetSerializable]
+public sealed class NavMapRegionProperties
+{
+    public readonly NetEntity Owner;
+    public readonly NavMapChunkType[] PropagatingTypes;
+    public readonly NavMapChunkType[] ConstraintsTypes;
+    public HashSet<Vector2i> Seeds;
+    public Color Color;
+
+    public NavMapRegionProperties(NetEntity owner, NavMapChunkType[] propagatingTypes, NavMapChunkType[] constraintsTypes, HashSet<Vector2i> seeds, Color color)
+    {
+        Owner = owner;
+        PropagatingTypes = propagatingTypes;
+        ConstraintsTypes = constraintsTypes;
+        Seeds = seeds;
+        Color = color;
     }
 }
 

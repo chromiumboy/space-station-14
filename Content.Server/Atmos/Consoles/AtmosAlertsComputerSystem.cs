@@ -258,7 +258,7 @@ public sealed class AtmosAlertsComputerSystem : SharedAtmosAlertsComputerSystem
                 }
 
                 var netEnt = GetNetEntity(ent);
-                _navMap.AddNavMapRegion(gridUid, navMapRegions, netEnt, alarmRegionSeeds);
+                //_navMap.AddNavMapRegion(gridUid, navMapRegions, netEnt, alarmRegionSeeds);
             }
 
             alarmStateData.Add(entry);

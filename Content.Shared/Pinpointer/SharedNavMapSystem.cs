@@ -27,7 +27,7 @@ public abstract class SharedNavMapSystem : EntitySystem
     {
         base.Initialize();
 
-        //SubscribeLocalEvent<NavMapBeaconComponent, MapInitEvent>(OnNavMapBeaconMapInit);
+        SubscribeLocalEvent<NavMapBeaconComponent, MapInitEvent>(OnNavMapBeaconMapInit);
     }
 
     #region: Event handling
@@ -110,13 +110,25 @@ public abstract class SharedNavMapSystem : EntitySystem
         return true;
     }
 
-    public bool AddNavMapRegion(EntityUid uid, NavMapComponent component, NetEntity regionOwner, HashSet<Vector2i> regionSeeds)
+    public bool AddOrUpdateNavMapRegion(EntityUid uid, NavMapComponent component, NetEntity regionOwner, NavMapRegionProperties regionProperties)
     {
-        if (!component.RegionProperties.TryGetValue(regionOwner, out var oldSeeds) ||
-            !oldSeeds.SequenceEqual(regionSeeds))
+        // Check if a new region has been added
+        var raiseEvent = !component.RegionProperties.TryGetValue(regionOwner, out var oldProperties);
+        var floodRegion = raiseEvent;
+
+        // If not, check if an old region has been altered
+        if (!raiseEvent)
         {
-            component.RegionProperties[regionOwner] = regionSeeds;
-            RaiseNetworkEvent(new NavMapRegionsOwnerChangedEvent(GetNetEntity(uid), regionOwner, regionSeeds));
+            var seedsEqual = oldProperties?.Seeds.SequenceEqual(regionProperties.Seeds) == false;
+
+            raiseEvent = !seedsEqual || (regionProperties.Color != oldProperties?.Color);
+            floodRegion = !seedsEqual;
+        }
+
+        if (raiseEvent)
+        {
+            component.RegionProperties[regionOwner] = regionProperties;
+            RaiseNetworkEvent(new NavMapRegionPropertiesChangedEvent(GetNetEntity(uid), regionOwner, regionProperties, floodRegion));
 
             return true;
         }
@@ -129,7 +141,7 @@ public abstract class SharedNavMapSystem : EntitySystem
         if (component.RegionProperties.ContainsKey(regionOwner))
         {
             component.RegionProperties.Remove(regionOwner);
-            RaiseNetworkEvent(new NavMapRegionsOwnerRemovedEvent(GetNetEntity(uid), regionOwner));
+            RaiseNetworkEvent(new NavMapRegionRemovedEvent(GetNetEntity(uid), regionOwner));
 
             return true;
         }
@@ -144,19 +156,19 @@ public abstract class SharedNavMapSystem : EntitySystem
     {
         public Dictionary<(NavMapChunkType, Vector2i), Dictionary<AtmosDirection, ushort>> ChunkData = new();
         public List<NavMapBeacon> Beacons = new();
-        public Dictionary<NetEntity, HashSet<Vector2i>> RegionProperties = new();
+        public Dictionary<NetEntity, NavMapRegionProperties> RegionProperties = new();
     }
 
     [Serializable, NetSerializable]
     public readonly record struct NavMapBeacon(NetEntity NetEnt, Color Color, string Text, Vector2 Position);
 
     [Serializable, NetSerializable]
-    public sealed class NavMapRegionsOwnerRemovedEvent : EntityEventArgs
+    public sealed class NavMapRegionRemovedEvent : EntityEventArgs
     {
         public NetEntity Grid;
         public NetEntity RegionOwner;
 
-        public NavMapRegionsOwnerRemovedEvent(NetEntity grid, NetEntity regionOwner)
+        public NavMapRegionRemovedEvent(NetEntity grid, NetEntity regionOwner)
         {
             Grid = grid;
             RegionOwner = regionOwner;
@@ -164,17 +176,19 @@ public abstract class SharedNavMapSystem : EntitySystem
     };
 
     [Serializable, NetSerializable]
-    public sealed class NavMapRegionsOwnerChangedEvent : EntityEventArgs
+    public sealed class NavMapRegionPropertiesChangedEvent : EntityEventArgs
     {
         public NetEntity Grid;
         public NetEntity RegionOwner;
-        public HashSet<Vector2i> RegionSeeds;
+        public NavMapRegionProperties RegionProperties;
+        public bool FloodRegion;
 
-        public NavMapRegionsOwnerChangedEvent(NetEntity grid, NetEntity regionOwner, HashSet<Vector2i> regionSeeds)
+        public NavMapRegionPropertiesChangedEvent(NetEntity grid, NetEntity regionOwner, NavMapRegionProperties regionProperties, bool floodRegion = false)
         {
             Grid = grid;
             RegionOwner = regionOwner;
-            RegionSeeds = regionSeeds;
+            RegionProperties = regionProperties;
+            FloodRegion = floodRegion;
         }
     };
 

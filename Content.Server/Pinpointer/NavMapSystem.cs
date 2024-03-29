@@ -239,10 +239,15 @@ public sealed partial class NavMapSystem : SharedNavMapSystem
         }
 
         // Get the region properties
-        var regionsData = new Dictionary<NetEntity, HashSet<Vector2i>>(component.RegionProperties.Count);
+        var regionsData = new Dictionary<NetEntity, NavMapRegionProperties>(component.RegionProperties.Count);
 
-        foreach (var (netEntity, seeds) in component.RegionProperties)
-            regionsData.Add(netEntity, seeds);
+        foreach (var (regionOwner, regionProperties) in component.RegionProperties)
+        {
+            var newProperties = new NavMapRegionProperties
+                (regionOwner, regionProperties.PropagatingTypes, regionProperties.ConstraintsTypes, regionProperties.Seeds, regionProperties.Color);
+
+            regionsData.Add(regionOwner, newProperties);
+        }
 
         // Set the state
         args.State = new NavMapComponentState()

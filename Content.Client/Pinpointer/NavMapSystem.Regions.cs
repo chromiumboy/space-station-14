@@ -21,18 +21,20 @@ public sealed partial class NavMapSystem
 
     #region: Event handling
 
-    private void OnRegionOwnerChanged(NavMapRegionsOwnerChangedEvent ev)
+    private void OnRegionPropertiesChanged(NavMapRegionPropertiesChangedEvent ev)
     {
         var gridUid = GetEntity(ev.Grid);
 
         if (!TryComp<NavMapComponent>(gridUid, out var component))
             return;
 
-        component.RegionProperties[ev.RegionOwner] = ev.RegionSeeds;
-        component.QueuedRegionsToFlood.Enqueue(ev.RegionOwner);
+        component.RegionProperties[ev.RegionOwner] = ev.RegionProperties;
+
+        if (ev.FloodRegion)
+            component.QueuedRegionsToFlood.Enqueue(ev.RegionOwner);
     }
 
-    private void OnRegionOwnerRemoved(NavMapRegionsOwnerRemovedEvent ev)
+    private void OnRegionRemoved(NavMapRegionRemovedEvent ev)
     {
         var gridUid = GetEntity(ev.Grid);
 
@@ -61,15 +63,15 @@ public sealed partial class NavMapSystem
         var regionOwner = component.QueuedRegionsToFlood.Dequeue();
 
         // If the region is no longer valid, flood the next one in the queue
-        if (!component.RegionProperties.TryGetValue(regionOwner, out var regionSeeds) ||
-            !regionSeeds.Any())
+        if (!component.RegionProperties.TryGetValue(regionOwner, out var regionProperties) ||
+            !regionProperties.Seeds.Any())
         {
             FloodFillNextEnqueuedRegion(uid, component);
             return;
         }
 
         // Get the tiles and chunks affected by the flood fill and assign the tiles to the component
-        var (floodedTiles, floodedChunks) = FloodFillRegion(uid, component, regionSeeds, RegionMaxSize);
+        var (floodedTiles, floodedChunks) = FloodFillRegion(uid, component, regionProperties.Seeds, RegionMaxSize);
         component.FloodedRegions[regionOwner] = floodedTiles;
 
         // To reduce unnecessary future flood fills, track which chunks have been flooded by a region owner 

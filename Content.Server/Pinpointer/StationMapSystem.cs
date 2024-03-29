@@ -19,7 +19,7 @@ public sealed class StationMapSystem : EntitySystem
         base.Initialize();
         SubscribeLocalEvent<StationMapUserComponent, EntParentChangedMessage>(OnUserParentChanged);
         SubscribeLocalEvent<AnchorStateChangedEvent>(OnNavMapBeaconAnchor);
-        SubscribeLocalEvent<NavMapBeaconComponent, MapInitEvent>(OnNavMapBeaconMapInit);
+        //SubscribeLocalEvent<NavMapBeaconComponent, MapInitEvent>(OnNavMapBeaconMapInit);
 
         Subs.BuiEvents<StationMapComponent>(StationMapUiKey.Key, subs =>
         {
@@ -39,13 +39,8 @@ public sealed class StationMapSystem : EntitySystem
         if (navMap == null)
             return;
 
-        var position = _mapSystem.CoordinatesToTile(xform.GridUid.Value, mapGrid, _transformSystem.GetMapCoordinates(uid, xform));
-        _navMapSystem.AddNavMapRegion(xform.GridUid.Value, navMap, GetNetEntity(uid), new HashSet<Vector2i>() { position });
-
-        component.Text ??= string.Empty;
-        component.Text = Loc.GetString(component.Text);
-
-        Dirty(uid, component);
+        //var position = _mapSystem.CoordinatesToTile(xform.GridUid.Value, mapGrid, _transformSystem.GetMapCoordinates(uid, xform));
+        //_navMapSystem.AddNavMapRegion(xform.GridUid.Value, navMap, GetNetEntity(uid), new HashSet<Vector2i>() { position });
     }
 
     private void OnStationMapOpened(EntityUid uid, StationMapComponent component, BoundUIOpenedEvent args)
