@@ -71,8 +71,8 @@ public sealed partial class NavMapSystem
         }
 
         // Get the tiles and chunks affected by the flood fill and assign the tiles to the component
-        var (floodedTiles, floodedChunks) = FloodFillRegion(uid, component, regionProperties.Seeds, RegionMaxSize);
-        component.FloodedRegions[regionOwner] = floodedTiles;
+        var (floodedTiles, floodedChunks) = FloodFillRegion(uid, component, regionProperties, RegionMaxSize);
+        component.FloodedRegions[regionOwner] = (floodedTiles, regionProperties.Color);
 
         // To reduce unnecessary future flood fills, track which chunks have been flooded by a region owner 
 
@@ -103,16 +103,16 @@ public sealed partial class NavMapSystem
         }
     }
 
-    private (HashSet<Vector2i>, HashSet<Vector2i>) FloodFillRegion(EntityUid uid, NavMapComponent component, HashSet<Vector2i> regionSeeds, int regionMaxSize = 100)
+    private (HashSet<Vector2i>, HashSet<Vector2i>) FloodFillRegion(EntityUid uid, NavMapComponent component, NavMapRegionProperties regionProperties, int regionMaxSize = 100)
     {
-        if (!regionSeeds.Any())
+        if (!regionProperties.Seeds.Any())
             return (new(), new());
 
         var visitedChunks = new HashSet<Vector2i>();
         var visitedTiles = new HashSet<Vector2i>();
         var tilesToVisit = new Stack<Vector2i>();
 
-        foreach (var regionSeed in regionSeeds)
+        foreach (var regionSeed in regionProperties.Seeds)
         {
             tilesToVisit.Push(regionSeed);
 
@@ -131,15 +131,18 @@ public sealed partial class NavMapSystem
                 if (visitedTiles.Contains(current))
                     continue;
 
-                if (!component.Chunks.TryGetValue((NavMapChunkType.Floor, chunkOrigin), out var floorChunk))
+                ushort combinedPropagatingChunk = 0;
+
+                foreach (var chunkType in regionProperties.PropagatingTypes)
+                {
+                    if (component.Chunks.TryGetValue((chunkType, chunkOrigin), out var propagatingChunk))
+                        combinedPropagatingChunk |= GetCombinedEdgesForChunk(propagatingChunk.TileData);
+                }
+
+                if ((combinedPropagatingChunk & flag) == 0)
                     continue;
 
-                var combinedFloorChunk = GetCombinedEdgesForChunk(floorChunk.TileData);
-
-                if ((combinedFloorChunk & flag) == 0)
-                    continue;
-
-                var regionBlockingTileData = GetRegionBlockingTileData(uid, component, current);
+                var regionBlockingTileData = GetRegionBlockingTileData(uid, component, current, regionProperties);
 
                 if (AllTileEdgesAreOccupied(regionBlockingTileData, relative))
                     continue;
@@ -157,7 +160,7 @@ public sealed partial class NavMapSystem
                     if (!regionBlockingTileData.TryGetValue(direction, out var directionFlag) || (directionFlag & flag) == 0)
                     {
                         var neighbor = current + tileOffset;
-                        var neighborBlockingTileData = GetRegionBlockingTileData(uid, component, neighbor);
+                        var neighborBlockingTileData = GetRegionBlockingTileData(uid, component, neighbor, regionProperties);
 
                         if (CanMoveIntoTile(neighborBlockingTileData, neighbor, reverseDirection))
                             tilesToVisit.Push(neighbor);
@@ -169,7 +172,7 @@ public sealed partial class NavMapSystem
         return (visitedTiles, visitedChunks);
     }
 
-    private Dictionary<AtmosDirection, ushort> GetRegionBlockingTileData(EntityUid uid, NavMapComponent component, Vector2i tile)
+    private Dictionary<AtmosDirection, ushort> GetRegionBlockingTileData(EntityUid uid, NavMapComponent component, Vector2i tile, NavMapRegionProperties regionProperties)
     {
         var chunkOrigin = SharedMapSystem.GetChunkIndices(tile, ChunkSize);
 
@@ -181,7 +184,7 @@ public sealed partial class NavMapSystem
             [AtmosDirection.West] = 0,
         };
 
-        foreach (var regionBlockingChunkType in RegionBlockingChunkTypes)
+        foreach (var regionBlockingChunkType in regionProperties.ConstraintTypes)
         {
             if (component.Chunks.TryGetValue((regionBlockingChunkType, chunkOrigin), out var blockerChunk))
             {

@@ -18,8 +18,8 @@ public sealed class StationMapSystem : EntitySystem
     {
         base.Initialize();
         SubscribeLocalEvent<StationMapUserComponent, EntParentChangedMessage>(OnUserParentChanged);
-        SubscribeLocalEvent<AnchorStateChangedEvent>(OnNavMapBeaconAnchor);
-        //SubscribeLocalEvent<NavMapBeaconComponent, MapInitEvent>(OnNavMapBeaconMapInit);
+        SubscribeLocalEvent<NavMapRegionMarkerComponent, MapInitEvent>(OnNavMapBeaconInit);
+        SubscribeLocalEvent<NavMapRegionMarkerComponent, AnchorStateChangedEvent>(OnNavMapBeaconAnchor);
 
         Subs.BuiEvents<StationMapComponent>(StationMapUiKey.Key, subs =>
         {
@@ -28,20 +28,7 @@ public sealed class StationMapSystem : EntitySystem
         });
     }
 
-    private void OnNavMapBeaconMapInit(EntityUid uid, NavMapBeaconComponent component, MapInitEvent args)
-    {
-        var xform = Transform(uid);
-
-        if (!TryComp<NavMapComponent>(xform.GridUid, out var navMap) ||
-            !TryComp<MapGridComponent>(xform.GridUid, out var mapGrid))
-            return;
-
-        if (navMap == null)
-            return;
-
-        //var position = _mapSystem.CoordinatesToTile(xform.GridUid.Value, mapGrid, _transformSystem.GetMapCoordinates(uid, xform));
-        //_navMapSystem.AddNavMapRegion(xform.GridUid.Value, navMap, GetNetEntity(uid), new HashSet<Vector2i>() { position });
-    }
+    #region: Event handling
 
     private void OnStationMapOpened(EntityUid uid, StationMapComponent component, BoundUIOpenedEvent args)
     {
@@ -71,25 +58,56 @@ public sealed class StationMapSystem : EntitySystem
         }
     }
 
-    private void OnNavMapBeaconAnchor(ref AnchorStateChangedEvent ev)
+    private void OnNavMapBeaconInit(EntityUid uid, NavMapRegionMarkerComponent component, ref MapInitEvent ev)
     {
-        if (!HasComp<NavMapBeaconComponent>(ev.Entity) ||
-            !TryComp<NavMapComponent>(ev.Transform.GridUid, out var navMap) ||
-            !TryComp<MapGridComponent>(ev.Transform.GridUid, out var mapGrid))
+        var xform = Transform(uid);
+
+        if (!TryComp<NavMapBeaconComponent>(uid, out var beacon) ||
+            !TryComp<NavMapComponent>(xform.GridUid, out var navMap))
             return;
 
-        if (navMap == null)
+        var regionProperties = GetNavMapRegionProperties(uid, beacon);
+
+        if (regionProperties != null)
+            _navMapSystem.AddOrUpdateNavMapRegion(xform.GridUid.Value, navMap, GetNetEntity(uid), regionProperties);
+    }
+
+    private void OnNavMapBeaconAnchor(EntityUid uid, NavMapRegionMarkerComponent component, ref AnchorStateChangedEvent ev)
+    {
+        var xform = Transform(uid);
+
+        if (!TryComp<NavMapBeaconComponent>(uid, out var beacon) ||
+            !TryComp<NavMapComponent>(xform.GridUid, out var navMap))
             return;
 
         if (ev.Anchored)
         {
-            var position = _mapSystem.CoordinatesToTile(ev.Transform.GridUid.Value, mapGrid, _transformSystem.GetMapCoordinates(ev.Entity, ev.Transform));
-            _navMapSystem.AddNavMapRegion(ev.Transform.GridUid.Value, navMap, GetNetEntity(ev.Entity), new HashSet<Vector2i>() { position });
+            var regionProperties = GetNavMapRegionProperties(uid, beacon);
+
+            if (regionProperties != null)
+                _navMapSystem.AddOrUpdateNavMapRegion(xform.GridUid.Value, navMap, GetNetEntity(uid), regionProperties);
         }
 
         else
         {
-            _navMapSystem.RemoveNavMapRegion(ev.Transform.GridUid.Value, navMap, GetNetEntity(ev.Entity));
+            _navMapSystem.RemoveNavMapRegion(xform.GridUid.Value, navMap, GetNetEntity(uid));
         }
+    }
+
+    #endregion
+
+    private NavMapRegionProperties? GetNavMapRegionProperties(EntityUid uid, NavMapBeaconComponent component)
+    {
+        var xform = Transform(uid);
+
+        if (!TryComp<MapGridComponent>(xform.GridUid, out var mapGrid))
+            return null;
+
+        NavMapChunkType[] propagatingChunkTypes = { NavMapChunkType.Floor };
+        NavMapChunkType[] constraintChunkTypes = { NavMapChunkType.Wall, NavMapChunkType.VisibleDoor };
+        var seeds = new HashSet<Vector2i>() { _mapSystem.CoordinatesToTile(xform.GridUid.Value, mapGrid, _transformSystem.GetMapCoordinates(uid, xform)) };
+        var regionProperties = new NavMapRegionProperties(GetNetEntity(uid), propagatingChunkTypes, constraintChunkTypes, seeds, component.Color);
+
+        return regionProperties;
     }
 }

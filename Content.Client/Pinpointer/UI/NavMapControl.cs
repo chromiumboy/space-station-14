@@ -43,8 +43,7 @@ public partial class NavMapControl : MapGridControl
     public Dictionary<NetEntity, NavMapBlip> TrackedEntities = new();
     public Dictionary<Vector2i, List<NavMapLine>>? TileGrid = default!;
 
-    public Dictionary<NetEntity, HashSet<Vector2i>> RegionOverlays = new();
-    public Dictionary<NetEntity, Color> RegionColors = new();
+    public Dictionary<NetEntity, (HashSet<Vector2i>, Color)> RegionOverlays = new();
 
     // Default colors
     public Color WallColor = new(102, 217, 102);
@@ -289,11 +288,8 @@ public partial class NavMapControl : MapGridControl
         // Draw region overlays
         if (_grid != null)
         {
-            foreach ((var regionOwner, var tiles) in RegionOverlays)
+            foreach ((var regionOwner, var (tiles, color)) in RegionOverlays)
             {
-                if (!RegionColors.TryGetValue(regionOwner, out var color))
-                    continue;
-
                 foreach (var tile in tiles)
                 {
                     var positionTopLeft = ScalePosition(new Vector2(tile.X, -tile.Y) - new Vector2(offset.X, -offset.Y));

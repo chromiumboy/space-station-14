@@ -13,8 +13,13 @@ public sealed partial class StationMapWindow : FancyWindow
 {
     private readonly IEntityManager _entManager;
 
-    private const float UpdateTime = 1.0f;
-    private float _updateTimer = 0f;
+    private const float UpdateTime = 1f;
+    private float _updateTimer = UpdateTime;
+
+    private readonly Color _markerColor = Color.Cyan;
+    private readonly Color _wallColor = new Color(64, 64, 64);
+    private readonly Color _tileColor = new Color(32, 32, 32);
+    private readonly Color _regionOverlayColor = Color.DarkGray;
 
     private EntityUid? _owner;
 
@@ -28,13 +33,16 @@ public sealed partial class StationMapWindow : FancyWindow
         if (trackedEntity != null)
         {
             _owner = trackedEntity;
-            NavMapScreen.TrackedCoordinates.Add(new EntityCoordinates(trackedEntity.Value, Vector2.Zero), (true, Color.Cyan));
+            NavMapScreen.TrackedCoordinates.Add(new EntityCoordinates(trackedEntity.Value, Vector2.Zero), (true, _markerColor));
         }
 
         if (_entManager.TryGetComponent<MetaDataComponent>(mapUid, out var metadata))
         {
             Title = metadata.EntityName;
         }
+
+        NavMapScreen.WallColor = _wallColor;
+        NavMapScreen.TileColor = _tileColor;
 
         NavMapScreen.ForceNavMapUpdate();
     }
@@ -56,7 +64,6 @@ public sealed partial class StationMapWindow : FancyWindow
     private void UpdateNavMap()
     {
         NavMapScreen.RegionOverlays.Clear();
-        NavMapScreen.RegionColors.Clear();
 
         if (_owner == null)
             return;
@@ -65,10 +72,7 @@ public sealed partial class StationMapWindow : FancyWindow
             !_entManager.TryGetComponent<NavMapComponent>(xform.GridUid, out var navMapRegions))
             return;
 
-        foreach (var (regionOwner, tiles) in navMapRegions.FloodedRegions)
-            NavMapScreen.RegionOverlays[regionOwner] = tiles;
-
-        foreach (var beacon in navMapRegions.Beacons)
-            NavMapScreen.RegionColors[beacon.NetEnt] = beacon.Color * Color.DimGray;
+        foreach (var (regionOwner, regionData) in navMapRegions.FloodedRegions)
+            NavMapScreen.RegionOverlays[regionOwner] = regionData;
     }
 }

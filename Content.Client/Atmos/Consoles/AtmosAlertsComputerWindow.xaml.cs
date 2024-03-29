@@ -189,13 +189,12 @@ public sealed partial class AtmosAlertsComputerWindow : FancyWindow
         NavMap.TrackedCoordinates.Clear();
         NavMap.TrackedEntities.Clear();
         NavMap.RegionOverlays.Clear();
-        NavMap.RegionColors.Clear();
 
         // Update region overlays
         if (_entManager.TryGetComponent<NavMapComponent>(xform.GridUid, out var navMapRegions))
         {
-            foreach (var (regionOwner, tiles) in navMapRegions.FloodedRegions)
-                NavMap.RegionOverlays[regionOwner] = tiles;
+            foreach (var (regionOwner, regionData) in navMapRegions.FloodedRegions)
+                NavMap.RegionOverlays[regionOwner] = regionData;
         }
 
         // Add tracked entities to the nav map
@@ -205,16 +204,6 @@ public sealed partial class AtmosAlertsComputerWindow : FancyWindow
                 continue;
 
             var alarmState = GetAlarmState(device.NetEntity, device.Group);
-            var color = GetBlipTexture(alarmState)?.Item2;
-
-            // Record alarm state colors for the region overlays
-            if (device.Group == AtmosAlertsComputerGroup.AirAlarm && color != null)
-            {
-                color *= _overlayModifier;
-                color = (_trackedEntity == null || device.NetEntity == _trackedEntity) ? color : color * _nonFocusModifier;
-
-                NavMap.RegionColors[device.NetEntity] = color.Value;
-            }
 
             if (_trackedEntity != device.NetEntity)
             {
