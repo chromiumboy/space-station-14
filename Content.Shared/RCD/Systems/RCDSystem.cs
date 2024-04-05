@@ -2,6 +2,7 @@ using Content.Shared.Administration.Logs;
 using Content.Shared.Charges.Components;
 using Content.Shared.Charges.Systems;
 using Content.Shared.Construction;
+using Content.Shared.Containers;
 using Content.Shared.Database;
 using Content.Shared.DoAfter;
 using Content.Shared.Examine;
@@ -23,6 +24,7 @@ using Robust.Shared.Physics.Dynamics;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization;
 using Robust.Shared.Timing;
+using Robust.Shared.Utility;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
@@ -64,6 +66,10 @@ public class RCDSystem : EntitySystem
         SubscribeLocalEvent<RCDComponent, RCDDoAfterEvent>(OnDoAfter);
         SubscribeLocalEvent<RCDComponent, DoAfterAttemptEvent<RCDDoAfterEvent>>(OnDoAfterAttempt);
         SubscribeLocalEvent<RCDComponent, RCDSystemMessage>(OnRCDSystemMessage);
+
+        SubscribeLocalEvent<RCDModuleComponent, GenericModuleInstalledEvent>(OnModuleInstalled);
+        SubscribeLocalEvent<RCDModuleComponent, GenericModuleUninstalledEvent>(OnModuleRemoved);
+
         SubscribeNetworkEvent<RCDConstructionGhostRotationEvent>(OnRCDconstructionGhostRotationEvent);
     }
 
@@ -71,6 +77,8 @@ public class RCDSystem : EntitySystem
 
     private void OnMapInit(EntityUid uid, RCDComponent component, MapInitEvent args)
     {
+        UpdateAvailablePrototypes(uid, component);
+
         // On init, set the RCD to its first available recipe
         if (component.AvailablePrototypes.Any())
         {
@@ -268,6 +276,22 @@ public class RCDSystem : EntitySystem
         // Play audio and consume charges
         _audio.PlayPredicted(component.SuccessSound, uid, args.User);
         _charges.UseCharges(uid, args.Cost);
+    }
+
+    private void OnModuleInstalled(EntityUid uid, RCDModuleComponent component, GenericModuleInstalledEvent args)
+    {
+        if (!TryComp<RCDComponent>(args.Owner, out var rcd))
+            return;
+
+        UpdateAvailablePrototypes(args.Owner, rcd);
+    }
+
+    private void OnModuleRemoved(EntityUid uid, RCDModuleComponent component, GenericModuleUninstalledEvent args)
+    {
+        if (!TryComp<RCDComponent>(args.Owner, out var rcd))
+            return;
+
+        UpdateAvailablePrototypes(args.Owner, rcd);
     }
 
     private void OnRCDconstructionGhostRotationEvent(RCDConstructionGhostRotationEvent ev, EntitySessionEventArgs session)
@@ -588,6 +612,42 @@ public class RCDSystem : EntitySystem
     {
         if (component.ProtoId.Id != component.CachedPrototype?.Prototype)
             component.CachedPrototype = _protoManager.Index(component.ProtoId);
+    }
+
+    private void UpdateAvailablePrototypes(EntityUid uid, RCDComponent component)
+    {
+        component.AvailablePrototypes.Clear();
+
+        foreach (var proto in component.BasePrototypes)
+            component.AvailablePrototypes.Add(proto);
+
+        if (!TryComp<GenericModuleReceiverComponent>(uid, out var receiver))
+            return;
+
+        foreach (var module in receiver.ModuleContainer.ContainedEntities)
+        {
+            if (!TryComp<RCDModuleComponent>(module, out var rcdModule))
+                return;
+
+            foreach (var proto in rcdModule.BasePrototypes)
+                component.AvailablePrototypes.Add(proto);
+        }
+
+        if (!component.AvailablePrototypes.Any())
+        {
+            // The RCD has no valid recipes somehow? Get rid of it
+            QueueDel(uid);
+
+            return;
+        }
+
+        if (!component.AvailablePrototypes.Contains(component.ProtoId))
+        {
+            component.ProtoId = component.AvailablePrototypes.First();
+            UpdateCachedPrototype(uid, component);
+        }
+
+        Dirty(uid, component);
     }
 
     #endregion

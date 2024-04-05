@@ -1,5 +1,7 @@
 using Content.Shared.RCD.Systems;
+using Content.Shared.Whitelist;
 using Robust.Shared.Audio;
+using Robust.Shared.Containers;
 using Robust.Shared.GameStates;
 using Robust.Shared.Physics;
 using Robust.Shared.Prototypes;
@@ -18,7 +20,13 @@ public sealed partial class RCDComponent : Component
     /// <summary>
     /// List of RCD prototypes that the device comes loaded with
     /// </summary>
-    [DataField, AutoNetworkedField]
+    [DataField(required: true), AutoNetworkedField]
+    public HashSet<ProtoId<RCDPrototype>> BasePrototypes { get; set; } = new();
+
+    /// <summary>
+    /// List of RCD prototypes that the device can construction
+    /// </summary>
+    [ViewVariables(VVAccess.ReadOnly), AutoNetworkedField]
     public HashSet<ProtoId<RCDPrototype>> AvailablePrototypes { get; set; } = new();
 
     /// <summary>

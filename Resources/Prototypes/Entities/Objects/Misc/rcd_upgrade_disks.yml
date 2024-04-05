@@ -1,0 +1,21 @@
+- type: entity
+  name: RCD Upgrade Disk
+  parent: BaseItem
+  id: RCDUpgradeDisk
+  description: A disk containing additional construction blueprints for a RCD.
+  components:
+  - type: Sprite
+    sprite: Objects/Misc/cd.rsi
+    state: icon
+  - type: StaticPrice
+    price: 100
+  - type: GenericModule
+    insertSound: /Audio/Machines/id_insert.ogg
+    ejectSound: /Audio/Machines/id_swipe.ogg
+  - type: RCDModule
+    basePrototypes:
+    - TubeLight
+    - BulbLight
+    - LVCable
+    - MVCable
+    - HVCable
