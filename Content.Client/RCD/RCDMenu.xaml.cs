@@ -17,8 +17,8 @@ public sealed partial class RCDMenu : RadialMenu
 {
     [Dependency] private readonly EntityManager _entManager = default!;
     [Dependency] private readonly IPrototypeManager _protoManager = default!;
-    [Dependency] private readonly RCDSystem _rcd = default!;
 
+    private readonly RCDSystem _rcdSystem = default!;
     private readonly SpriteSystem _spriteSystem;
 
     public event Action<ProtoId<RCDPrototype>>? SendRCDSystemMessageAction;
@@ -28,6 +28,7 @@ public sealed partial class RCDMenu : RadialMenu
         IoCManager.InjectDependencies(this);
         RobustXamlLoader.Load(this);
 
+        _rcdSystem = _entManager.System<RCDSystem>();
         _spriteSystem = _entManager.System<SpriteSystem>();
 
         // Find the main radial container
@@ -40,7 +41,7 @@ public sealed partial class RCDMenu : RadialMenu
         if (!_entManager.TryGetComponent<RCDComponent>(owner, out var rcd))
             return;
 
-        foreach (var protoId in _rcd.GetAvailablePrototypes(owner, rcd))
+        foreach (var protoId in _rcdSystem.GetAvailablePrototypes(owner, rcd))
         {
             if (!_protoManager.TryIndex(protoId, out var proto))
                 continue;
