@@ -370,6 +370,10 @@
     containers:
       modules: !type:Container { }
   - type: GenericModuleReceiver
+    moduleWhitelist:
+      tags:  
+      - RCDModuleIncreasedCapacity
+      - RCDModuleIncreasedEfficiency
   - type: UseDelay
   - type: Sprite
     sprite: Objects/Tools/rcd.rsi
@@ -401,6 +405,14 @@
   components:
   - type: LimitedCharges
     charges: 0
+  - type: GenericModuleReceiver
+    moduleWhitelist:
+      tags:
+      - RCDModuleDeconstruction
+      - RCDModuleElectrical
+      - RCDModuleLighting      
+      - RCDModuleIncreasedCapacity
+      - RCDModuleIncreasedEfficiency
   - type: RCD
     basePrototypes:   
     - WallSolid

@@ -83,4 +83,16 @@ public abstract class SharedChargesSystem : EntitySystem
         if (Resolve(uid, ref comp, false))
             AddCharges(uid, -chargesUsed, comp);
     }
+
+    public void SetMaxCharges(EntityUid uid, int maxCharges, LimitedChargesComponent? comp = null)
+    {
+        if (Resolve(uid, ref comp, false) || comp == null)
+            return;
+
+        if (maxCharges <= 0)
+            maxCharges = 1;
+
+        comp.MaxCharges = maxCharges;
+        comp.Charges = Math.Clamp(comp.Charges, 0, comp.MaxCharges);
+    }
 }

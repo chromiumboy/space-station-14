@@ -24,7 +24,6 @@ using Robust.Shared.Physics.Dynamics;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization;
 using Robust.Shared.Timing;
-using Robust.Shared.Utility;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
@@ -66,6 +65,7 @@ public class RCDSystem : EntitySystem
         SubscribeLocalEvent<RCDComponent, RCDDoAfterEvent>(OnDoAfter);
         SubscribeLocalEvent<RCDComponent, DoAfterAttemptEvent<RCDDoAfterEvent>>(OnDoAfterAttempt);
         SubscribeLocalEvent<RCDComponent, RCDSystemMessage>(OnRCDSystemMessage);
+        SubscribeLocalEvent<RCDComponent, GenericModuleReceiverExamineEvent>(OnModuleExamine);
 
         SubscribeLocalEvent<RCDModuleComponent, GenericModuleInstalledEvent>(OnModuleInstalled);
         SubscribeLocalEvent<RCDModuleComponent, GenericModuleUninstalledEvent>(OnModuleRemoved);
@@ -77,12 +77,12 @@ public class RCDSystem : EntitySystem
 
     private void OnMapInit(EntityUid uid, RCDComponent component, MapInitEvent args)
     {
-        UpdateAvailablePrototypes(uid, component);
-
         // On init, set the RCD to its first available recipe
-        if (component.AvailablePrototypes.Any())
+        var availablePrototypes = GetAvailablePrototypes(uid, component);
+
+        if (availablePrototypes.Any())
         {
-            component.ProtoId = component.AvailablePrototypes.First();
+            component.ProtoId = availablePrototypes.First();
             UpdateCachedPrototype(uid, component);
             Dirty(uid, component);
 
@@ -96,7 +96,9 @@ public class RCDSystem : EntitySystem
     private void OnRCDSystemMessage(EntityUid uid, RCDComponent component, RCDSystemMessage args)
     {
         // Exit if the RCD doesn't actually know the supplied prototype
-        if (!component.AvailablePrototypes.Contains(args.ProtoId))
+        var availablePrototypes = GetAvailablePrototypes(uid, component);
+
+        if (!availablePrototypes.Contains(args.ProtoId))
             return;
 
         if (!_protoManager.HasIndex(args.ProtoId))
@@ -278,20 +280,40 @@ public class RCDSystem : EntitySystem
         _charges.UseCharges(uid, args.Cost);
     }
 
-    private void OnModuleInstalled(EntityUid uid, RCDModuleComponent component, GenericModuleInstalledEvent args)
+    private void OnModuleExamine(EntityUid uid, RCDComponent component, GenericModuleReceiverExamineEvent ev)
     {
-        if (!TryComp<RCDComponent>(args.Owner, out var rcd))
+        if (!TryComp<GenericModuleReceiverComponent>(uid, out var receiver))
             return;
 
-        UpdateAvailablePrototypes(args.Owner, rcd);
+        foreach (var ent in receiver.ModuleContainer.ContainedEntities)
+        {
+            if (!TryComp<GenericModuleComponent>(ent, out var entModule) || entModule.HiddenOnReceiverExamination)
+                continue;
+
+            ev.Message.AddMarkup(MetaData(ent).EntityName + '\n');
+        }
+    }
+
+    private void OnModuleInstalled(EntityUid uid, RCDModuleComponent component, GenericModuleInstalledEvent args)
+    {
+        if (!HasComp<RCDComponent>(args.Owner))
+            return;
+
+        if (!TryComp<LimitedChargesComponent>(args.Owner, out var charges))
+            return;
+
+        _charges.SetMaxCharges(args.Owner, charges.MaxCharges + component.CapacityModifier, charges);
     }
 
     private void OnModuleRemoved(EntityUid uid, RCDModuleComponent component, GenericModuleUninstalledEvent args)
     {
-        if (!TryComp<RCDComponent>(args.Owner, out var rcd))
+        if (!HasComp<RCDComponent>(args.Owner))
             return;
 
-        UpdateAvailablePrototypes(args.Owner, rcd);
+        if (!TryComp<LimitedChargesComponent>(args.Owner, out var charges))
+            return;
+
+        _charges.SetMaxCharges(args.Owner, charges.MaxCharges - component.CapacityModifier, charges);
     }
 
     private void OnRCDconstructionGhostRotationEvent(RCDConstructionGhostRotationEvent ev, EntitySessionEventArgs session)
@@ -614,40 +636,56 @@ public class RCDSystem : EntitySystem
             component.CachedPrototype = _protoManager.Index(component.ProtoId);
     }
 
-    private void UpdateAvailablePrototypes(EntityUid uid, RCDComponent component)
+    public HashSet<ProtoId<RCDPrototype>> GetAvailablePrototypes(EntityUid uid, RCDComponent component)
     {
-        component.AvailablePrototypes.Clear();
+        var availablePrototypes = new HashSet<ProtoId<RCDPrototype>>(component.BasePrototypes);
 
-        foreach (var proto in component.BasePrototypes)
-            component.AvailablePrototypes.Add(proto);
-
-        if (!TryComp<GenericModuleReceiverComponent>(uid, out var receiver))
-            return;
-
-        foreach (var module in receiver.ModuleContainer.ContainedEntities)
+        if (TryComp<GenericModuleReceiverComponent>(uid, out var receiver))
         {
-            if (!TryComp<RCDModuleComponent>(module, out var rcdModule))
-                return;
+            foreach (var module in receiver.ModuleContainer.ContainedEntities)
+            {
+                if (!TryComp<RCDModuleComponent>(module, out var rcdModule) ||
+                    rcdModule.BasePrototypes == null)
+                    continue;
 
-            foreach (var proto in rcdModule.BasePrototypes)
-                component.AvailablePrototypes.Add(proto);
+                foreach (var proto in rcdModule.BasePrototypes)
+                    availablePrototypes.Add(proto);
+            }
         }
 
-        if (!component.AvailablePrototypes.Any())
+        if (!availablePrototypes.Any())
         {
             // The RCD has no valid recipes somehow? Get rid of it
             QueueDel(uid);
 
-            return;
+            return new();
         }
 
-        if (!component.AvailablePrototypes.Contains(component.ProtoId))
+        if (!availablePrototypes.Contains(component.ProtoId))
         {
-            component.ProtoId = component.AvailablePrototypes.First();
+            component.ProtoId = availablePrototypes.First();
             UpdateCachedPrototype(uid, component);
         }
 
-        Dirty(uid, component);
+        return availablePrototypes;
+    }
+
+    public float GetEfficiencyMultiplier(EntityUid uid, RCDComponent component)
+    {
+        var efficiencyMultiplier = component.EfficiencyMultiplier;
+
+        if (TryComp<GenericModuleReceiverComponent>(uid, out var receiver))
+        {
+            foreach (var module in receiver.ModuleContainer.ContainedEntities)
+            {
+                if (!TryComp<RCDModuleComponent>(module, out var rcdModule))
+                    continue;
+
+                efficiencyMultiplier *= rcdModule.EfficiencyMultipler;
+            }
+        }
+
+        return efficiencyMultiplier;
     }
 
     #endregion

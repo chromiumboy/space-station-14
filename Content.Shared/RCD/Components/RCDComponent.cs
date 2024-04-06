@@ -24,12 +24,6 @@ public sealed partial class RCDComponent : Component
     public HashSet<ProtoId<RCDPrototype>> BasePrototypes { get; set; } = new();
 
     /// <summary>
-    /// List of RCD prototypes that the device can construction
-    /// </summary>
-    [ViewVariables(VVAccess.ReadOnly), AutoNetworkedField]
-    public HashSet<ProtoId<RCDPrototype>> AvailablePrototypes { get; set; } = new();
-
-    /// <summary>
     /// Sound that plays when a RCD operation successfully completes
     /// </summary>
     [DataField]
@@ -77,4 +71,7 @@ public sealed partial class RCDComponent : Component
     /// </remarks>
     [ViewVariables(VVAccess.ReadOnly)]
     public Transform ConstructionTransform { get; private set; } = default!;
+
+    [DataField]
+    public float EfficiencyMultiplier = 1f;
 }

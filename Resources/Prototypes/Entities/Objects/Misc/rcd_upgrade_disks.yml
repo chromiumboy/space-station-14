@@ -1,21 +1,88 @@
 - type: entity
-  name: RCD Upgrade Disk
   parent: BaseItem
-  id: RCDUpgradeDisk
-  description: A disk containing additional construction blueprints for a RCD.
+  abstract: true
+  id: RCDModuleBase
   components:
   - type: Sprite
     sprite: Objects/Misc/cd.rsi
     state: icon
+  - type: GenericModule
+    installSound: /Audio/Weapons/Guns/MagIn/batrifle_magin.ogg
+    uninstallSound: /Audio/Machines/id_swipe.ogg
+  - type: RCDModule
+    
+- type: entity
+  name: RCD electrical blueprints
+  parent: RCDModuleBase
+  id: RCDModuleElectrical
+  description: Inserting this disk into a RCD will allow it to construct power cables.
+  components:
   - type: StaticPrice
     price: 100
-  - type: GenericModule
-    insertSound: /Audio/Machines/id_insert.ogg
-    ejectSound: /Audio/Machines/id_swipe.ogg
+  - type: Tag
+    tags:
+    - RCDModuleElectrical
+  - type: RCDModule
+    basePrototypes:
+    - LVCable
+    - MVCable
+    - HVCable
+
+- type: entity
+  name: RCD lighting blueprints
+  parent: RCDModuleBase
+  id: RCDModuleLighting
+  description: Inserting this disk into a RCD will allow it to construct lighting fixtures.
+  components:
+  - type: StaticPrice
+    price: 100
+  - type: Tag
+    tags:
+    - RCDModuleLighting
   - type: RCDModule
     basePrototypes:
     - TubeLight
     - BulbLight
-    - LVCable
-    - MVCable
-    - HVCable
+
+- type: entity
+  name: RCD deconstruction blueprints
+  parent: RCDModuleBase
+  id: RCDModuleDeconstruction
+  description: Inserting this disk into a RCD will allow it to deconstruct a wide range of basic structures and fixtures.
+  components:
+  - type: StaticPrice
+    price: 100
+  - type: Tag
+    tags:
+    - RCDModuleDeconstruction
+  - type: RCDModule
+    basePrototypes:
+    - Deconstruct
+
+- type: entity
+  name: advanced RCD matter hopper
+  parent: RCDModuleBase
+  id: RCDModuleIncreasedCapacity
+  description: Install this module on a RCD to add more compressed matter storage to the device.
+  components:
+  - type: StaticPrice
+    price: 100
+  - type: Tag
+    tags:
+    - RCDModuleIncreasedCapacity 
+  - type: RCDModule
+    capacityModifier: 20
+    
+- type: entity
+  name: advanced RCD control unit
+  parent: RCDModuleBase
+  id: RCDModuleIncreasedEfficiency
+  description: Install this module on a RCD to decrease the amount of compressed matter used during construction.
+  components:
+  - type: StaticPrice
+    price: 100
+  - type: Tag
+    tags:
+    - RCDModuleIncreasedEfficiency
+  - type: RCDModule
+    efficiencyMultiplier: 0.75
