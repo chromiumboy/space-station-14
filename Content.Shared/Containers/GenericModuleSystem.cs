@@ -87,7 +87,7 @@ public class GenericModuleSystem : EntitySystem
             var verb = new Verb
             {
                 Priority = 1,
-                Category = VerbCategory.SelectType,
+                Category = VerbCategory.Eject,
                 Text = Loc.GetString("generic-module-uninstall", ("module", MetaData(ent).EntityName)),
                 Impact = LogImpact.Low,
                 DoContactInteraction = true,
@@ -194,7 +194,7 @@ public class GenericModuleSystem : EntitySystem
                 RequireAll = component.ModuleWhitelist.RequireAll
             };
 
-            if (!whitelist.IsValid(uid))
+            if (!whitelist.IsValid(module))
             {
                 if (user != null)
                     _popup.PopupClient(Loc.GetString("generic-module-whitelist-tag-duplicated"), uid, user.Value);

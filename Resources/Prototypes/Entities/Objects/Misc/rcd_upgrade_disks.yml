@@ -15,7 +15,7 @@
   name: RCD electrical blueprints
   parent: RCDModuleBase
   id: RCDModuleElectrical
-  description: Inserting this disk into a RCD will allow it to construct power cables.
+  description: Inserting this disk into a RCD will allow it to construct power cables and terminals.
   components:
   - type: StaticPrice
     price: 100

@@ -343,7 +343,7 @@
   description: The rapid construction device can be used to quickly place and remove various station structures and fixtures. Requires compressed matter to function.
   components:
   - type: RCD
-    basePrototypes:   
+    basePrototypes:
     - WallSolid
     - FloorSteel
     - Plating
@@ -356,22 +356,24 @@
     - Airlock
     - AirlockGlass
     - Firelock
-    - TubeLight
-    - BulbLight
-    - LVCable
-    - MVCable
-    - HVCable
-    - CableTerminal
-    - Deconstruct
   - type: LimitedCharges
     maxCharges: 30
     charges: 30
   - type: ContainerContainer
     containers:
       modules: !type:Container { }
+  - type: ContainerFill
+    containers:
+      modules:
+      - RCDModuleElectrical
+      - RCDModuleLighting
+      - RCDModuleDeconstruction
   - type: GenericModuleReceiver
     moduleWhitelist:
       tags:  
+      - RCDModuleElectrical
+      - RCDModuleLighting
+      - RCDModuleDeconstruction      
       - RCDModuleIncreasedCapacity
       - RCDModuleIncreasedEfficiency
   - type: UseDelay
@@ -405,28 +407,9 @@
   components:
   - type: LimitedCharges
     charges: 0
-  - type: GenericModuleReceiver
-    moduleWhitelist:
-      tags:
-      - RCDModuleDeconstruction
-      - RCDModuleElectrical
-      - RCDModuleLighting      
-      - RCDModuleIncreasedCapacity
-      - RCDModuleIncreasedEfficiency
-  - type: RCD
-    basePrototypes:   
-    - WallSolid
-    - FloorSteel
-    - Plating
-    - Catwalk
-    - Grille
-    - Window
-    - WindowDirectional
-    - WindowReinforcedDirectional
-    - ReinforcedWindow
-    - Airlock
-    - AirlockGlass
-    - Firelock
+  - type: ContainerFill
+    containers:
+      modules: [ ]
 
 - type: entity
   id: RCDRecharging

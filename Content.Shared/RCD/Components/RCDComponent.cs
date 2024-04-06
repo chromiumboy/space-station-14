@@ -20,7 +20,7 @@ public sealed partial class RCDComponent : Component
     /// <summary>
     /// List of RCD prototypes that the device comes loaded with
     /// </summary>
-    [DataField(required: true), AutoNetworkedField]
+    [DataField(required: true)]
     public HashSet<ProtoId<RCDPrototype>> BasePrototypes { get; set; } = new();
 
     /// <summary>

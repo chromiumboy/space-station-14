@@ -43,7 +43,7 @@ public sealed partial class GenericModuleReceiverComponent : Component
     /// A white listed tag cannot be present on more than one installed module
     /// </summary>
     [DataField]
-    public bool NoDuplicateWhitelistTags;
+    public bool NoDuplicateWhitelistTags = true;
 }
 
 /// <summary>
