@@ -456,6 +456,57 @@
     price: 60
 
 - type: entity
+  id: RPD
+  parent: BaseItem
+  name: RPD
+  description: The rapid piping device can be used to quickly place and remove utility piping. Requires compressed matter to function.
+  components:
+  - type: RCD
+    availablePrototypes:
+    - GasPipeHalf
+    - GasPipeStraight
+    - GasPipeBend
+    - GasPipeTJunction
+    - GasPipeFourway
+    - GasValve
+    - GasPressurePump
+    - GasVolumePump
+    - GasFilter
+    - GasMixer
+    - GasVentPump
+    - GasPassiveVent
+    - GasVentScrubber
+    - GasOutletInjector
+    - GasPort
+    - Deconstruct
+  - type: LimitedCharges
+    maxCharges: 30
+    charges: 30
+  - type: UseDelay
+  - type: Sprite
+    sprite: Objects/Tools/rpd.rsi
+    state: icon
+  - type: Item
+    size: Normal
+  - type: Clothing
+    sprite: Objects/Tools/rpd.rsi
+    quickEquip: false
+    slots:
+    - Belt
+  - type: PhysicalComposition
+    materialComposition:
+      Steel: 600
+      Plastic: 100
+  - type: StaticPrice
+    price: 100
+  - type: UserInterface
+    interfaces:
+    - key: enum.RcdUiKey.Key
+      type: RCDMenuBoundUserInterface
+  - type: ActivatableUI
+    key: enum.RcdUiKey.Key
+
+- type: entity
   name: omnitool
   parent: BaseItem
   id: Omnitool

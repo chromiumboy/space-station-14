@@ -12,6 +12,8 @@
 
     <!-- Entry layer (shows main categories) -->
     <ui:RadialContainer Name="Main" VerticalExpand="True" HorizontalExpand="True" Radius="64" ReserveSpaceForHiddenChildren="False">
+
+        <!-- RCD specific -->
         <ui:RadialMenuTextureButton StyleClasses="RadialMenuButton" SetSize="64 64" ToolTip="{Loc 'rcd-component-walls-and-flooring'}" TargetLayer="WallsAndFlooring" Visible="False">
             <TextureRect VerticalAlignment="Center" HorizontalAlignment="Center" TextureScale="2 2" TexturePath="/Textures/Interface/Radial/RCD/walls_and_flooring.png"/>
         </ui:RadialMenuTextureButton>
@@ -24,9 +26,17 @@
         <ui:RadialMenuTextureButton StyleClasses="RadialMenuButton" SetSize="64 64" ToolTip="{Loc 'rcd-component-electrical'}" TargetLayer="Electrical" Visible="False">
             <TextureRect VerticalAlignment="Center" HorizontalAlignment="Center" TextureScale="2 2" TexturePath="/Textures/Interface/Radial/RCD/multicoil.png"/>
         </ui:RadialMenuTextureButton>
-        <ui:RadialMenuTextureButton StyleClasses="RadialMenuButton" SetSize="64 64" ToolTip="{Loc 'rcd-component-lighting'}" TargetLayer="Lighting" Visible="False">
-            <TextureRect VerticalAlignment="Center" HorizontalAlignment="Center" TextureScale="2 2" TexturePath="/Textures/Interface/Radial/RCD/lighting.png"/>
+
+        <!-- RPD specific -->
+        <ui:RadialMenuTextureButton StyleClasses="RadialMenuButton" SetSize="64 64" ToolTip="{Loc 'rcd-component-pipes-and-valves'}" TargetLayer="PipesAndValves" Visible="False">
+            <TextureRect VerticalAlignment="Center" HorizontalAlignment="Center" TextureScale="2 2" TexturePath="/Textures/Interface/Radial/RPD/pipes_and_valves.png"/>
         </ui:RadialMenuTextureButton>
+        <ui:RadialMenuTextureButton StyleClasses="RadialMenuButton" SetSize="64 64" ToolTip="{Loc 'rcd-component-pumps-and-regulators'}" TargetLayer="PumpsAndRegulators" Visible="False">
+            <TextureRect VerticalAlignment="Center" HorizontalAlignment="Center" TextureScale="2 2" TexturePath="/Textures/Interface/Radial/RPD/pumps_and_regulators.png"/>
+        </ui:RadialMenuTextureButton>
+        <ui:RadialMenuTextureButton StyleClasses="RadialMenuButton" SetSize="64 64" ToolTip="{Loc 'rcd-component-inlets-and-outlets'}" TargetLayer="InletsAndOutlets" Visible="False">
+            <TextureRect VerticalAlignment="Center" HorizontalAlignment="Center" TextureScale="2 2" TexturePath="/Textures/Interface/Radial/RPD/vent_passive.png"/>
+        </ui:RadialMenuTextureButton>     
     </ui:RadialContainer>
 
     <!-- Walls and flooring -->
@@ -38,10 +48,19 @@
     <!-- Airlocks -->
     <ui:RadialContainer Name="Airlocks"  VerticalExpand="True" HorizontalExpand="True" Radius="64"/>
 
-    <!-- Computer and machine frames -->
+    <!-- Electrical -->
     <ui:RadialContainer Name="Electrical"  VerticalExpand="True" HorizontalExpand="True" Radius="64"/>
        
     <!-- Lighting -->
     <ui:RadialContainer Name="Lighting"  VerticalExpand="True" HorizontalExpand="True" Radius="64"/>
+
+    <!-- Pipes and valves -->
+    <ui:RadialContainer Name="PipesAndValves"  VerticalExpand="True" HorizontalExpand="True" Radius="64"/>
+
+    <!-- Pumps and regulators -->
+    <ui:RadialContainer Name="PumpsAndRegulators"  VerticalExpand="True" HorizontalExpand="True" Radius="64"/>
+
+    <!-- Inlets and outlets -->
+    <ui:RadialContainer Name="InletsAndOutlets"  VerticalExpand="True" HorizontalExpand="True" Radius="64"/>
 
 </ui:RadialMenu>

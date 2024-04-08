@@ -38,7 +38,9 @@ rcd-component-windows-and-grilles = Windows and grilles
 rcd-component-airlocks = Airlocks
 rcd-component-electrical = Electrical
 rcd-component-lighting = Lighting
-
+rcd-component-pipes-and-valves = Pipes and valves
+rcd-component-pumps-and-regulators = Pumps and regulators
+rcd-component-inlets-and-outlets = Inlets and outlets
 
 ### Prototype names (note: constructable items will be puralized)
 
