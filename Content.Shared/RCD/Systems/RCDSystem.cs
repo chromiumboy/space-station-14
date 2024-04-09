@@ -53,6 +53,7 @@ public class RCDSystem : EntitySystem
     private readonly ProtoId<RCDPrototype> _deconstructLatticeProto = "DeconstructLattice";
 
     private HashSet<EntityUid> _intersectingEntities = new();
+    private const string UnknownPrototype = "Unknown";
 
     public override void Initialize()
     {
@@ -99,6 +100,7 @@ public class RCDSystem : EntitySystem
         // Set the current RCD prototype to the one supplied
         component.ProtoId = args.ProtoId;
         UpdateCachedPrototype(uid, component);
+
         Dirty(uid, component);
     }
 
@@ -114,9 +116,12 @@ public class RCDSystem : EntitySystem
 
         if (component.CachedPrototype.Mode == RcdMode.ConstructTile || component.CachedPrototype.Mode == RcdMode.ConstructObject)
         {
-            var name = Loc.GetString(component.CachedPrototype.SetName);
+            var name = UnknownPrototype;
 
-            if (component.CachedPrototype.Prototype != null &&
+            if (!string.IsNullOrEmpty(component.CachedPrototype.SetName))
+                name = Loc.GetString(component.CachedPrototype.SetName);
+
+            else if (component.CachedPrototype.Prototype != null &&
                 _protoManager.TryIndex(component.CachedPrototype.Prototype, out var proto))
                 name = proto.Name;
 
@@ -542,7 +547,10 @@ public class RCDSystem : EntitySystem
                 break;
 
             case RcdMode.ConstructObject:
-                var ent = Spawn(component.CachedPrototype.Prototype, _mapSystem.GridTileToLocal(mapGridData.GridUid, mapGridData.Component, mapGridData.Position));
+                var proto = (component.UseMirrorPrototype && !string.IsNullOrEmpty(component.CachedPrototype.MirrorPrototype)) ?
+                    component.CachedPrototype.MirrorPrototype : component.CachedPrototype.Prototype;
+
+                var ent = Spawn(proto, _mapSystem.GridTileToLocal(mapGridData.GridUid, mapGridData.Component, mapGridData.Position));
 
                 switch (component.CachedPrototype.Rotation)
                 {
@@ -619,7 +627,7 @@ public class RCDSystem : EntitySystem
     public void UpdateCachedPrototype(EntityUid uid, RCDComponent component)
     {
         if (component.ProtoId.Id != component.CachedPrototype?.Prototype ||
-            (component.CachedPrototype?.MirrorPrototype != null &&
+            (!string.IsNullOrEmpty(component.CachedPrototype?.MirrorPrototype) &&
             component.ProtoId.Id != component.CachedPrototype?.MirrorPrototype))
         {
             component.CachedPrototype = _protoManager.Index(component.ProtoId);

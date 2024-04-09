@@ -42,8 +42,16 @@ rcd-component-pipes-and-valves = Pipes and valves
 rcd-component-pumps-and-regulators = Pumps and regulators
 rcd-component-inlets-and-outlets = Inlets and outlets
 
+
 ### Prototype names (note: constructable items will be puralized)
 
 rcd-component-deconstruct = deconstruct
 rcd-component-floor-steel = steel tile
 rcd-component-plating = hull plate
+
+rcd-component-deconstruct-pipes = deconstruct pipes
+rcd-component-pipe-half = half pipe
+rcd-component-pipe-straight = straight pipe
+rcd-component-pipe-bend = bent pipe
+rcd-component-pipe-t-junction = T-junction pipe
+rcd-component-pipe-four-way = four way pipe

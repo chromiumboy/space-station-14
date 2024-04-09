@@ -45,7 +45,7 @@ public sealed partial class RCDComponent : Component
     /// <summary>
     /// Indicates if a mirrored version of the construction prototype should be used (if available)
     /// </summary>
-    [ViewVariables(VVAccess.ReadOnly)]
+    [AutoNetworkedField, ViewVariables(VVAccess.ReadOnly)]
     public bool UseMirrorPrototype = false;
 
     /// <summary>

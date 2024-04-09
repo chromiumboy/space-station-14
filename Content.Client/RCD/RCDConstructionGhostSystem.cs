@@ -20,6 +20,7 @@ public sealed class RCDConstructionGhostSystem : EntitySystem
 
     private string _placementMode = typeof(AlignRCDConstruction).Name;
     private Direction _placementDirection = default;
+    private bool _useMirrorPrototype = false;
 
     public event EventHandler? FlipConstructionPrototype;
 
@@ -49,15 +50,15 @@ public sealed class RCDConstructionGhostSystem : EntitySystem
             var placerEntity = _placementManager.CurrentPermission?.MobUid;
 
             if (!TryComp<RCDComponent>(placerEntity, out var rcd) ||
-                rcd.CachedPrototype.MirrorPrototype == null)
+                string.IsNullOrEmpty(rcd.CachedPrototype.MirrorPrototype))
                 return false;
 
-            bool useMirrorPrototype = !rcd.UseMirrorPrototype;
+            _useMirrorPrototype = !rcd.UseMirrorPrototype;
 
-            var useProto = useMirrorPrototype ? rcd.CachedPrototype.MirrorPrototype : rcd.CachedPrototype.Prototype;
+            var useProto = _useMirrorPrototype ? rcd.CachedPrototype.MirrorPrototype : rcd.CachedPrototype.Prototype;
             CreateNewPlacer(placerEntity.Value, rcd, useProto);
 
-            RaiseNetworkEvent(new RCDConstructionGhostFlipEvent(GetNetEntity(placerEntity.Value), useMirrorPrototype));
+            RaiseNetworkEvent(new RCDConstructionGhostFlipEvent(GetNetEntity(placerEntity.Value), _useMirrorPrototype));
         }
 
         return true;
@@ -103,7 +104,7 @@ public sealed class RCDConstructionGhostSystem : EntitySystem
         // If the placer has changed, rebuild it
         _rcdSystem.UpdateCachedPrototype(heldEntity.Value, rcd);
 
-        var useProto = rcd.UseMirrorPrototype ? rcd.CachedPrototype.MirrorPrototype : rcd.CachedPrototype.Prototype;
+        var useProto = (_useMirrorPrototype && !string.IsNullOrEmpty(rcd.CachedPrototype.MirrorPrototype)) ? rcd.CachedPrototype.MirrorPrototype : rcd.CachedPrototype.Prototype;
 
         if (heldEntity != placerEntity || useProto != placerProto)
             CreateNewPlacer(heldEntity.Value, rcd, useProto);

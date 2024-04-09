@@ -1,6 +1,6 @@
 - type: rcd
   id: DeconstructPipes
-  name: rcd-component-deconstruct
+  name: rcd-component-deconstruct-pipes
   category: Main
   sprite: /Textures/Interface/Radial/RPD/deconstruct_pipes.png
   mode: Deconstruct
@@ -11,6 +11,7 @@
 # Pipes and valves 
 - type: rcd
   id: GasPipeHalf
+  name: rcd-component-pipe-half
   category: PipesAndValves
   sprite: /Textures/Interface/Radial/RPD/pipe_half.png
   mode: ConstructObject
@@ -25,6 +26,7 @@
   
 - type: rcd
   id: GasPipeStraight
+  name: rcd-component-pipe-straight
   category: PipesAndValves
   sprite: /Textures/Interface/Radial/RPD/pipe_straight.png
   mode: ConstructObject
@@ -39,6 +41,7 @@
 
 - type: rcd
   id: GasPipeBend
+  name: rcd-component-pipe-bend
   category: PipesAndValves
   sprite: /Textures/Interface/Radial/RPD/pipe_bend.png
   mode: ConstructObject
@@ -53,6 +56,7 @@
   
 - type: rcd
   id: GasPipeTJunction
+  name: rcd-component-pipe-t-junction
   category: PipesAndValves
   sprite: /Textures/Interface/Radial/RPD/pipe_T_junction.png
   mode: ConstructObject
@@ -67,6 +71,7 @@
 
 - type: rcd
   id: GasPipeFourway
+  name: rcd-component-pipe-four-way
   category: PipesAndValves
   sprite: /Textures/Interface/Radial/RPD/pipe_four_way.png
   mode: ConstructObject

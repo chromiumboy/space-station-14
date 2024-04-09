@@ -26,6 +26,7 @@ public sealed partial class RCDMenu : RadialMenu
     public event Action<ProtoId<RCDPrototype>>? SendRCDSystemMessageAction;
 
     private EntityUid _owner;
+    private const string UnknownPrototype = "Unknown";
 
     public RCDMenu(EntityUid owner, RCDMenuBoundUserInterface bui)
     {
@@ -52,7 +53,7 @@ public sealed partial class RCDMenu : RadialMenu
             if (!_protoManager.TryIndex(protoId, out var proto))
                 continue;
 
-            if (proto.Mode == RcdMode.Invalid)
+            if (proto.Mode == RcdMode.Invalid || string.IsNullOrEmpty(proto.Category))
                 continue;
 
             var parent = FindControl<RadialContainer>(proto.Category);
@@ -60,9 +61,14 @@ public sealed partial class RCDMenu : RadialMenu
             if (parent == null)
                 continue;
 
-            var tooltip = Loc.GetString(proto.SetName);
+            var tooltip = UnknownPrototype;
 
-            if ((proto.Mode == RcdMode.ConstructTile || proto.Mode == RcdMode.ConstructObject) &&
+            if (!string.IsNullOrEmpty(proto.SetName))
+            {
+                tooltip = Loc.GetString(proto.SetName);
+            }
+
+            else if ((proto.Mode == RcdMode.ConstructTile || proto.Mode == RcdMode.ConstructObject) &&
                 proto.Prototype != null && _protoManager.TryIndex(proto.Prototype, out var entProto))
             {
                 tooltip = Loc.GetString(entProto.Name);

@@ -24,13 +24,13 @@ public sealed class RCDPrototype : IPrototype
     /// The name associated with the prototype
     /// </summary>
     [DataField("name"), ViewVariables(VVAccess.ReadOnly)]
-    public string SetName { get; private set; } = "Unknown";
+    public string SetName { get; private set; } = string.Empty;
 
     /// <summary>
     /// The name of the radial container that this prototype will be listed under on the RCD menu
     /// </summary>
     [DataField, ViewVariables(VVAccess.ReadOnly)]
-    public string Category { get; private set; } = "Undefined";
+    public string Category { get; private set; } = string.Empty;
 
     /// <summary>
     /// Texture path for this prototypes menu icon
