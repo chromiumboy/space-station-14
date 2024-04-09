@@ -64,7 +64,9 @@ public class RCDSystem : EntitySystem
         SubscribeLocalEvent<RCDComponent, RCDDoAfterEvent>(OnDoAfter);
         SubscribeLocalEvent<RCDComponent, DoAfterAttemptEvent<RCDDoAfterEvent>>(OnDoAfterAttempt);
         SubscribeLocalEvent<RCDComponent, RCDSystemMessage>(OnRCDSystemMessage);
-        SubscribeNetworkEvent<RCDConstructionGhostRotationEvent>(OnRCDconstructionGhostRotationEvent);
+
+        SubscribeNetworkEvent<RCDConstructionGhostRotationEvent>(OnRCDConstructionGhostRotationEvent);
+        SubscribeNetworkEvent<RCDConstructionGhostFlipEvent>(OnRCDConstructionGhostFlipEvent);
     }
 
     #region Event handling
@@ -269,7 +271,7 @@ public class RCDSystem : EntitySystem
         _charges.UseCharges(uid, args.Cost);
     }
 
-    private void OnRCDconstructionGhostRotationEvent(RCDConstructionGhostRotationEvent ev, EntitySessionEventArgs session)
+    private void OnRCDConstructionGhostRotationEvent(RCDConstructionGhostRotationEvent ev, EntitySessionEventArgs session)
     {
         var uid = GetEntity(ev.NetEntity);
 
@@ -286,6 +288,26 @@ public class RCDSystem : EntitySystem
 
         // Update the construction direction
         rcd.ConstructionDirection = ev.Direction;
+        Dirty(uid, rcd);
+    }
+
+    private void OnRCDConstructionGhostFlipEvent(RCDConstructionGhostFlipEvent ev, EntitySessionEventArgs session)
+    {
+        var uid = GetEntity(ev.NetEntity);
+
+        // Determine if player that send the message is carrying the specified RCD in their active hand
+        if (session.SenderSession.AttachedEntity == null)
+            return;
+
+        if (!TryComp<HandsComponent>(session.SenderSession.AttachedEntity, out var hands) ||
+            uid != hands.ActiveHand?.HeldEntity)
+            return;
+
+        if (!TryComp<RCDComponent>(uid, out var rcd))
+            return;
+
+        // Update the construction direction
+        rcd.UseMirrorPrototype = ev.UseMirrorPrototype;
         Dirty(uid, rcd);
     }
 
@@ -596,8 +618,12 @@ public class RCDSystem : EntitySystem
 
     public void UpdateCachedPrototype(EntityUid uid, RCDComponent component)
     {
-        if (component.ProtoId.Id != component.CachedPrototype?.Prototype)
+        if (component.ProtoId.Id != component.CachedPrototype?.Prototype ||
+            (component.CachedPrototype?.MirrorPrototype != null &&
+            component.ProtoId.Id != component.CachedPrototype?.MirrorPrototype))
+        {
             component.CachedPrototype = _protoManager.Index(component.ProtoId);
+        }
     }
 
     #endregion

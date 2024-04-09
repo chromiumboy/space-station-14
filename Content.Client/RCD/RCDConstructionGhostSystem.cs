@@ -1,4 +1,5 @@
 using Content.Shared.Hands.Components;
+using Content.Shared.Input;
 using Content.Shared.Interaction;
 using Content.Shared.RCD;
 using Content.Shared.RCD.Components;
@@ -6,6 +7,8 @@ using Content.Shared.RCD.Systems;
 using Robust.Client.Placement;
 using Robust.Client.Player;
 using Robust.Shared.Enums;
+using Robust.Shared.Input;
+using Robust.Shared.Input.Binding;
 
 namespace Content.Client.RCD;
 
@@ -17,6 +20,48 @@ public sealed class RCDConstructionGhostSystem : EntitySystem
 
     private string _placementMode = typeof(AlignRCDConstruction).Name;
     private Direction _placementDirection = default;
+
+    public event EventHandler? FlipConstructionPrototype;
+
+    public override void Initialize()
+    {
+        base.Initialize();
+
+        CommandBinds.Builder
+            .Bind(ContentKeyFunctions.EditorFlipObject,
+                new PointerInputCmdHandler(HandleFlip, outsidePrediction: true))
+            .Register<RCDConstructionGhostSystem>();
+    }
+
+    public override void Shutdown()
+    {
+        CommandBinds.Unregister<RCDConstructionGhostSystem>();
+        base.Shutdown();
+    }
+
+    private bool HandleFlip(in PointerInputCmdHandler.PointerInputCmdArgs args)
+    {
+        if (args.State == BoundKeyState.Down)
+        {
+            if (!_placementManager.IsActive || _placementManager.Eraser)
+                return false;
+
+            var placerEntity = _placementManager.CurrentPermission?.MobUid;
+
+            if (!TryComp<RCDComponent>(placerEntity, out var rcd) ||
+                rcd.CachedPrototype.MirrorPrototype == null)
+                return false;
+
+            bool useMirrorPrototype = !rcd.UseMirrorPrototype;
+
+            var useProto = useMirrorPrototype ? rcd.CachedPrototype.MirrorPrototype : rcd.CachedPrototype.Prototype;
+            CreateNewPlacer(placerEntity.Value, rcd, useProto);
+
+            RaiseNetworkEvent(new RCDConstructionGhostFlipEvent(GetNetEntity(placerEntity.Value), useMirrorPrototype));
+        }
+
+        return true;
+    }
 
     public override void Update(float frameTime)
     {
@@ -55,20 +100,24 @@ public sealed class RCDConstructionGhostSystem : EntitySystem
             RaiseNetworkEvent(new RCDConstructionGhostRotationEvent(GetNetEntity(heldEntity.Value), _placementDirection));
         }
 
-        // If the placer has not changed, exit
+        // If the placer has changed, rebuild it
         _rcdSystem.UpdateCachedPrototype(heldEntity.Value, rcd);
 
-        if (heldEntity == placerEntity && rcd.CachedPrototype.Prototype == placerProto)
-            return;
+        var useProto = rcd.UseMirrorPrototype ? rcd.CachedPrototype.MirrorPrototype : rcd.CachedPrototype.Prototype;
 
-        // Create a new placer
+        if (heldEntity != placerEntity || useProto != placerProto)
+            CreateNewPlacer(heldEntity.Value, rcd, useProto);
+    }
+
+    private void CreateNewPlacer(EntityUid uid, RCDComponent component, string? prototype)
+    {
         var newObjInfo = new PlacementInformation
         {
-            MobUid = heldEntity.Value,
+            MobUid = uid,
             PlacementOption = _placementMode,
-            EntityType = rcd.CachedPrototype.Prototype,
+            EntityType = prototype,
             Range = (int) Math.Ceiling(SharedInteractionSystem.InteractionRange),
-            IsTile = (rcd.CachedPrototype.Mode == RcdMode.ConstructTile),
+            IsTile = (component.CachedPrototype.Mode == RcdMode.ConstructTile),
             UseEditorContext = false,
         };
 
