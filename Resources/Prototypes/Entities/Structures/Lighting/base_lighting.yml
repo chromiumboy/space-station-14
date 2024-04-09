@@ -43,6 +43,7 @@
   - type: RCDDeconstructable
     cost: 4
     delay: 2
+    category: Lighting
     fx: EffectRCDDeconstruct2  
   - type: Destructible
     thresholds:

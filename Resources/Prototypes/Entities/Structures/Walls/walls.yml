@@ -66,6 +66,7 @@
   - type: RCDDeconstructable
     cost: 6
     delay: 8
+    category: StandardWalls
     fx: EffectRCDDeconstruct8
   - type: Destructible
     thresholds:
@@ -135,6 +136,7 @@
   - type: RCDDeconstructable
     cost: 6
     delay: 8
+    category: StandardWalls
     fx: EffectRCDDeconstruct8    
   - type: Destructible
     thresholds:
@@ -262,6 +264,7 @@
   - type: RCDDeconstructable
     cost: 6
     delay: 8
+    category: StandardWalls
     fx: EffectRCDDeconstruct8   
   - type: Destructible
     thresholds:
@@ -298,6 +301,7 @@
   - type: RCDDeconstructable
     cost: 6
     delay: 8
+    category: StandardWalls
     fx: EffectRCDDeconstruct8  
   - type: Destructible
     thresholds:
@@ -372,6 +376,7 @@
   - type: RCDDeconstructable
     cost: 6
     delay: 8
+    category: StandardWalls
     fx: EffectRCDDeconstruct8
   - type: Destructible
     thresholds:
@@ -419,6 +424,7 @@
   - type: RCDDeconstructable
     cost: 6
     delay: 8
+    category: StandardWalls
     fx: EffectRCDDeconstruct8    
   - type: Destructible
     thresholds:
@@ -657,6 +663,7 @@
   - type: RCDDeconstructable
     cost: 6
     delay: 8
+    category: StandardWalls
     fx: EffectRCDDeconstruct8    
   - type: Destructible
     thresholds:
@@ -693,6 +700,7 @@
   - type: RCDDeconstructable
     cost: 6
     delay: 8
+    category: StandardWalls
     fx: EffectRCDDeconstruct8    
   - type: Destructible
     thresholds:
@@ -870,6 +878,7 @@
   - type: RCDDeconstructable
     cost: 6
     delay: 8
+    category: StandardWalls
     fx: EffectRCDDeconstruct8    
   - type: Destructible
     thresholds:
@@ -1250,6 +1259,7 @@
   - type: RCDDeconstructable
     cost: 6
     delay: 8
+    category: StandardWalls
     fx: EffectRCDDeconstruct8    
   - type: Destructible
     thresholds:

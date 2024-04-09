@@ -9,6 +9,7 @@
   category: Main
   sprite: /Textures/Interface/Radial/RCD/deconstruct.png
   mode: Deconstruct
+  permittedDeconstruction: StandardDeconstruction
   prototype: EffectRCDDeconstructPreview
   rotation: Camera
 

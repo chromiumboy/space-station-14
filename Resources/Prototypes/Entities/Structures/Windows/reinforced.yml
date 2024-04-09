@@ -17,6 +17,7 @@
   - type: RCDDeconstructable
     cost: 6
     delay: 6
+    category: StandardWindows
     fx: EffectRCDDeconstruct6
   - type: Destructible
     thresholds:
@@ -106,6 +107,7 @@
   - type: RCDDeconstructable
     cost: 4
     delay: 4
+    category: StandardWindows
     fx: EffectRCDDeconstruct4  
   - type: Destructible
     thresholds:

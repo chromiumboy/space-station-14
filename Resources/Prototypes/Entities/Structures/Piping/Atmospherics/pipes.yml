@@ -19,6 +19,11 @@
   - type: PipeAppearance
   - type: Anchorable
   - type: Rotatable
+  - type: RCDDeconstructable
+    cost: 1
+    delay: 0
+    category: AtmosPipes
+    fx: EffectRCDConstruct0
   - type: Destructible
     thresholds:
     - trigger: # for nukes

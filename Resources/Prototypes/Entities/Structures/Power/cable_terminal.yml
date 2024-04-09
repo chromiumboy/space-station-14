@@ -20,6 +20,7 @@
     - type: RCDDeconstructable
       cost: 2
       delay: 2
+      category: Electrical
       fx: EffectRCDDeconstruct2  
     - type: Destructible
       thresholds:

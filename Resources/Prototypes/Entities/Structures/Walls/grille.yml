@@ -12,6 +12,7 @@
     - type: RCDDeconstructable
       cost: 6
       delay: 4
+      category: StandardWindows
       fx: EffectRCDDeconstruct4  
     - type: CanBuildWindowOnTop
     - type: Sprite
@@ -124,6 +125,7 @@
     - type: RCDDeconstructable
       cost: 6
       delay: 4
+      category: StandardWindows
       fx: EffectRCDDeconstruct4
     - type: Construction
       graph: Grille

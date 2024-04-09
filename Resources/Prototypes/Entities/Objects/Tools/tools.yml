@@ -462,13 +462,13 @@
   description: The rapid piping device can be used to quickly place and remove utility piping. Requires compressed matter to function.
   components:
   - type: RCD
-    availablePrototypes:
-    - GasPipeHalf
+    availablePrototypes:   
     - GasPipeStraight
     - GasPipeBend
     - GasPipeTJunction
     - GasPipeFourway
     - GasValve
+    - GasPipeHalf
     - GasPressurePump
     - GasVolumePump
     - GasFilter
@@ -478,7 +478,7 @@
     - GasVentScrubber
     - GasOutletInjector
     - GasPort
-    - Deconstruct
+    - DeconstructPipes
   - type: LimitedCharges
     maxCharges: 30
     charges: 30

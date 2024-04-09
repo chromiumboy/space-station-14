@@ -26,6 +26,7 @@
   - type: RCDDeconstructable
     cost: 2
     delay: 2
+    category: StandardWalls
     fx: EffectRCDDeconstruct2
   - type: Destructible
     thresholds:

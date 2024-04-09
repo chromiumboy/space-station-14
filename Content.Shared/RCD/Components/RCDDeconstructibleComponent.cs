@@ -21,6 +21,12 @@ public sealed partial class RCDDeconstructableComponent : Component
     public float Delay = 1f;
 
     /// <summary>
+    /// The length of the deconstruction 
+    /// </summary>
+    [DataField("category", required: true), ViewVariables(VVAccess.ReadWrite)]
+    public RcdDeconstructionCategory DeconstructionCategory = RcdDeconstructionCategory.Invalid;
+
+    /// <summary>
     /// The visual effect that plays during deconstruction
     /// </summary>
     [DataField("fx"), ViewVariables(VVAccess.ReadWrite)]

@@ -1,3 +1,13 @@
+- type: rcd
+  id: DeconstructPipes
+  name: rcd-component-deconstruct
+  category: Main
+  sprite: /Textures/Interface/Radial/RPD/deconstruct_pipes.png
+  mode: Deconstruct
+  permittedDeconstruction: AtmosPipes
+  prototype: EffectRCDDeconstructPreview
+  rotation: Camera
+
 # Pipes and valves 
 - type: rcd
   id: GasPipeHalf

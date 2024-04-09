@@ -116,6 +116,7 @@
   - type: RCDDeconstructable
     cost: 6
     delay: 8
+    category: StandardAirlocks
     fx: EffectRCDDeconstruct8    
   - type: Destructible
     thresholds:
@@ -161,6 +162,7 @@
   abstract: true
   components:
   - type: RCDDeconstructable
+    category: ReinforcedAirlocks
     deconstructable: false
 
 - type: entity

@@ -51,6 +51,12 @@ public sealed class RCDPrototype : IPrototype
     public string? MirrorPrototype { get; private set; } = string.Empty;
 
     /// <summary>
+    /// Determines what categories of entity can be deconstructed (requires 'Mode' to be set to 'Deconstruct')
+    /// </summary>
+    [DataField, ViewVariables(VVAccess.ReadOnly)]
+    public RcdDeconstructionCategory PermittedDeconstruction { get; private set; } = RcdDeconstructionCategory.Invalid;
+
+    /// <summary>
     /// Number of charges consumed when the operation is completed
     /// </summary>
     [DataField, ViewVariables(VVAccess.ReadOnly)]
@@ -147,4 +153,27 @@ public enum RcdRotation : byte
     Fixed,      // The entity has a local rotation of zero
     Camera,     // The rotation of the entity matches the local player camera
     User,       // The entity can be rotated by the local player prior to placement
+}
+
+public enum RcdDeconstructionCategory : ushort
+{
+    Invalid = 0,
+    Tiles = 1 << 0,
+    StandardWalls = 1 << 1,
+    StandardAirlocks = 1 << 2,
+    StandardWindows = 1 << 3,
+    Electrical = 1 << 4,
+    Lighting = 1 << 5,
+    ReinforcedWalls = 1 << 6,
+    ReinforcedAirlocks = 1 << 7,
+    ReinforcedWindows = 1 << 8,
+    AtmosPipes = 1 << 9,
+    DisposalPipes = 1 << 10,
+    ShuttleParts = 1 << 11,
+
+    StandardDeconstruction = Tiles | StandardWalls | StandardWindows | Electrical | Lighting,
+    ReinforcedDeconstruction = StandardDeconstruction | ReinforcedWalls | ReinforcedAirlocks | ReinforcedWindows,
+    AllPipesDeconstruction = AtmosPipes | DisposalPipes,
+
+    Everything = ushort.MaxValue,
 }

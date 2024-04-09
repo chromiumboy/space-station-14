@@ -33,6 +33,7 @@
   - type: RCDDeconstructable
     cost: 6
     delay: 8
+    category: StandardAirlocks
     fx: EffectRCDDeconstruct8
   - type: Destructible
     thresholds:

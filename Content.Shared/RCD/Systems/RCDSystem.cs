@@ -452,6 +452,15 @@ public class RCDSystem : EntitySystem
                 return false;
             }
 
+            // The RCD isn't capable of deconstructing tiles
+            if (((int) component.CachedPrototype.PermittedDeconstruction & (int) RcdDeconstructionCategory.Tiles) == 0)
+            {
+                if (popMsgs)
+                    _popup.PopupClient(Loc.GetString("rcd-component-deconstruct-target-not-on-whitelist-message"), uid, user);
+
+                return false;
+            }
+
             // The tile has a structure sitting on it
             if (_turf.IsTileBlocked(mapGridData.Tile, CollisionGroup.MobMask))
             {
@@ -477,7 +486,9 @@ public class RCDSystem : EntitySystem
         else
         {
             // The object is not in the whitelist
-            if (!TryComp<RCDDeconstructableComponent>(target, out var deconstructible) || !deconstructible.Deconstructable)
+            if (!TryComp<RCDDeconstructableComponent>(target, out var deconstructible) ||
+                !deconstructible.Deconstructable ||
+                ((int) component.CachedPrototype.PermittedDeconstruction & (int) deconstructible.DeconstructionCategory) == 0)
             {
                 if (popMsgs)
                     _popup.PopupClient(Loc.GetString("rcd-component-deconstruct-target-not-on-whitelist-message"), uid, user);

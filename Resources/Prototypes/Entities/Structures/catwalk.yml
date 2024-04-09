@@ -54,4 +54,5 @@
   - type: RCDDeconstructable
     cost: 2
     delay: 2
+    category: Tiles
     fx: EffectRCDDeconstruct2  
