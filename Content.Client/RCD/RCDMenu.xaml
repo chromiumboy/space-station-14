@@ -35,7 +35,7 @@
             <TextureRect VerticalAlignment="Center" HorizontalAlignment="Center" TextureScale="2 2" TexturePath="/Textures/Interface/Radial/RPD/pumps_and_regulators.png"/>
         </ui:RadialMenuTextureButton>
         <ui:RadialMenuTextureButton StyleClasses="RadialMenuButton" SetSize="64 64" ToolTip="{Loc 'rcd-component-inlets-and-outlets'}" TargetLayer="InletsAndOutlets" Visible="False">
-            <TextureRect VerticalAlignment="Center" HorizontalAlignment="Center" TextureScale="2 2" TexturePath="/Textures/Interface/Radial/RPD/vent_passive.png"/>
+            <TextureRect VerticalAlignment="Center" HorizontalAlignment="Center" TextureScale="2 2" TexturePath="/Textures/Interface/Radial/RPD/inlets_and_outlets.png"/>
         </ui:RadialMenuTextureButton>     
     </ui:RadialContainer>
 
