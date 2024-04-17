@@ -1,5 +1,7 @@
 using Content.Shared.Pinpointer;
 using Robust.Shared.GameStates;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Content.Client.Pinpointer;
 
@@ -30,6 +32,12 @@ public sealed partial class NavMapSystem : SharedNavMapSystem
                 if (!state.AllBeacons!.Contains(beacon))
                     component.Beacons.Remove(beacon);
             }
+
+            foreach (var region in component.RegionProperties)
+            {
+                if (!state.AllRegions!.Any(x => x.Owner == region.Value.Owner))
+                    component.RegionProperties.Remove(region.Key);
+            }
         }
 
         else
@@ -45,6 +53,12 @@ public sealed partial class NavMapSystem : SharedNavMapSystem
                 if (!state.Beacons.Contains(beacon))
                     component.Beacons.Remove(beacon);
             }
+
+            foreach (var region in component.RegionProperties)
+            {
+                if (!state.Regions.Any(x => x.Owner == region.Value.Owner))
+                    component.RegionProperties.Remove(region.Key);
+            }
         }
 
         foreach (var ((category, origin), chunk) in state.Chunks)
@@ -59,5 +73,11 @@ public sealed partial class NavMapSystem : SharedNavMapSystem
 
         foreach (var beacon in state.Beacons)
             component.Beacons.Add(beacon);
+
+        foreach (var region in state.Regions)
+        {
+            component.RegionProperties[region.Owner] = region;
+            component.QueuedRegionsToFlood.Enqueue(region.Owner);
+        }
     }
 }

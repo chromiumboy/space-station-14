@@ -26,6 +26,32 @@ public sealed partial class NavMapComponent : Component
     /// </summary>
     [ViewVariables]
     public HashSet<SharedNavMapSystem.NavMapBeacon> Beacons = new();
+
+    /// <summary>
+    /// Describes the properties of a region on the station.
+    /// It is indexed by the entity assigned as the region owner.
+    /// </summary>
+    [ViewVariables(VVAccess.ReadOnly)]
+    public Dictionary<NetEntity, SharedNavMapSystem.NavMapRegionProperties> RegionProperties = new();
+
+    /// <summary>
+    /// All flood filled regions.
+    /// It is indexed by the entity assigned as the region owner.
+    /// </summary>
+    /// <remarks>
+    /// For client use only
+    /// </remarks>
+    [ViewVariables(VVAccess.ReadOnly)]
+    public Dictionary<NetEntity, (HashSet<Vector2i>, Color)> FloodedRegions = new();
+
+    /// <summary>
+    /// A queue of all region owners that are waiting their associated regions to be floodfilled.
+    /// </summary>
+    /// <remarks>
+    /// For client use only
+    /// </remarks>
+    [ViewVariables(VVAccess.ReadOnly)]
+    public Queue<NetEntity> QueuedRegionsToFlood = new();
 }
 
 [Serializable, NetSerializable]
