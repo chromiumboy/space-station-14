@@ -47,6 +47,7 @@ public partial class NavMapControl : MapGridControl
     public List<(Vector2, Vector2)> TileLines = new();
     public List<(Vector2, Vector2)> TileRects = new();
     public List<(Vector2[], Color)> TilePolygons = new();
+    public Dictionary<NetEntity, (HashSet<Vector2i>, Color)> RegionOverlays = new();
 
     // Default colors
     public Color WallColor = new(102, 217, 102);
@@ -361,6 +362,22 @@ public partial class NavMapControl : MapGridControl
 
             if (rects.Count > 0)
                 handle.DrawPrimitives(DrawPrimitiveTopology.LineList, rects.Span, wallsRGB);
+        }
+
+        // Draw region overlays
+        if (_grid != null)
+        {
+            foreach ((var regionOwner, var (tiles, color)) in RegionOverlays)
+            {
+                foreach (var tile in tiles)
+                {
+                    var positionTopLeft = ScalePosition(new Vector2(tile.X, -tile.Y) - new Vector2(offset.X, -offset.Y));
+                    var positionBottomRight = ScalePosition(new Vector2(tile.X, -tile.Y) + new Vector2(_grid.TileSize, -_grid.TileSize) - new Vector2(offset.X, -offset.Y));
+                    var box = new UIBox2(positionTopLeft, positionBottomRight);
+
+                    handle.DrawRect(box, color);
+                }
+            }
         }
 
         // Invoke post wall drawing action

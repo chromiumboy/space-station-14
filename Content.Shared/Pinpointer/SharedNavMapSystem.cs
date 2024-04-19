@@ -232,7 +232,7 @@ public abstract class SharedNavMapSystem : EntitySystem
         {
             if (kvp.Value.LastUpdate < args.FromTick)
                 continue;
-
+        
             regions.Add(kvp.Value);
         }
 
