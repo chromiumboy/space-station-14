@@ -69,6 +69,19 @@ public sealed partial class NavMapSystem : SharedNavMapSystem
                 newChunk.TileData[atmosDirection] = value;
 
             component.Chunks[(category, origin)] = newChunk;
+
+            // If the affected chunk intersects one or more regions, re-flood them
+            if (!_chunkToRegionOwnerTable.TryGetValue(origin, out var affectedOwners))
+                continue;
+
+            foreach (var affectedOwner in affectedOwners)
+            {
+                if (!component.RegionProperties.ContainsKey(affectedOwner))
+                    continue;
+
+                if (!component.QueuedRegionsToFlood.Contains(affectedOwner))
+                    component.QueuedRegionsToFlood.Enqueue(affectedOwner);
+            }
         }
 
         foreach (var beacon in state.Beacons)
@@ -77,7 +90,9 @@ public sealed partial class NavMapSystem : SharedNavMapSystem
         foreach (var region in state.Regions)
         {
             component.RegionProperties[region.Owner] = region;
-            component.QueuedRegionsToFlood.Enqueue(region.Owner);
+
+            if (!component.QueuedRegionsToFlood.Contains(region.Owner))
+                component.QueuedRegionsToFlood.Enqueue(region.Owner);
         }
     }
 }

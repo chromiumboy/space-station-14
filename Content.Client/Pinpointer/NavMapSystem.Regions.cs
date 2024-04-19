@@ -130,9 +130,13 @@ public sealed partial class NavMapSystem
 
                 foreach (var (direction, tileOffset, reverseDirection) in _regionPropagationTable)
                 {
+                    var neighbor = current + tileOffset;
+                    var neighborOrigin = SharedMapSystem.GetChunkIndices(neighbor, ChunkSize);
+
+                    visitedChunks.Add(neighborOrigin);
+
                     if (!regionBlockingTileData.TryGetValue(direction, out var directionFlag) || (directionFlag & flag) == 0)
                     {
-                        var neighbor = current + tileOffset;
                         var neighborBlockingTileData = GetRegionBlockingTileData(uid, component, neighbor, regionProperties);
 
                         if (CanMoveIntoTile(neighborBlockingTileData, neighbor, reverseDirection))
