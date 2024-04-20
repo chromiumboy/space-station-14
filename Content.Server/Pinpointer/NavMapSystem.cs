@@ -138,8 +138,11 @@ public sealed partial class NavMapSystem : SharedNavMapSystem
         RefreshTileEntityContents(gridUid.Value, navMap, mapGrid, chunkOrigin, tile);
 
         // Update potentially affected chunks
-        foreach (var category in EntityChunkTypes)
+        foreach (NavMapChunkType category in Enum.GetValues(typeof(NavMapChunkType)))
         {
+            if (category == NavMapChunkType.Invalid || category == NavMapChunkType.Floor)
+                continue;
+
             if (!navMap.Chunks.TryGetValue((category, chunkOrigin), out var chunk))
                 continue;
 
@@ -263,8 +266,11 @@ public sealed partial class NavMapSystem : SharedNavMapSystem
         var invFlag = (ushort) ~flag;
 
         // Clear stale data from the tile across all entity associated chunks
-        foreach (var category in EntityChunkTypes)
+        foreach (NavMapChunkType category in Enum.GetValues(typeof(NavMapChunkType)))
         {
+            if (category == NavMapChunkType.Invalid || category == NavMapChunkType.Floor)
+                continue;
+
             if (!component.Chunks.TryGetValue((category, chunkOrigin), out var chunk))
                 chunk = new(chunkOrigin);
 
@@ -304,6 +310,18 @@ public sealed partial class NavMapSystem : SharedNavMapSystem
             {
                 var airlockInvFlag = (ushort) ~airlockChunk.TileData[direction];
                 wallChunk.TileData[direction] &= airlockInvFlag;
+            }
+
+            wallChunk.LastUpdate = _gameTiming.CurTick;
+            component.Chunks[(NavMapChunkType.Wall, chunkOrigin)] = wallChunk;
+        }
+
+        if (component.Chunks.TryGetValue((NavMapChunkType.Wall, chunkOrigin), out wallChunk) &&
+            component.Chunks.TryGetValue((NavMapChunkType.WallDiagonal, chunkOrigin), out var diagonalChunk))
+        {
+            foreach (var (direction, _) in wallChunk.TileData)
+            {
+                wallChunk.TileData[direction] |= diagonalChunk.TileData[direction];
             }
 
             wallChunk.LastUpdate = _gameTiming.CurTick;

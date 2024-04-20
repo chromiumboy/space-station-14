@@ -12,19 +12,9 @@ namespace Content.Shared.Pinpointer;
 
 public abstract class SharedNavMapSystem : EntitySystem
 {
-    [Dependency] private readonly TagSystem _tagSystem = default!;
     [Dependency] private readonly IGameTiming _gameTiming = default!;
 
     public const byte ChunkSize = 4;
-
-    public readonly NavMapChunkType[] EntityChunkTypes =
-    {
-        NavMapChunkType.Invalid,
-        NavMapChunkType.Wall,
-        NavMapChunkType.Airlock,
-    };
-
-    private readonly string[] _wallTags = ["Wall", "Window"];
 
     public override void Initialize()
     {

@@ -93,6 +93,7 @@ public enum NavMapChunkType : byte
     Invalid,
     Floor,
     Wall,
+    WallDiagonal,
     Airlock,
     Firelock,
 }

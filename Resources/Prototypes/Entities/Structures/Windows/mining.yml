@@ -90,7 +90,7 @@
     - South
     - East
   - type: NavMapEntity
-    category: Wall
+    category: WallDiagonal
     initBlockedDirection: SouthEast
   - type: DamageVisuals
     damageOverlay:

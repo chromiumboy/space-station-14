@@ -59,7 +59,7 @@
   - type: Airtight
     noAirWhenFullyAirBlocked: false
   - type: NavMapEntity
-    category: Airlock  
+    category: Airlock
   - type: Tag
     tags:
       - ForceNoFixRotations

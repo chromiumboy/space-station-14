@@ -102,7 +102,7 @@ public sealed class StationMapSystem : EntitySystem
             return null;
 
         NavMapChunkType[] propagatingChunkTypes = { NavMapChunkType.Floor };
-        NavMapChunkType[] constraintChunkTypes = { NavMapChunkType.Wall, NavMapChunkType.Airlock };
+        NavMapChunkType[] constraintChunkTypes = { NavMapChunkType.Wall, NavMapChunkType.WallDiagonal, NavMapChunkType.Airlock };
         var seeds = new HashSet<Vector2i>() { _mapSystem.CoordinatesToTile(xform.GridUid.Value, mapGrid, _transformSystem.GetMapCoordinates(uid, xform)) };
 
         var regionProperties = new NavMapRegionProperties(GetNetEntity(uid), propagatingChunkTypes, constraintChunkTypes, seeds, component.Color)
