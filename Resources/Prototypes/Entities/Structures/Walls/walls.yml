@@ -45,6 +45,8 @@
         density: 1000
   - type: Occluder
   - type: Airtight
+  - type: NavMapEntity
+    category: Wall
   - type: StaticPrice
     price: 75
   - type: RadiationBlocker
@@ -761,6 +763,9 @@
     airBlockedDirection:
     - South
     - East
+  - type: NavMapEntity
+    category: Wall
+    initBlockedDirection: SouthEast
   - type: Fixtures
     fixtures:
       fix1:

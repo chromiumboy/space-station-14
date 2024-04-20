@@ -137,6 +137,9 @@
     noAirWhenFullyAirBlocked: false
     airBlockedDirection:
       - South
+  - type: NavMapEntity
+    category: Airlock
+    initBlockedDirection: South
   - type: Construction
     graph: Windoor
     node: windoor

@@ -103,19 +103,6 @@ public abstract class SharedNavMapSystem : EntitySystem
         return true;
     }
 
-    public NavMapChunkType GetAssociatedEntityChunkType(EntityUid uid)
-    {
-        var category = NavMapChunkType.Invalid;
-
-        if (HasComp<NavMapDoorComponent>(uid))
-            category = NavMapChunkType.Airlock;
-
-        else if (_tagSystem.HasAnyTag(uid, _wallTags))
-            category = NavMapChunkType.Wall;
-
-        return category;
-    }
-
     protected bool TryCreateNavMapBeaconData(EntityUid uid, NavMapBeaconComponent component, TransformComponent xform, [NotNullWhen(true)] out NavMapBeacon? beaconData)
     {
         beaconData = null;
@@ -232,7 +219,7 @@ public abstract class SharedNavMapSystem : EntitySystem
         {
             if (kvp.Value.LastUpdate < args.FromTick)
                 continue;
-        
+
             regions.Add(kvp.Value);
         }
 

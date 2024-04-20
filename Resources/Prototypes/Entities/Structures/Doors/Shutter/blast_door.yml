@@ -52,6 +52,8 @@
     canCollide: false
   - type: Airtight
     airBlocked: false
+  - type: NavMapEntity
+    category: Airlock
   - type: RadiationBlocker
     enabled: false
 

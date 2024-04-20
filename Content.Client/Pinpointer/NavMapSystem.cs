@@ -1,6 +1,5 @@
 using Content.Shared.Pinpointer;
 using Robust.Shared.GameStates;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace Content.Client.Pinpointer;

@@ -92,6 +92,9 @@
     airBlockedDirection:
     - South
     - East
+  - type: NavMapEntity
+    category: Wall
+    initBlockedDirection: SouthEast
   - type: DamageVisuals
     damageOverlay:
       sprite: Structures/Windows/cracks_diagonal.rsi

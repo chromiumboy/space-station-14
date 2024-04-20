@@ -96,6 +96,8 @@
     - type: Airtight
       airBlocked: false
       noAirWhenFullyAirBlocked: true
+    - type: NavMapEntity
+      category: Firelock
     - type: RadiationBlocker
       enabled: false
     - type: Occluder
@@ -162,6 +164,9 @@
       noAirWhenFullyAirBlocked: false
       airBlockedDirection:
         - South
+    - type: NavMapEntity
+      category: Firelock
+      initBlockedDirection: South
     - type: Fixtures
       fixtures:
         fix1:

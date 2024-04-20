@@ -94,4 +94,5 @@ public enum NavMapChunkType : byte
     Floor,
     Wall,
     Airlock,
+    Firelock,
 }

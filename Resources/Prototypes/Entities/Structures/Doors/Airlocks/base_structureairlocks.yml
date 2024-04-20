@@ -107,6 +107,8 @@
       type: WiresBoundUserInterface
   - type: Airtight
     noAirWhenFullyAirBlocked: false
+  - type: NavMapEntity
+    category: Airlock   
   - type: RadiationBlocker
     resistance: 3
   - type: Occluder

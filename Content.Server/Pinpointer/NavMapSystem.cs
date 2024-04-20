@@ -3,6 +3,7 @@ using Content.Server.Atmos.Components;
 using Content.Server.Atmos.EntitySystems;
 using Content.Server.Station.Systems;
 using Content.Server.Warps;
+using Content.Shared.Atmos;
 using Content.Shared.Database;
 using Content.Shared.Examine;
 using Content.Shared.Localizations;
@@ -43,8 +44,10 @@ public sealed partial class NavMapSystem : SharedNavMapSystem
         SubscribeLocalEvent<GridSplitEvent>(OnNavMapSplit);
         SubscribeLocalEvent<TileChangedEvent>(OnTileChanged);
 
-        // Airtight structure change event
-        SubscribeLocalEvent<AirtightChanged>(OnAirtightChanged);
+        // Nav map entity event
+        SubscribeLocalEvent<NavMapEntityComponent, AnchorStateChangedEvent>(OnEntityAnchorStateChanged);
+        SubscribeLocalEvent<NavMapEntityComponent, ReAnchorEvent>(OnEntityReAnchor);
+        SubscribeLocalEvent<NavMapEntityComponent, MoveEvent>(OnEntityMove);
 
         // Beacon events
         SubscribeLocalEvent<NavMapBeaconComponent, MapInitEvent>(OnNavMapBeaconMapInit);
@@ -105,19 +108,34 @@ public sealed partial class NavMapSystem : SharedNavMapSystem
         Dirty(ev.NewTile.GridUid, navMap);
     }
 
-    private void OnAirtightChanged(ref AirtightChanged ev)
+    private void OnEntityAnchorStateChanged(EntityUid uid, NavMapEntityComponent component, AnchorStateChangedEvent ev)
     {
-        var gridUid = ev.Position.Grid;
+        OnEntityChanged(ev.Transform);
+    }
+
+    private void OnEntityReAnchor(EntityUid uid, NavMapEntityComponent component, ReAnchorEvent ev)
+    {
+        OnEntityChanged(ev.Xform);
+    }
+
+    private void OnEntityMove(EntityUid uid, NavMapEntityComponent component, MoveEvent ev)
+    {
+        OnEntityChanged(ev.Component);
+    }
+
+    private void OnEntityChanged(TransformComponent xform)
+    {
+        var gridUid = xform.GridUid;
 
         if (!TryComp<NavMapComponent>(gridUid, out var navMap) ||
             !TryComp<MapGridComponent>(gridUid, out var mapGrid))
             return;
 
         // Refresh the affected tile
-        var tile = ev.Position.Tile;
+        var tile = _mapSystem.CoordinatesToTile(gridUid.Value, mapGrid, xform.Coordinates);
         var chunkOrigin = SharedMapSystem.GetChunkIndices(tile, ChunkSize);
 
-        RefreshTileEntityContents(gridUid, navMap, mapGrid, chunkOrigin, tile);
+        RefreshTileEntityContents(gridUid.Value, navMap, mapGrid, chunkOrigin, tile);
 
         // Update potentially affected chunks
         foreach (var category in EntityChunkTypes)
@@ -129,7 +147,7 @@ public sealed partial class NavMapSystem : SharedNavMapSystem
             navMap.Chunks[(category, chunkOrigin)] = chunk;
         }
 
-        Dirty(gridUid, navMap);
+        Dirty(gridUid.Value, navMap);
     }
 
     #endregion
@@ -262,22 +280,20 @@ public sealed partial class NavMapSystem : SharedNavMapSystem
 
         while (enumerator.MoveNext(out var ent))
         {
-            if (!TryComp<AirtightComponent>(ent, out var entAirtight))
+            if (!TryComp<NavMapEntityComponent>(ent, out var entNavMap))
                 continue;
 
-            var category = GetAssociatedEntityChunkType(ent.Value);
-
-            if (!component.Chunks.TryGetValue((category, chunkOrigin), out var chunk))
+            if (!component.Chunks.TryGetValue((entNavMap.Category, chunkOrigin), out var chunk))
                 continue;
 
             foreach (var (direction, _) in chunk.TileData)
             {
-                if ((direction & entAirtight.AirBlockedDirection) > 0)
+                if ((direction & GetNavMapEntityDirection(ent.Value, entNavMap)) > 0)
                     chunk.TileData[direction] |= flag;
             }
 
             chunk.LastUpdate = _gameTiming.CurTick;
-            component.Chunks[(category, chunkOrigin)] = chunk;
+            component.Chunks[(entNavMap.Category, chunkOrigin)] = chunk;
         }
 
         // Remove walls that intersect with doors (unless they can both physically fit on the same tile)
@@ -293,6 +309,29 @@ public sealed partial class NavMapSystem : SharedNavMapSystem
             wallChunk.LastUpdate = _gameTiming.CurTick;
             component.Chunks[(NavMapChunkType.Wall, chunkOrigin)] = wallChunk;
         }
+    }
+
+    public AtmosDirection GetNavMapEntityDirection(EntityUid uid, NavMapEntityComponent component)
+    {
+        if (component.InitBlockedDirection == AtmosDirection.All)
+            return AtmosDirection.All;
+
+        var baseDirection = component.InitBlockedDirection;
+        var baseAngle = Transform(uid).LocalRotation;
+        var newDirection = AtmosDirection.Invalid;
+
+        for (var i = 0; i < Atmospherics.Directions; i++)
+        {
+            var currDirection = (AtmosDirection) (1 << i);
+
+            if ((baseDirection & currDirection) == 0)
+                continue;
+
+            var currAngle = currDirection.ToAngle() + baseAngle;
+            newDirection |= currAngle.ToAtmosDirectionCardinal();
+        }
+
+        return newDirection;
     }
 
     #endregion

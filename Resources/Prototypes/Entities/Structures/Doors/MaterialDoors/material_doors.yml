@@ -40,6 +40,8 @@
       path: /Audio/Effects/stonedoor_openclose.ogg
   - type: Appearance
   - type: Airtight
+  - type: NavMapEntity
+    category: Airlock
   - type: Damageable
     damageContainer: Inorganic
     damageModifierSet: Metallic

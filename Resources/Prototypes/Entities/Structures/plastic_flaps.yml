@@ -86,6 +86,8 @@
       - !type:DoActsBehavior
         acts: ["Destruction"]
   - type: Airtight
+  - type: NavMapEntity
+    category: Airlock
   - type: Construction
     graph: PlasticFlapsGraph
     node: airtightFlaps
@@ -107,7 +109,9 @@
       behaviors:
       - !type:DoActsBehavior
         acts: ["Destruction"]
-  - type: Airtight
+  - type: Airtight  
+  - type: NavMapEntity
+    category: Airlock
   - type: Construction
     graph: PlasticFlapsGraph
     node: airtightopaqueFlaps

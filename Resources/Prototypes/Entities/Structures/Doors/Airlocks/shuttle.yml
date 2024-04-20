@@ -58,6 +58,8 @@
       path: /Audio/Machines/airlock_deny.ogg
   - type: Airtight
     noAirWhenFullyAirBlocked: false
+  - type: NavMapEntity
+    category: Airlock  
   - type: Tag
     tags:
       - ForceNoFixRotations

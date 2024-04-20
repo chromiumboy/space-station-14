@@ -71,6 +71,8 @@
       - !type:DoActsBehavior
         acts: [ "Destruction" ]
   - type: Airtight
+  - type: NavMapEntity
+    category: Wall
   - type: IconSmooth
     key: windows
     base: window
@@ -183,6 +185,9 @@
     noAirWhenFullyAirBlocked: false
     airBlockedDirection:
     - South
+  - type: NavMapEntity
+    category: Wall
+    initBlockedDirection: South
   - type: Construction
     graph: WindowDirectional
     node: windowDirectional
@@ -259,6 +264,9 @@
     airBlockedDirection:
     - South
     - East
+  - type: NavMapEntity
+    category: Wall
+    initBlockedDirection: SouthEast
   - type: DamageVisuals
     damageOverlay:
       sprite: Structures/Windows/cracks_diagonal.rsi
