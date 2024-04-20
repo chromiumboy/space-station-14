@@ -45,7 +45,7 @@ public sealed partial class NavMapSystem
 
         // Get the tiles and chunks affected by the flood fill and assign the tiles to the component
         var (floodedTiles, floodedChunks) = FloodFillRegion(uid, component, regionProperties, RegionMaxSize);
-        component.FloodedRegions[regionOwner] = (floodedTiles, regionProperties.Color);
+        component.FloodedRegions[regionOwner] = (GetMergedRegionTiles(floodedTiles), regionProperties.Color);
 
         // To reduce unnecessary future flood fills, track which chunks have been flooded by a region owner 
 
@@ -147,6 +147,124 @@ public sealed partial class NavMapSystem
         }
 
         return (visitedTiles, visitedChunks);
+    }
+
+    private List<(Vector2i, Vector2i)> GetMergedRegionTiles(HashSet<Vector2i> tiles)
+    {
+        if (!tiles.Any())
+            return new();
+
+        var x = tiles.Select(t => t.X);
+        var minX = x.Min();
+        var maxX = x.Max();
+
+        var y = tiles.Select(t => t.Y);
+        var minY = y.Min();
+        var maxY = y.Max();
+
+        var matrix = new int[maxX - minX + 1, maxY - minY + 1];
+
+        foreach (var tile in tiles)
+        {
+            var a = tile.X - minX;
+            var b = tile.Y - minY;
+
+            matrix[a, b] = 1;
+
+            //matrix[tile.X - minX, tile.Y - minY] = 1;
+        }
+
+        return GetMergedRegionTiles(matrix, new Vector2i(minX, minY));
+    }
+
+    private List<(Vector2i, Vector2i)> GetMergedRegionTiles(int[,] matrix, Vector2i offset)
+    {
+        var output = new List<(Vector2i, Vector2i)>();
+
+        var rows = matrix.GetLength(0);
+        var cols = matrix.GetLength(1);
+
+        var dp = new int[rows, cols];
+        var coords = (new Vector2i(), new Vector2i());
+        var maxArea = 0;
+
+        var count = 0;
+
+        while (!IsArrayEmpty(matrix))
+        {
+            count++;
+
+            if (count > rows * cols)
+                break;
+
+            // Clear old values
+            dp = new int[rows, cols];
+            coords = (new Vector2i(), new Vector2i());
+            maxArea = 0;
+
+            // Initialize the first row of dp
+            for (int j = 0; j < cols; j++)
+            {
+                dp[0, j] = matrix[0, j];
+            }
+
+            // Calculate dp values for remaining rows
+            for (int i = 1; i < rows; i++)
+            {
+                for (int j = 0; j < cols; j++)
+                    dp[i, j] = matrix[i, j] == 1 ? dp[i - 1, j] + 1 : 0;
+            }
+
+            // Find the largest rectangular area seeded for each position in the matrix
+            for (int i = 0; i < rows; i++)
+            {
+                for (int j = 0; j < cols; j++)
+                {
+                    int minWidth = dp[i, j];
+
+                    for (int k = j; k >= 0; k--)
+                    {
+                        if (dp[i, k] <= 0)
+                            break;
+
+                        minWidth = Math.Min(minWidth, dp[i, k]);
+                        var currArea = Math.Max(maxArea, minWidth * (j - k + 1));
+
+                        if (currArea > maxArea)
+                        {
+                            maxArea = currArea;
+                            coords = (new Vector2i(i - minWidth + 1, k), new Vector2i(i, j));
+                        }
+                    }
+                }
+            }
+
+            // Save the recorded rectangle vertices
+            output.Add((coords.Item1 + offset, coords.Item2 + offset));
+
+            // Removed the tiles covered by the rectangle from matrix
+            for (int i = coords.Item1.X; i <= coords.Item2.X; i++)
+            {
+                for (int j = coords.Item1.Y; j <= coords.Item2.Y; j++)
+                    matrix[i, j] = 0;
+            }
+        }
+
+        return output;
+    }
+
+    private bool IsArrayEmpty(int[,] matrix)
+    {
+        for (int i = 0; i < matrix.GetLength(0); i++)
+        {
+            for (int j = 0; j < matrix.GetLength(1); j++)
+            {
+                if (matrix[i, j] == 1)
+                    return false;
+            }
+        }
+
+        return true;
     }
 
     private Dictionary<AtmosDirection, ushort> GetRegionBlockingTileData(EntityUid uid, NavMapComponent component, Vector2i tile, NavMapRegionProperties regionProperties)

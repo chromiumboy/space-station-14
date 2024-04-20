@@ -42,7 +42,7 @@ public sealed partial class NavMapComponent : Component
     /// For client use only
     /// </remarks>
     [ViewVariables(VVAccess.ReadOnly)]
-    public Dictionary<NetEntity, (HashSet<Vector2i>, Color)> FloodedRegions = new();
+    public Dictionary<NetEntity, (List<(Vector2i, Vector2i)>, Color)> FloodedRegions = new();
 
     /// <summary>
     /// A queue of all region owners that are waiting their associated regions to be floodfilled.
