@@ -1,0 +1,103 @@
+<controls:FancyWindow xmlns="https://spacestation14.io"
+               xmlns:ui="clr-namespace:Content.Client.TurretControls"
+               xmlns:controls="clr-namespace:Content.Client.UserInterface.Controls"
+               xmlns:gfx="clr-namespace:Robust.Client.Graphics;assembly=Robust.Client"
+               Resizable="False">
+
+    <PanelContainer Name="Background" StyleClasses="PdaBackgroundRect" />
+    <PanelContainer Name="AccentH" Margin="-1 170 -2 170" Access="Public" StyleClasses="PdaBackground" />
+    <PanelContainer Name="AccentV" Margin="220 -1 220 -1" Access="Public" StyleClasses="PdaBackground" />
+    <PanelContainer Name="Border" StyleClasses="PdaBorderRect" />
+
+    <BoxContainer Orientation="Vertical" HorizontalExpand="True">
+        <!--Heading-->
+        <BoxContainer SetHeight="26" Margin="4 2 8 0" Orientation="Horizontal">
+            <Control HorizontalExpand="True"/>
+            <!--<TextureButton Name="CloseButton" StyleClasses="windowCloseButton" VerticalAlignment="Center" Margin="0 4 4 0"/> -->
+        </BoxContainer>
+        
+        <!--Content-->
+        <Control Margin="18 0" RectClipContent="True" VerticalExpand="true"
+                 HorizontalExpand="True">
+            <PanelContainer Name="ContentBorder" StyleClasses="PdaBackground"/>
+            <Control Margin="3 3">
+
+                <!-- Screen Background -->
+                <PanelContainer Name="ContentBackground" StyleClasses="PdaContentBackground"/>
+
+                <!-- Screen foreground -->
+                <BoxContainer Orientation="Vertical">
+
+                    <Label Text="{Loc 'turret-controls-window-title'}" HorizontalAlignment="Center" Margin="0 5 0 0" StyleClasses="LabelKeyText"/>
+
+                    <!-- Linked objects -->
+                    <PanelContainer Margin="10 5 10 5">
+                        <PanelContainer.PanelOverride>
+                            <gfx:StyleBoxFlat BorderColor="#FFFFFF" BorderThickness="2" />
+                        </PanelContainer.PanelOverride>
+                        
+                        <BoxContainer Orientation="Vertical" MinHeight="200">
+                            <Label Text="{Loc 'turret-controls-window-turret-status-label'}" HorizontalAlignment="Center" Margin="0 5 0 0" />
+
+                            <BoxContainer Orientation="Vertical">
+                                <Label Name="NoLinkedTurretsText" Text="{Loc 'turret-controls-window-no-turrets'}" HorizontalAlignment="Center" ReservesSpace="False"/>
+
+                                <!-- Populated with C# code -->
+                                <BoxContainer Name="LinkedTurretsContainer" Visible="False" ReservesSpace="False"/>
+
+                            </BoxContainer>
+                        </BoxContainer>
+                    </PanelContainer>
+
+                    <!-- Armament controls -->
+                    <PanelContainer Margin="10 0 10 5">
+                        <PanelContainer.PanelOverride>
+                            <gfx:StyleBoxFlat BorderColor="#FFFFFF" BorderThickness="2" />
+                        </PanelContainer.PanelOverride>
+
+                        <BoxContainer Orientation="Vertical">
+                            <Label Text="{Loc 'turret-controls-window-armament-controls-label'}" HorizontalAlignment="Center" Margin="0 5 0 0" />
+
+                            <BoxContainer Orientation="Horizontal" Margin="10 5 10 10">
+                                <Button Name="SafeButton" Text="{Loc 'turret-controls-window-safe'}" StyleClasses="OpenRight" Pressed="True" ToggleMode="True" HorizontalExpand="True"/>
+                                <Button Name="StunButton" Text="{Loc 'turret-controls-window-stun'}" StyleClasses="OpenBoth" Pressed="False" ToggleMode="True" HorizontalExpand="True"/>
+                                <Button Name="LethalButton" Text="{Loc 'turret-controls-window-lethal'}" StyleClasses="OpenLeft" Pressed="False" ToggleMode="True" HorizontalExpand="True"/>
+                            </BoxContainer>
+                            
+                        </BoxContainer>
+                    </PanelContainer>
+
+                    <!-- Targeting controls -->
+                    <PanelContainer Name="TargetingControlsPanel" Margin="10 0 10 10" ReservesSpace="False">
+                        <PanelContainer.PanelOverride>
+                            <gfx:StyleBoxFlat BorderColor="#FFFFFF" BorderThickness="2" />
+                        </PanelContainer.PanelOverride>
+
+                        <BoxContainer Orientation="Vertical">
+                            <Label Text="{Loc 'turret-controls-window-targeting-controls-label'}" HorizontalAlignment="Center" Margin="0 5 0 0" />
+
+                            <!-- Populated with C# code -->
+                            <BoxContainer Orientation="Vertical">
+                                <BoxContainer Orientation="Horizontal" Margin="10 5 10 10">
+                                    <Control SetWidth="100">
+                                        <Label Text="Cyborgs" HorizontalAlignment="Center" />
+                                    </Control>
+                                    <Button Name="IgnoreButton" Text="{Loc 'turret-controls-window-ignore'}" StyleClasses="OpenRight" Pressed="False" ToggleMode="True" HorizontalExpand="True"/>
+                                    <Button Name="TargetButton" Text="{Loc 'turret-controls-window-target'}" StyleClasses="OpenLeft" Pressed="True" ToggleMode="True" HorizontalExpand="True"/>
+                                </BoxContainer>
+                            </BoxContainer>
+                            
+                        </BoxContainer>
+                    </PanelContainer>
+
+                </BoxContainer>
+
+            </Control>
+        </Control>
+        
+        <!--Footer-->
+        <BoxContainer Orientation="Horizontal" SetHeight="28">
+            <Label Text="{Loc 'turret-controls-window-footer'}" HorizontalAlignment="Center" Margin="0 0 0 6"/>
+        </BoxContainer>
+    </BoxContainer>
+</controls:FancyWindow>
