@@ -1,0 +1,72 @@
+{
+  "version": 1,
+  "license": "CC-BY-SA-3.0",
+  "copyright": "",
+  "size": {
+    "x": 32,
+    "y": 32
+  },
+  "states": [
+    {
+      "name": "base",
+      "directions": 8
+    },
+    {
+      "name": "stun",
+      "directions": 8
+    },
+    {
+      "name": "lethal",
+      "directions": 8
+    },
+    {
+      "name": "destroyed",
+      "directions": 8
+    },
+    {
+      "name": "pit"
+    },
+    {
+      "name": "cover_closed"
+    },
+    {
+      "name": "cover_open"
+    },
+    {
+      "name": "cover_opening",
+      "delays": [
+        [
+          0.1,
+          0.1,
+          0.1,
+          0.1,
+          0.1,
+          0.1,
+          0.1,
+          0.1,
+          0.1,
+          0.1,
+          0.1
+        ]
+      ]
+    },
+    {
+      "name": "cover_closing",
+      "delays": [
+        [
+          0.1,
+          0.1,
+          0.1,
+          0.1,
+          0.1,
+          0.1,
+          0.1,
+          0.1,
+          0.1,
+          0.1,
+          0.1
+        ]
+      ]
+    }
+  ]
+}
