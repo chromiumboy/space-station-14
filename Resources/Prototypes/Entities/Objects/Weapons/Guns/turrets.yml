@@ -257,3 +257,35 @@
       interactFailureString: petting-failure-generic
       interactSuccessSound:
         path: /Audio/Animals/snake_hiss.ogg
+
+- type: entity
+  parent: BaseWeaponTurret
+  name: automated defense turret
+  description: A high-tech automated weapon system designed to protect sensitive areas.
+  id: WeaponTurretAIDefense
+  components:
+  - type: NpcFactionMember
+    factions:
+    - NanoTrasen
+  - type: Sprite
+    sprite: Objects/Weapons/Guns/Turrets/ai_turret.rsi
+    granularLayersRendering: true
+    layers:
+    - state: pit
+      renderingStrategy: NoRotation
+    - state: cover_open
+      renderingStrategy: NoRotation
+    - state: base
+    - state: stun
+      map: [ "enum.PopupTurretVisualLayers.Weapon" ]
+      shader: "unshaded"
+    - map: [ "enum.PopupTurretVisualLayers.Cover" ]
+      renderingStrategy: NoRotation
+  - type: GenericVisualizer
+    visuals:
+      enum.PopupTurretVisuals.State:
+        enum.PopupTurretVisualLayers.Weapon:
+          Inactive: { visible: false }
+          Stun: { state: stun, visible: true }
+          Lethal: { state: lethal, visible: true }
+  - type: AnimationPlayer

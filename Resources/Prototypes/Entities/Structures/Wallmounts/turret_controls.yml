@@ -1,0 +1,103 @@
+- type: entity
+  id: TurretControlPanel
+  name: turret control panel
+  description: Remotely configures the settings of connected automated defense turrets.
+  components:
+  - type: StationAiWhitelist
+  - type: WallMount
+  - type: ApcPowerReceiver
+  - type: Electrified
+    enabled: false
+    usesApcPower: true
+  - type: TelecomExempt
+  - type: ExtensionCableReceiver
+  - type: Clickable
+  - type: InteractionOutline
+  - type: Appearance
+  - type: WiresVisuals
+  - type: WiresPanelSecurity
+#  - type: ContainerFill
+#    containers:
+#      board: [ ]
+  - type: Sprite
+    noRot: false
+    drawdepth: SmallObjects
+    sprite: Structures/Wallmounts/turret_controls.rsi
+    layers:
+    - state: base
+    - state: safe
+      map: ["safe"]
+      shader: unshaded
+    - state: stun
+      map: ["stun"]
+      shader: unshaded
+      visible: false
+    - state: lethal
+      map: ["lethal"]
+      shader: unshaded
+      visible: false
+#    - state: panel
+#      map: ["enum.WiresVisualLayers.MaintenancePanel"]
+#      visible: false
+  - type: Transform
+    anchored: true
+  - type: WiresPanel
+  - type: Wires
+    boardName: wires-board-name-intercom
+    layoutId: Intercom
+  - type: ActivatableUIRequiresPower
+  - type: ActivatableUI
+    key: enum.TurretControlsUiKey.Key
+  - type: UserInterface
+    interfaces:
+      enum.TurretControlsUiKey.Key:
+        type: TurretControlsBoundUserInterface
+      enum.WiresUiKey.Key:
+        type: WiresBoundUserInterface
+#  - type: Construction
+#    graph: Intercom
+#    node: intercom
+  - type: Damageable
+    damageContainer: StructuralInorganic
+    damageModifierSet: StructuralMetallic
+  - type: Destructible
+    thresholds:
+      - trigger:
+          !type:DamageTrigger
+          damage: 200
+        behaviors:
+          - !type:DoActsBehavior
+            acts: [ "Destruction" ]
+      - trigger:
+          !type:DamageTrigger
+          damage: 100
+        behaviors:
+          - !type:DoActsBehavior
+            acts: [ "Destruction" ]
+          - !type:PlaySoundBehavior
+            sound:
+              collection: MetalGlassBreak
+              params:
+                volume: -4
+  - type: GenericVisualizer
+    visuals:
+      enum.WiresVisualLayers.MaintenancePanel:
+        enum.WiresVisualLayers.MaintenancePanel:
+          True: { visible: true }
+          False: { visible: false }
+      enum.PowerDeviceVisuals.Powered:
+        enum.PowerDeviceVisualLayers.Powered:
+          True: { visible: true }
+          False: { visible: false }
+#      enum.RadioDeviceVisuals.Broadcasting:
+#        enum.RadioDeviceVisualLayers.Broadcasting:
+#          True: { visible: true }
+#          False: { visible: false }
+#      enum.RadioDeviceVisuals.Speaker:
+#        enum.RadioDeviceVisualLayers.Speaker:
+#          True: { visible: true }
+#          False: { visible: false }
+  placement:
+    mode: SnapgridCenter
+    snap:
+    - Wallmount
