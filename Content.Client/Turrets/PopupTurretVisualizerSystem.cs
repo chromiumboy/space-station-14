@@ -6,8 +6,6 @@ namespace Content.Client.Turrets;
 
 public sealed partial class PopupTurretVisualizerSystem : VisualizerSystem<PopupTurretComponent>
 {
-    [Dependency] private readonly SharedAppearanceSystem _appearance = default!;
-
     public override void Initialize()
     {
         base.Initialize();
