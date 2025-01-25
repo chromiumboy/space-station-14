@@ -264,6 +264,7 @@
   description: A high-tech automated weapon system designed to protect sensitive areas.
   id: WeaponTurretAIDefense
   components:
+  - type: StationAiWhitelist
   - type: NpcFactionMember
     factions:
     - NanoTrasen
@@ -301,7 +302,7 @@
   - type: ApcPowerReceiver
   - type: ExtensionCableReceiver
   - type: AccessReader
-    access: [["Command"]]
+    access: [["StationAi"]]
   - type: DeviceNetwork
     deviceNetId: Wired
     receiveFrequencyId: TurretControl

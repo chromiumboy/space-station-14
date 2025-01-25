@@ -20,7 +20,7 @@
 #    containers:
 #      board: [ ]
   - type: AccessReader
-    access: [["Command"]]
+    access: [["StationAi"]]
   - type: DeviceNetwork
     deviceNetId: Wired
     receiveFrequencyId: TurretControl

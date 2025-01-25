@@ -428,6 +428,9 @@
   - type: ComplexInteraction
   - type: Actions
   - type: Access
+    tags:
+    - Borg
+    - StationAi
     groups:
     - AllAccess
   - type: Eye

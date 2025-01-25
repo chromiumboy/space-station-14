@@ -32,3 +32,11 @@
   - Chapel
   - Hydroponics
   - Atmospherics
+  
+- type: accessLevel
+  id: Borg
+  name: id-card-access-level-borg
+  
+- type: accessLevel
+  id: StationAi
+  name: id-card-access-level-station-ai
