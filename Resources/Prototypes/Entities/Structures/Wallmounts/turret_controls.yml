@@ -19,6 +19,17 @@
 #  - type: ContainerFill
 #    containers:
 #      board: [ ]
+  - type: AccessReader
+    access: [["Command"]]
+  - type: DeviceNetwork
+    deviceNetId: Wired
+    receiveFrequencyId: TurretControl
+    transmitFrequencyId: TurretControl
+    prefix: device-address-prefix-console
+    sendBroadcastAttemptEvent: true
+  - type: WiredNetworkConnection
+  - type: DeviceList
+  - type: DeviceNetworkRequiresPower
   - type: Sprite
     noRot: false
     drawdepth: SmallObjects

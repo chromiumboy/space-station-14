@@ -300,3 +300,14 @@
     delay: 1.2
   - type: ApcPowerReceiver
   - type: ExtensionCableReceiver
+  - type: AccessReader
+    access: [["Command"]]
+  - type: DeviceNetwork
+    deviceNetId: Wired
+    receiveFrequencyId: TurretControl
+    transmitFrequencyId: TurretControl
+    prefix: device-address-prefix-turret
+    sendBroadcastAttemptEvent: true
+    examinableAddress: true
+  - type: DeviceNetworkRequiresPower
+  - type: WiredNetworkConnection
