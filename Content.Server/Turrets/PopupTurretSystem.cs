@@ -1,0 +1,79 @@
+using Content.Server.NPC.HTN;
+using Content.Server.Popups;
+using Content.Server.Power.EntitySystems;
+using Content.Shared.Access.Components;
+using Content.Shared.Access.Systems;
+using Content.Shared.Interaction;
+using Content.Shared.Power;
+using Content.Shared.Timing;
+using Content.Shared.Turrets;
+
+namespace Content.Server.Turrets;
+
+public sealed partial class PopupTurretSystem : EntitySystem
+{
+    [Dependency] private readonly UseDelaySystem _useDelay = default!;
+    [Dependency] private readonly AccessReaderSystem _accessReader = default!;
+    [Dependency] private readonly PopupSystem _popup = default!;
+    [Dependency] private readonly SharedAppearanceSystem _appearance = default!;
+    [Dependency] private readonly HTNSystem _htn = default!;
+
+    public override void Initialize()
+    {
+        SubscribeLocalEvent<PopupTurretComponent, ActivateInWorldEvent>(OnActivate);
+        SubscribeLocalEvent<PopupTurretComponent, PowerChangedEvent>(OnPowerChanged);
+    }
+
+    private void OnActivate(Entity<PopupTurretComponent> ent, ref ActivateInWorldEvent args)
+    {
+        if (TryComp(ent, out UseDelayComponent? useDelay) && !_useDelay.TryResetDelay((ent, useDelay), true))
+            return;
+
+        if (TryComp<AccessReaderComponent>(ent, out var reader) && !_accessReader.IsAllowed(args.User, ent, reader))
+        {
+            _popup.PopupEntity(Loc.GetString("popup-turret-component-no-access"), ent, args.User);
+            return;
+        }
+
+        ToggleTurret(ent, args.User);
+    }
+
+    private void OnPowerChanged(Entity<PopupTurretComponent> ent, ref PowerChangedEvent args)
+    {
+        if (ent.Comp.Enabled && !args.Powered)
+            ToggleTurret(ent);
+    }
+
+    private void ToggleTurret(Entity<PopupTurretComponent> ent, EntityUid? user = null)
+    {
+        if (!this.IsPowered(ent, EntityManager))
+            return;
+
+        ent.Comp.Enabled = !ent.Comp.Enabled;
+
+        // End/restart any tasks the NPC was doing
+        var planCooldown = ent.Comp.Enabled ? ent.Comp.DeploymentAnimLength : ent.Comp.RetractionAnimLength;
+
+        if (TryComp<HTNComponent>(ent, out var htn))
+            _htn.SetHTNEnabled((ent, htn), ent.Comp.Enabled, planCooldown);
+
+        // Show message to the player
+        if (user != null)
+        {
+            var msg = ent.Comp.Enabled ? "popup-turret-component-turn-on" : "popup-turret-component-turn-off";
+            _popup.PopupEntity(Loc.GetString(msg), ent, user.Value);
+        }
+
+        // Update appearance
+        UpdateAppearance(ent);
+    }
+
+    private void UpdateAppearance(Entity<PopupTurretComponent> ent, AppearanceComponent? appearance = null)
+    {
+        if (!Resolve(ent, ref appearance))
+            return;
+
+        var state = ent.Comp.Enabled ? PopupTurretVisualState.Deployed : PopupTurretVisualState.Retracted;
+        _appearance.SetData(ent, PopupTurretVisuals.Turret, state, appearance);
+    }
+}

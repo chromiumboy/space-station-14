@@ -271,21 +271,32 @@
     sprite: Objects/Weapons/Guns/Turrets/ai_turret.rsi
     granularLayersRendering: true
     layers:
-    - state: pit
-      renderingStrategy: NoRotation
-    - state: cover_open
+    - state: support
       renderingStrategy: NoRotation
     - state: base
     - state: stun
       map: [ "enum.PopupTurretVisualLayers.Weapon" ]
       shader: "unshaded"
-    - map: [ "enum.PopupTurretVisualLayers.Cover" ]
+      visible: false
+    - state: cover_closed
+      map: [ "enum.PopupTurretVisualLayers.Turret" ]
       renderingStrategy: NoRotation
+  - type: Appearance
   - type: GenericVisualizer
     visuals:
-      enum.PopupTurretVisuals.State:
+#      enum.PopupTurretVisuals.Weapon:
+#        enum.PopupTurretVisualLayers.Weapon:
+#          Setting1: { state: stun }
+#          Setting2: { state: lethal }
+      enum.PopupTurretVisuals.Turret:
         enum.PopupTurretVisualLayers.Weapon:
-          Inactive: { visible: false }
-          Stun: { state: stun, visible: true }
-          Lethal: { state: lethal, visible: true }
+          Retracted: { visible: false }
+          Deploying: { visible: true }
+          Deployed: { visible: true }
+          Retracting: { visible: false }      
   - type: AnimationPlayer
+  - type: PopupTurret
+  - type: UseDelay
+    delay: 1.2
+  - type: ApcPowerReceiver
+  - type: ExtensionCableReceiver
