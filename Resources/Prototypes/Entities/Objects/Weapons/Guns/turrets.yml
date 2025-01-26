@@ -33,7 +33,7 @@
 - type: entity
   parent: BaseStructure
   id: BaseWeaponTurret
-  name: ballistic turret
+  name: turret
   abstract: true
   components:
     - type: Clickable
@@ -50,9 +50,6 @@
             - MachineMask
           layer:
             - MachineLayer
-    - type: ContainerContainer
-      containers:
-        ballistic-ammo: !type:Container
     - type: Sprite
       sprite: Objects/Weapons/Guns/Turrets/turrets.rsi
       drawdepth: Mobs
@@ -92,19 +89,9 @@
                 SheetSteel1:
                   min: 3
                   max: 5
-    - type: Gun
-      fireRate: 6
-      selectedMode: FullAuto
-      availableModes:
-        - FullAuto
-      soundGunshot: /Audio/Weapons/Guns/Gunshots/gun_sentry.ogg
-    # TODO: Power ammo provider?
-    - type: BallisticAmmoProvider
-      proto: CartridgeCaselessRifle
-      capacity: 500
     - type: HTN
       rootTask:
-        task: TurretCompound
+        task: EnergyTurretCompound
       blackboard:
         RotateSpeed: !type:Single
           3.141
@@ -120,7 +107,27 @@
       context: "human"
 
 - type: entity
-  parent: [BaseWeaponTurret, BaseSyndicateContraband]
+  parent: BaseWeaponTurret
+  id: BaseWeaponBallisticTurret
+  name: ballistic turret
+  abstract: true
+  components:
+    - type: ContainerContainer
+      containers:
+        ballistic-ammo: !type:Container
+    - type: Gun
+      fireRate: 6
+      selectedMode: FullAuto
+      availableModes:
+        - FullAuto
+      soundGunshot: /Audio/Weapons/Guns/Gunshots/gun_sentry.ogg
+    # TODO: Power ammo provider?
+    - type: BallisticAmmoProvider
+      proto: CartridgeCaselessRifle
+      capacity: 500
+
+- type: entity
+  parent: [BaseWeaponBallisticTurret, BaseSyndicateContraband]
   id: WeaponTurretSyndicate
   suffix: Syndicate
   components:
@@ -129,7 +136,7 @@
         - Syndicate
 
 - type: entity
-  parent: BaseWeaponTurret
+  parent: BaseWeaponBallisticTurret
   name: disposable ballistic turret
   id: WeaponTurretSyndicateDisposable
   suffix: Syndicate, Disposable
@@ -178,7 +185,7 @@
       canCreateVacuum: false
 
 - type: entity
-  parent: BaseWeaponTurret
+  parent: BaseWeaponBallisticTurret
   id: WeaponTurretNanoTrasen
   suffix: NanoTrasen
   components:
@@ -187,7 +194,7 @@
     - NanoTrasen
 
 - type: entity
-  parent: BaseWeaponTurret
+  parent: BaseWeaponBallisticTurret
   id: WeaponTurretHostile
   suffix: Hostile
   components:
@@ -196,7 +203,7 @@
     - SimpleHostile
 
 - type: entity
-  parent: BaseWeaponTurret
+  parent: BaseWeaponBallisticTurret
   id: WeaponTurretAllHostile
   suffix: All hostile
   components:
@@ -207,7 +214,7 @@
 - type: entity
   name: xeno turret
   description: Shoots 9mm acid projectiles.
-  parent: BaseWeaponTurret
+  parent: BaseWeaponBallisticTurret
   id: WeaponTurretXeno
   suffix: Xeno
   components:
@@ -264,10 +271,30 @@
   description: A high-tech automated weapon system designed to protect sensitive areas.
   id: WeaponTurretAIDefense
   components:
+  - type: Gun
+    projectileSpeed: 15
+    fireRate: 1.5
+    soundGunshot:
+      path: /Audio/Weapons/Guns/Gunshots/taser2.ogg
+  - type: ProjectileBatteryAmmoProvider
+    proto: BulletEnergyTurretDisabler
+    fireCost: 1
+  - type: BatteryWeaponFireModes
+    fireModes:
+    - proto: BulletEnergyTurretDisabler
+      fireCost: 1
+    - proto: BulletEnergyTurretLaser
+      fireCost: 1
+  - type: Battery
+    maxCharge: 1
+    startingCharge: 1
+  - type: BatterySelfRecharger
+    autoRecharge: true
+    autoRechargeRate: 1
   - type: StationAiWhitelist
   - type: NpcFactionMember
     factions:
-    - NanoTrasen
+    - AllHostile
   - type: Sprite
     sprite: Objects/Weapons/Guns/Turrets/ai_turret.rsi
     granularLayersRendering: true
@@ -285,10 +312,10 @@
   - type: Appearance
   - type: GenericVisualizer
     visuals:
-#      enum.PopupTurretVisuals.Weapon:
-#        enum.PopupTurretVisualLayers.Weapon:
-#          Setting1: { state: stun }
-#          Setting2: { state: lethal }
+      enum.BatteryWeaponFireModeVisuals.State:
+        enum.PopupTurretVisualLayers.Weapon:
+          BulletEnergyTurretDisabler: { state: stun }
+          BulletEnergyTurretLaser: { state: lethal }
       enum.PopupTurretVisuals.Turret:
         enum.PopupTurretVisualLayers.Weapon:
           Retracted: { visible: false }
@@ -302,7 +329,7 @@
   - type: ApcPowerReceiver
   - type: ExtensionCableReceiver
   - type: AccessReader
-    access: [["StationAi"]]
+    access: [["Command"]]
   - type: DeviceNetwork
     deviceNetId: Wired
     receiveFrequencyId: TurretControl
@@ -312,3 +339,15 @@
     examinableAddress: true
   - type: DeviceNetworkRequiresPower
   - type: WiredNetworkConnection
+  - type: HTN
+    enabled: false
+  - type: WiresPanel
+  - type: WiresPanelSecurity
+    securityLevel: medSecurity
+  - type: Wires
+    boardName: wires-board-name-ai-turret  
+    layoutId: WeaponTurretAIDefense
+  - type: UserInterface
+    interfaces:
+      enum.WiresUiKey.Key:
+        type: WiresBoundUserInterface
