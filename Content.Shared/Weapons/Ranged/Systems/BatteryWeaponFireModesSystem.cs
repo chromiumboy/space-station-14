@@ -49,7 +49,7 @@ public sealed class BatteryWeaponFireModesSystem : EntitySystem
 
     private void OnGetVerb(EntityUid uid, BatteryWeaponFireModesComponent component, GetVerbsEvent<Verb> args)
     {
-        if (!args.CanAccess || !args.CanInteract || args.Hands == null)
+        if (!args.CanAccess || !args.CanInteract || !args.CanComplexInteract)
             return;
 
         if (component.FireModes.Count < 2)
