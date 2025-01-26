@@ -10,7 +10,7 @@ public sealed partial class HTNComponent : NPCComponent
     /// The base task to use for planning
     /// </summary>
     [ViewVariables(VVAccess.ReadWrite),
-     DataField("rootTask", required: true)]
+    DataField("rootTask", required: true)]
     public HTNCompoundTask RootTask = default!;
 
     /// <summary>
@@ -51,6 +51,6 @@ public sealed partial class HTNComponent : NPCComponent
     /// <summary>
     /// Determines whether plans should be made / updated for this entity
     /// </summary>
-    [ViewVariables(VVAccess.ReadWrite)]
+    [DataField, ViewVariables(VVAccess.ReadWrite)]
     public bool Enabled = true;
 }
