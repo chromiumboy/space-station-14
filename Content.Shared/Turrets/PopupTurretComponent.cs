@@ -1,5 +1,7 @@
+using Content.Shared.Damage.Prototypes;
 using Robust.Client.Animations;
 using Robust.Shared.GameStates;
+using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization;
 
 namespace Content.Shared.Turrets;
@@ -87,6 +89,18 @@ public sealed partial class PopupTurretComponent : Component
     /// </summary>
     [ViewVariables(VVAccess.ReadWrite)]
     public Animation RetractionAnimation = default!;
+
+    /// <summary>
+    /// When retracted, the following damage modifier set will be applied to the turret.
+    /// </summary>
+    [DataField]
+    public ProtoId<DamageModifierSetPrototype>? RetractedDamageModifierSetId;
+
+    /// <summary>
+    /// When deployed, the following damage modifier set will be applied to the turret.
+    /// </summary>
+    [DataField]
+    public ProtoId<DamageModifierSetPrototype>? DeployedDamageModifierSetId;
 }
 
 [Serializable, NetSerializable]

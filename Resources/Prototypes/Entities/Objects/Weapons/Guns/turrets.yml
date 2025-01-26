@@ -323,7 +323,10 @@
           Deployed: { visible: true }
           Retracting: { visible: false }      
   - type: AnimationPlayer
+  - type: Damageable
+    damageModifierSet: StrongMetallic
   - type: PopupTurret
+    retractedDamageModifierSetId: StrongMetallic
   - type: UseDelay
     delay: 1.2
   - type: ApcPowerReceiver

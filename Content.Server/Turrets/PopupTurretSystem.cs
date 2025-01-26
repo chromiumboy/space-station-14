@@ -3,6 +3,7 @@ using Content.Server.Popups;
 using Content.Server.Power.EntitySystems;
 using Content.Shared.Access.Components;
 using Content.Shared.Access.Systems;
+using Content.Shared.Damage;
 using Content.Shared.Database;
 using Content.Shared.Interaction;
 using Content.Shared.Power;
@@ -20,6 +21,7 @@ public sealed partial class PopupTurretSystem : EntitySystem
     [Dependency] private readonly PopupSystem _popup = default!;
     [Dependency] private readonly SharedAppearanceSystem _appearance = default!;
     [Dependency] private readonly HTNSystem _htn = default!;
+    [Dependency] private readonly DamageableSystem _damageable = default!;
 
     public override void Initialize()
     {
@@ -83,6 +85,13 @@ public sealed partial class PopupTurretSystem : EntitySystem
 
         if (TryComp<HTNComponent>(ent, out var htn))
             _htn.SetHTNEnabled((ent, htn), ent.Comp.Enabled, planCooldown);
+
+        // Change the turrets damage modifiers
+        if (TryComp<DamageableComponent>(ent, out var damageable))
+        {
+            var damageSetID = ent.Comp.Enabled ? ent.Comp.DeployedDamageModifierSetId : ent.Comp.RetractedDamageModifierSetId;
+            _damageable.SetDamageModifierSetId(ent, damageSetID, damageable);
+        }
 
         // Show message to the player
         if (user != null)
