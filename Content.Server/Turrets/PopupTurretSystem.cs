@@ -3,10 +3,13 @@ using Content.Server.Popups;
 using Content.Server.Power.EntitySystems;
 using Content.Shared.Access.Components;
 using Content.Shared.Access.Systems;
+using Content.Shared.Database;
 using Content.Shared.Interaction;
 using Content.Shared.Power;
 using Content.Shared.Timing;
 using Content.Shared.Turrets;
+using Content.Shared.Verbs;
+using Robust.Shared.Utility;
 
 namespace Content.Server.Turrets;
 
@@ -20,8 +23,32 @@ public sealed partial class PopupTurretSystem : EntitySystem
 
     public override void Initialize()
     {
+        SubscribeLocalEvent<PopupTurretComponent, GetVerbsEvent<Verb>>(OnGetVerb);
         SubscribeLocalEvent<PopupTurretComponent, ActivateInWorldEvent>(OnActivate);
         SubscribeLocalEvent<PopupTurretComponent, PowerChangedEvent>(OnPowerChanged);
+    }
+
+    private void OnGetVerb(Entity<PopupTurretComponent> ent, ref GetVerbsEvent<Verb> args)
+    {
+        if (!args.CanAccess || !args.CanInteract || !args.CanComplexInteract)
+            return;
+
+        if (TryComp<AccessReaderComponent>(ent, out var accessReader) && !_accessReader.IsAllowed(args.User, ent, accessReader))
+            return;
+
+        var user = args.User;
+
+        var verb = new Verb
+        {
+            Priority = 1,
+            Text = ent.Comp.Enabled ? Loc.GetString("popup-turret-component-deactivate") : Loc.GetString("popup-turret-component-activate"),
+            Icon = new SpriteSpecifier.Texture(new("/Textures/Interface/VerbIcons/Spare/poweronoff.svg.192dpi.png")),
+            Disabled = !this.IsPowered(ent, EntityManager),
+            Impact = LogImpact.Low,
+            Act = () => { ToggleTurret(ent, user); }
+        };
+
+        args.Verbs.Add(verb);
     }
 
     private void OnActivate(Entity<PopupTurretComponent> ent, ref ActivateInWorldEvent args)
@@ -60,7 +87,7 @@ public sealed partial class PopupTurretSystem : EntitySystem
         // Show message to the player
         if (user != null)
         {
-            var msg = ent.Comp.Enabled ? "popup-turret-component-turn-on" : "popup-turret-component-turn-off";
+            var msg = ent.Comp.Enabled ? "popup-turret-component-activating" : "popup-turret-component-deactivating";
             _popup.PopupEntity(Loc.GetString(msg), ent, user.Value);
         }
 

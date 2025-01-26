@@ -1,4 +1,6 @@
 # Pop up turrets
-popup-turret-component-turn-on = Turret deploying
-popup-turret-component-turn-off = Turret deactivated
+popup-turret-component-activating = Deploying...
+popup-turret-component-deactivating = Deactivating...
+popup-turret-component-activate = Activate
+popup-turret-component-deactivate = Deactivate
 popup-turret-component-no-access = Access denied
