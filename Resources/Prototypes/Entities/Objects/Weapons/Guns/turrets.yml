@@ -365,13 +365,3 @@
   - type: WiredNetworkConnection
   - type: HTN
     enabled: false
-  - type: WiresPanel
-  - type: WiresPanelSecurity
-    securityLevel: medSecurity
-  - type: Wires
-    boardName: wires-board-name-ai-turret  
-    layoutId: WeaponTurretAIDefense
-  - type: UserInterface
-    interfaces:
-      enum.WiresUiKey.Key:
-        type: WiresBoundUserInterface
