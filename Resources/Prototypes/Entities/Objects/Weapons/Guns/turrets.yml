@@ -297,19 +297,20 @@
       path: /Audio/Weapons/Guns/Gunshots/taser2.ogg
   - type: ProjectileBatteryAmmoProvider
     proto: BulletEnergyTurretDisabler
-    fireCost: 1
+    fireCost: 150
   - type: BatteryWeaponFireModes
     fireModes:
     - proto: BulletEnergyTurretDisabler
-      fireCost: 1
+      fireCost: 150
     - proto: BulletEnergyTurretLaser
-      fireCost: 1
+      fireCost: 150
   - type: Battery
-    maxCharge: 1
-    startingCharge: 1
+    maxCharge: 3000
+    startingCharge: 0
   - type: BatterySelfRecharger
     autoRecharge: true
-    autoRechargeRate: 1
+    autoRechargeRate: 200
+    requiresApcNetwork: true
   - type: StationAiWhitelist
   - type: NpcFactionMember
     factions:
@@ -351,6 +352,7 @@
   - type: UseDelay
     delay: 1.2
   - type: ApcPowerReceiver
+    powerLoad: 200
   - type: ExtensionCableReceiver
   - type: AccessReader
     access: [["Command"]]

@@ -13,6 +13,9 @@ using Content.Shared.Verbs;
 using Robust.Shared.Utility;
 using Robust.Shared.Physics.Systems;
 using Robust.Shared.Physics;
+using Content.Server.Power.Components;
+using Content.Shared.Weapons.Ranged.Components;
+using Content.Shared.Weapons.Ranged.Events;
 
 namespace Content.Server.Turrets;
 
@@ -30,7 +33,8 @@ public sealed partial class PopupTurretSystem : EntitySystem
     {
         SubscribeLocalEvent<PopupTurretComponent, GetVerbsEvent<Verb>>(OnGetVerb);
         SubscribeLocalEvent<PopupTurretComponent, ActivateInWorldEvent>(OnActivate);
-        SubscribeLocalEvent<PopupTurretComponent, PowerChangedEvent>(OnPowerChanged);
+        SubscribeLocalEvent<PopupTurretComponent, AmmoShotEvent>(OnAmmoShot);
+        SubscribeLocalEvent<PopupTurretComponent, ChargeChangedEvent>(OnChargeChanged);
     }
 
     private void OnGetVerb(Entity<PopupTurretComponent> ent, ref GetVerbsEvent<Verb> args)
@@ -48,7 +52,7 @@ public sealed partial class PopupTurretSystem : EntitySystem
             Priority = 1,
             Text = ent.Comp.Enabled ? Loc.GetString("popup-turret-component-deactivate") : Loc.GetString("popup-turret-component-activate"),
             Icon = new SpriteSpecifier.Texture(new("/Textures/Interface/VerbIcons/Spare/poweronoff.svg.192dpi.png")),
-            Disabled = !this.IsPowered(ent, EntityManager),
+            Disabled = !HasAmmo(ent),
             Impact = LogImpact.Low,
             Act = () => { ToggleTurret(ent, user); }
         };
@@ -70,16 +74,27 @@ public sealed partial class PopupTurretSystem : EntitySystem
         ToggleTurret(ent, args.User);
     }
 
-    private void OnPowerChanged(Entity<PopupTurretComponent> ent, ref PowerChangedEvent args)
+    private void OnAmmoShot(Entity<PopupTurretComponent> ent, ref AmmoShotEvent args)
     {
-        if (ent.Comp.Enabled && !args.Powered)
+        if (ent.Comp.Enabled && !HasAmmo(ent))
+            ToggleTurret(ent);
+    }
+
+    private void OnChargeChanged(Entity<PopupTurretComponent> ent, ref ChargeChangedEvent args)
+    {
+        if (ent.Comp.Enabled && !HasAmmo(ent))
             ToggleTurret(ent);
     }
 
     private void ToggleTurret(Entity<PopupTurretComponent> ent, EntityUid? user = null)
     {
-        if (!this.IsPowered(ent, EntityManager))
+        if (!ent.Comp.Enabled && !HasAmmo(ent))
+        {
+            if (user != null)
+                _popup.PopupEntity(Loc.GetString("popup-turret-component-no-ammo"), ent, user.Value);
+
             return;
+        }
 
         ent.Comp.Enabled = !ent.Comp.Enabled;
 
@@ -122,5 +137,22 @@ public sealed partial class PopupTurretSystem : EntitySystem
 
         var state = ent.Comp.Enabled ? PopupTurretVisualState.Deployed : PopupTurretVisualState.Retracted;
         _appearance.SetData(ent, PopupTurretVisuals.Turret, state, appearance);
+    }
+
+    private bool HasAmmo(Entity<PopupTurretComponent> ent)
+    {
+        if (TryComp<ProjectileBatteryAmmoProviderComponent>(ent, out var projectilebatteryAmmo) &&
+            (projectilebatteryAmmo.Shots > 0 || this.IsPowered(ent, EntityManager)))
+            return true;
+
+        if (TryComp<HitscanBatteryAmmoProviderComponent>(ent, out var hitscanBatteryAmmo) &&
+            (hitscanBatteryAmmo.Shots > 0 || this.IsPowered(ent, EntityManager)))
+            return true;
+
+        if (TryComp<BallisticAmmoProviderComponent>(ent, out var ballisticAmmo) &&
+            ballisticAmmo.Count > 0)
+            return true;
+
+        return false;
     }
 }

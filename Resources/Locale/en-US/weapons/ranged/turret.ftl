@@ -4,3 +4,4 @@ popup-turret-component-deactivating = Deactivating...
 popup-turret-component-activate = Activate
 popup-turret-component-deactivate = Deactivate
 popup-turret-component-no-access = Access denied
+popup-turret-component-no-ammo = No ammunition
