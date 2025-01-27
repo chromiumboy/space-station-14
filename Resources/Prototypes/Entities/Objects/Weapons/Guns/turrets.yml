@@ -271,6 +271,25 @@
   description: A high-tech automated weapon system designed to protect sensitive areas.
   id: WeaponTurretAIDefense
   components:
+  - type: Fixtures
+    fixtures:
+      body:
+        shape:
+          !type:PhysShapeCircle
+          radius: 0.45
+        density: 60
+        mask:
+          - Impassable
+      turret:
+        shape:
+          !type:PhysShapeCircle
+          radius: 0.45
+        density: 60
+        mask:
+          - MachineMask
+        layer:
+          - MachineLayer
+        hard: false
   - type: Gun
     projectileSpeed: 15
     fireRate: 1.5
@@ -297,6 +316,7 @@
     - AllHostile
   - type: Sprite
     sprite: Objects/Weapons/Guns/Turrets/ai_turret.rsi
+    drawdepth: FloorObjects
     granularLayersRendering: true
     layers:
     - state: support
@@ -324,9 +344,10 @@
           Retracting: { visible: false }      
   - type: AnimationPlayer
   - type: Damageable
-    damageModifierSet: StrongMetallic
+    damageModifierSet: Metallic
   - type: PopupTurret
-    retractedDamageModifierSetId: StrongMetallic
+    retractedDamageModifierSetId: Metallic
+    deployedDamageModifierSetId: FlimsyMetallic
   - type: UseDelay
     delay: 1.2
   - type: ApcPowerReceiver

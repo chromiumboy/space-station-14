@@ -101,6 +101,12 @@ public sealed partial class PopupTurretComponent : Component
     /// </summary>
     [DataField]
     public ProtoId<DamageModifierSetPrototype>? DeployedDamageModifierSetId;
+
+    /// <summary>
+    /// The physics fixture that will have its collisions disabled when the turret is retracted.
+    /// </summary>
+    [DataField]
+    public string? DeployedFixture = "turret";
 }
 
 [Serializable, NetSerializable]

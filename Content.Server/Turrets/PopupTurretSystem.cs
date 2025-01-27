@@ -11,6 +11,8 @@ using Content.Shared.Timing;
 using Content.Shared.Turrets;
 using Content.Shared.Verbs;
 using Robust.Shared.Utility;
+using Robust.Shared.Physics.Systems;
+using Robust.Shared.Physics;
 
 namespace Content.Server.Turrets;
 
@@ -22,6 +24,7 @@ public sealed partial class PopupTurretSystem : EntitySystem
     [Dependency] private readonly SharedAppearanceSystem _appearance = default!;
     [Dependency] private readonly HTNSystem _htn = default!;
     [Dependency] private readonly DamageableSystem _damageable = default!;
+    [Dependency] private readonly SharedPhysicsSystem _physics = default!;
 
     public override void Initialize()
     {
@@ -86,11 +89,19 @@ public sealed partial class PopupTurretSystem : EntitySystem
         if (TryComp<HTNComponent>(ent, out var htn))
             _htn.SetHTNEnabled((ent, htn), ent.Comp.Enabled, planCooldown);
 
-        // Change the turrets damage modifiers
+        // Change the turret's damage modifiers
         if (TryComp<DamageableComponent>(ent, out var damageable))
         {
             var damageSetID = ent.Comp.Enabled ? ent.Comp.DeployedDamageModifierSetId : ent.Comp.RetractedDamageModifierSetId;
             _damageable.SetDamageModifierSetId(ent, damageSetID, damageable);
+        }
+
+        // Change the turret's fixtures
+        if (ent.Comp.DeployedFixture != null &&
+            TryComp(ent, out FixturesComponent? fixtures) &&
+            fixtures.Fixtures.TryGetValue(ent.Comp.DeployedFixture, out var fixture))
+        {
+            _physics.SetHard(ent, fixture, ent.Comp.Enabled);
         }
 
         // Show message to the player
