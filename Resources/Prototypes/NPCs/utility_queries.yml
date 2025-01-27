@@ -206,6 +206,10 @@
   considerations:
     - !type:TargetIsAliveCon
       curve: !type:BoolCurve
+    - !type:TargetIsCritCon
+      curve: !type:InverseBoolCurve
+    - !type:TargetIsStamCritCon
+      curve: !type:InverseBoolCurve
     - !type:TargetIsBorgCon
       curve: !type:InverseBoolCurve
     - !type:TargetDistanceCon
