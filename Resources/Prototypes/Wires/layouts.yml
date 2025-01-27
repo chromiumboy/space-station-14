@@ -197,13 +197,6 @@
   - !type:PowerWireAction
   - !type:AiInteractWireAction
   - !type:AiVisionWireAction
-  
-- type: wireLayout
-  id: WeaponTurretAIDefense
-  dummyWires: 3
-  wires:
-  - !type:PowerWireAction
-  - !type:AiInteractWireAction
 
 - type: wireLayout
   id: BarSign
