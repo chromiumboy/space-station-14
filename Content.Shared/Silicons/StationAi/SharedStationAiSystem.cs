@@ -1,6 +1,7 @@
 using Content.Shared.ActionBlocker;
 using Content.Shared.Actions;
 using Content.Shared.Administration.Managers;
+using Content.Shared.Chat.Prototypes;
 using Content.Shared.Containers.ItemSlots;
 using Content.Shared.Database;
 using Content.Shared.Doors.Systems;
@@ -17,10 +18,8 @@ using Content.Shared.Power;
 using Content.Shared.Power.EntitySystems;
 using Content.Shared.StationAi;
 using Content.Shared.Verbs;
-using Robust.Shared.Audio;
 using Robust.Shared.Audio.Systems;
 using Robust.Shared.Containers;
-using Robust.Shared.GameObjects;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
 using Robust.Shared.Network;
@@ -274,10 +273,10 @@ public abstract partial class SharedStationAiSystem : EntitySystem
             return;
         }
 
-        if (TryGetHeldFromHolder((args.Target.Value, targetHolder), out var held) && _timing.CurTime > intelliComp.NextWarningAllowed)
+        if (TryGetHeldFromHolder((args.Target.Value, targetHolder), out var held))
         {
-            intelliComp.NextWarningAllowed = _timing.CurTime + intelliComp.WarningDelay;
-            AnnounceIntellicardUsage(held, intelliComp.WarningSound);
+            var ev = new ChatNotificationEvent("IntellicardDownload", args.Used, args.User);
+            RaiseLocalEvent(held, ref ev);
         }
 
         var doAfterArgs = new DoAfterArgs(EntityManager, args.User, cardHasAi ? intelliComp.UploadTime : intelliComp.DownloadTime, new IntellicardDoAfterEvent(), args.Target, ent.Owner)
@@ -493,8 +492,6 @@ public abstract partial class SharedStationAiSystem : EntitySystem
 
         _appearance.SetData(entity.Owner, StationAiVisualState.Key, StationAiState.Occupied);
     }
-
-    public virtual void AnnounceIntellicardUsage(EntityUid uid, SoundSpecifier? cue = null) { }
 
     public virtual bool SetVisionEnabled(Entity<StationAiVisionComponent> entity, bool enabled, bool announce = false)
     {
