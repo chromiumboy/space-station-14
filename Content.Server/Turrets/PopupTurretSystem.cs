@@ -6,7 +6,6 @@ using Content.Shared.Access.Systems;
 using Content.Shared.Damage;
 using Content.Shared.Database;
 using Content.Shared.Interaction;
-using Content.Shared.Power;
 using Content.Shared.Timing;
 using Content.Shared.Turrets;
 using Content.Shared.Verbs;

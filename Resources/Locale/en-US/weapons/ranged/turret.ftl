@@ -5,3 +5,6 @@ popup-turret-component-activate = Activate
 popup-turret-component-deactivate = Deactivate
 popup-turret-component-no-access = Access denied
 popup-turret-component-no-ammo = No ammunition
+
+# Turret notification for station AI
+turret-is-attacking-warning = {CAPITALIZE($source)} has engaged a hostile target.
