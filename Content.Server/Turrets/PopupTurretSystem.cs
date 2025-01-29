@@ -15,6 +15,8 @@ using Robust.Shared.Physics;
 using Content.Server.Power.Components;
 using Content.Shared.Weapons.Ranged.Components;
 using Content.Shared.Weapons.Ranged.Events;
+using Content.Server.Repairable;
+using Content.Shared.Destructible;
 
 namespace Content.Server.Turrets;
 
@@ -34,6 +36,8 @@ public sealed partial class PopupTurretSystem : EntitySystem
         SubscribeLocalEvent<PopupTurretComponent, ActivateInWorldEvent>(OnActivate);
         SubscribeLocalEvent<PopupTurretComponent, AmmoShotEvent>(OnAmmoShot);
         SubscribeLocalEvent<PopupTurretComponent, ChargeChangedEvent>(OnChargeChanged);
+        SubscribeLocalEvent<PopupTurretComponent, BreakageEventArgs>(OnBroken, after: [typeof(RepairableTurretSystem)]);
+        SubscribeLocalEvent<PopupTurretComponent, RepairedEvent>(OnRepaired, after: [typeof(RepairableTurretSystem)]);
     }
 
     private void OnGetVerb(Entity<PopupTurretComponent> ent, ref GetVerbsEvent<Verb> args)
@@ -85,8 +89,26 @@ public sealed partial class PopupTurretSystem : EntitySystem
             ToggleTurret(ent);
     }
 
+    private void OnBroken(Entity<PopupTurretComponent> ent, ref BreakageEventArgs args)
+    {
+        ent.Comp.Broken = true;
+    }
+
+    private void OnRepaired(Entity<PopupTurretComponent> ent, ref RepairedEvent args)
+    {
+        ent.Comp.Broken = false;
+    }
+
     private void ToggleTurret(Entity<PopupTurretComponent> ent, EntityUid? user = null)
     {
+        if (ent.Comp.Broken)
+        {
+            if (user != null)
+                _popup.PopupEntity(Loc.GetString("popup-turret-component-is-broken"), ent, user.Value);
+
+            return;
+        }
+
         if (!ent.Comp.Enabled && !HasAmmo(ent))
         {
             if (user != null)

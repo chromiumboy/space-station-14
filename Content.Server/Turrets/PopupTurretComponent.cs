@@ -1,6 +1,5 @@
 using Content.Shared.Damage.Prototypes;
 using Content.Shared.Turrets;
-using Robust.Shared.GameStates;
 using Robust.Shared.Prototypes;
 
 namespace Content.Server.Turrets;
@@ -8,14 +7,20 @@ namespace Content.Server.Turrets;
 /// <summary>
 /// Attached to turrets that deploy with an accompanying animation
 /// </summary>
-[RegisterComponent, NetworkedComponent]
+[RegisterComponent, Access(typeof(PopupTurretSystem))]
 public sealed partial class PopupTurretComponent : SharedPopupTurretComponent
 {
     /// <summary>
-    /// Determines whether the turret is currently active or not
+    /// Determines whether the turret is currently active
     /// </summary>
     [DataField]
     public bool Enabled = false;
+
+    /// <summary>
+    /// Indicates whether the turret is currently broken
+    /// </summary>
+    [ViewVariables]
+    public bool Broken = false;
 
     /// <summary>
     /// The physics fixture that will have its collisions disabled when the turret is retracted.

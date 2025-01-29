@@ -1,13 +1,12 @@
 using Content.Shared.Turrets;
 using Robust.Client.Animations;
-using Robust.Shared.GameStates;
 
 namespace Content.Client.Turrets;
 
 /// <summary>
 /// Attached to turrets that deploy with an accompanying animation
 /// </summary>
-[RegisterComponent, NetworkedComponent]
+[RegisterComponent, Access(typeof(PopupTurretVisualizerSystem))]
 public sealed partial class PopupTurretComponent : SharedPopupTurretComponent
 {
     /// <summary>
