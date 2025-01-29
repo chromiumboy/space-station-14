@@ -18,7 +18,7 @@ public sealed partial class PopupTurretVisualizerSystem : VisualizerSystem<Popup
     {
         ent.Comp.DeploymentAnimation = new Animation
         {
-            Length = TimeSpan.FromSeconds(ent.Comp.DeploymentAnimLength),
+            Length = TimeSpan.FromSeconds(ent.Comp.DeploymentLength),
             AnimationTracks = {
                 new AnimationTrackSpriteFlick() {
                     LayerKey = PopupTurretVisualLayers.Turret,
@@ -29,7 +29,7 @@ public sealed partial class PopupTurretVisualizerSystem : VisualizerSystem<Popup
 
         ent.Comp.RetractionAnimation = new Animation
         {
-            Length = TimeSpan.FromSeconds(ent.Comp.RetractionAnimLength),
+            Length = TimeSpan.FromSeconds(ent.Comp.RetractionLength),
             AnimationTracks = {
                 new AnimationTrackSpriteFlick() {
                     LayerKey = PopupTurretVisualLayers.Turret,

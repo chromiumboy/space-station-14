@@ -98,7 +98,7 @@ public sealed partial class PopupTurretSystem : EntitySystem
         ent.Comp.Enabled = !ent.Comp.Enabled;
 
         // End/restart any tasks the NPC was doing
-        var planCooldown = ent.Comp.Enabled ? ent.Comp.DeploymentAnimLength : ent.Comp.RetractionAnimLength;
+        var planCooldown = ent.Comp.Enabled ? ent.Comp.DeploymentLength : ent.Comp.RetractionLength;
 
         if (TryComp<HTNComponent>(ent, out var htn))
             _htn.SetHTNEnabled((ent, htn), ent.Comp.Enabled, planCooldown);
