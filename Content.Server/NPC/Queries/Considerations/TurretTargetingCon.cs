@@ -15,9 +15,6 @@ using Robust.Shared.Prototypes;
 
 namespace Content.Server.NPC.Queries.Considerations;
 
-/// <summary>
-/// Goes linearly from 1f to 0f, with 0 damage returning 1f and <see cref=TargetState> damage returning 0f
-/// </summary>
 public sealed partial class TurretTargetingCon : UtilityConsideration
 {
     [Dependency] private readonly IEntityManager _entManager = default!;
@@ -25,7 +22,7 @@ public sealed partial class TurretTargetingCon : UtilityConsideration
 
     private HandsSystem _hands = default!;
     private AccessReaderSystem _accessReader = default!;
-    private IdCardSystem _idCard = default;
+    private IdCardSystem _idCard = default!;
     private StationRecordsSystem _records = default!;
 
     public override void Initialize(IEntitySystemManager sysManager)
@@ -57,7 +54,7 @@ public sealed partial class TurretTargetingCon : UtilityConsideration
             return 1f;
 
         // Check for animals
-        if (targeting.TargetXenosAndAnimals && _entManager.HasComponent<AnimalComponent>(targetUid))
+        if (targeting.TargetAnimalsAndXenos && _entManager.HasComponent<BasicOrganicComponent>(targetUid))
             return 1f;
 
         // Check for held contraband
@@ -113,15 +110,9 @@ public sealed partial class TurretTargetingCon : UtilityConsideration
         if (_entManager.HasComponent<HumanoidAppearanceComponent>(targetUid))
         {
             // Check criminality status
-            if (targeting.TargetWantedCriminals || targeting.TargetCleanCrew)
+            if (targeting.TargetWantedCriminals && TargetIsWantedCriminal(targetUid))
             {
-                var isWanted = TargetIsWantedCriminal(targetUid);
-
-                if (!isWanted && targeting.TargetCleanCrew)
-                    return 1f;
-
-                if (isWanted && targeting.TargetWantedCriminals)
-                    return 1f;
+                return 1f;
             }
 
             // Check for authorized access
@@ -130,18 +121,21 @@ public sealed partial class TurretTargetingCon : UtilityConsideration
                 var idCardAccessLevels = _accessReader.FindAccessTags(targetUid);
                 var allowed = false;
 
-                // If the ID card does not have an access level on the authroized list, they will be targeted
-                foreach (var accessLevel in idCardAccessLevels)
+                if (targeting.AuthorizedAccessLevels.Count > 0)
                 {
-                    if (targeting.AuthorizedAccessLevels.Contains(accessLevel))
+                    // If the ID card does not have an access level on the authorized list, they will be targeted
+                    foreach (var accessLevel in idCardAccessLevels)
                     {
-                        allowed = true;
-                        break;
+                        if (targeting.AuthorizedAccessLevels.Contains(accessLevel))
+                        {
+                            allowed = true;
+                            break;
+                        }
                     }
-                }
 
-                if (!allowed)
-                    return 1f;
+                    if (!allowed)
+                        return 1f;
+                }
             }
         }
 

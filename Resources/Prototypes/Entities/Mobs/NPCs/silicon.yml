@@ -107,6 +107,7 @@
   - type: ProtectedFromStepTriggers
   - type: NoSlip
   - type: Insulated
+  - type: BasicSilicon
 
 - type: entity
   parent: MobSiliconBase

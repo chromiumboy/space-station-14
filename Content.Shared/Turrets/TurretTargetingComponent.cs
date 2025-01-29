@@ -23,7 +23,7 @@ public sealed partial class TurretTargetingComponent : Component
     /// Determines whether the turret will attack xenos and animals.
     /// </summary>
     [DataField, ViewVariables(VVAccess.ReadWrite)]
-    public bool TargetXenosAndAnimals = true;
+    public bool TargetAnimalsAndXenos = true;
 
     /// <summary>
     /// Determines whether the turret will attack those who are openly carrying weapons and are not cleared to do so.
@@ -38,12 +38,6 @@ public sealed partial class TurretTargetingComponent : Component
     public bool TargetWantedCriminals = true;
 
     /// <summary>
-    /// Determines whether the turret will attack crew who are not wanted criminals.
-    /// </summary>
-    [DataField, ViewVariables(VVAccess.ReadWrite)]
-    public bool TargetCleanCrew = true;
-
-    /// <summary>
     /// Determines whether the turret will attack crew who do not have sufficent access permissions,
     /// see <see cref="AuthorizedAccessLevels" />. Only applies to humanoids.
     /// </summary>
@@ -51,8 +45,12 @@ public sealed partial class TurretTargetingComponent : Component
     public bool TargetUnauthorizedCrew = true;
 
     /// <summary>
-    /// Crew with one or more access privileges from this list are exempt from <see cref="TargetUnauthorizedCrew" />
+    /// Crew with one or more access privileges from this list are exempt from <see cref="TargetUnauthorizedCrew" />.
     /// </summary>
+    /// <remarks>
+    /// This list does not have to match the one on the turret's <see cref="AccessReaderComponent.AccessLists" />
+    /// (i.e., entities can be authorized to passby but not to interfere with the operation of the turret).
+    /// </remarks>
     [DataField, ViewVariables(VVAccess.ReadWrite)]
     public List<ProtoId<AccessLevelPrototype>> AuthorizedAccessLevels = new();
 }
