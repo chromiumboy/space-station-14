@@ -104,11 +104,6 @@ public sealed class NPCUtilitySystem : EntitySystem
             return UtilityResult.Empty;
         }
 
-        foreach (var con in weh.Considerations)
-        {
-            con.Initialize(EntityManager.EntitySysManager);
-        }
-
         var results = new Dictionary<EntityUid, float>();
         var highestScore = 0f;
 

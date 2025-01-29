@@ -1,0 +1,58 @@
+using Content.Shared.Access;
+using Robust.Shared.GameStates;
+using Robust.Shared.Prototypes;
+
+namespace Content.Shared.Turrets;
+
+[RegisterComponent, NetworkedComponent]
+public sealed partial class TurretTargetingComponent : Component
+{
+    /// <summary>
+    /// Determines whether the turret will attack cyborgs.
+    /// </summary>
+    [DataField, ViewVariables(VVAccess.ReadWrite)]
+    public bool TargetCyborgs = true;
+
+    /// <summary>
+    /// Determines whether the turret will attack bots.
+    /// </summary>
+    [DataField, ViewVariables(VVAccess.ReadWrite)]
+    public bool TargetBasicSilicons = true;
+
+    /// <summary>
+    /// Determines whether the turret will attack xenos and animals.
+    /// </summary>
+    [DataField, ViewVariables(VVAccess.ReadWrite)]
+    public bool TargetXenosAndAnimals = true;
+
+    /// <summary>
+    /// Determines whether the turret will attack those who are openly carrying weapons and are not cleared to do so.
+    /// </summary>
+    [DataField, ViewVariables(VVAccess.ReadWrite)]
+    public bool TargetIsHoldingContraband = true;
+
+    /// <summary>
+    /// Determines whether the turret will attack wanted criminals.
+    /// </summary>
+    [DataField, ViewVariables(VVAccess.ReadWrite)]
+    public bool TargetWantedCriminals = true;
+
+    /// <summary>
+    /// Determines whether the turret will attack crew who are not wanted criminals.
+    /// </summary>
+    [DataField, ViewVariables(VVAccess.ReadWrite)]
+    public bool TargetCleanCrew = true;
+
+    /// <summary>
+    /// Determines whether the turret will attack crew who do not have sufficent access permissions,
+    /// see <see cref="AuthorizedAccessLevels" />. Only applies to humanoids.
+    /// </summary>
+    [DataField, ViewVariables(VVAccess.ReadWrite)]
+    public bool TargetUnauthorizedCrew = true;
+
+    /// <summary>
+    /// Crew with one or more access privileges from this list are exempt from <see cref="TargetUnauthorizedCrew" />
+    /// </summary>
+    [DataField, ViewVariables(VVAccess.ReadWrite)]
+    public List<ProtoId<AccessLevelPrototype>> AuthorizedAccessLevels = new();
+}

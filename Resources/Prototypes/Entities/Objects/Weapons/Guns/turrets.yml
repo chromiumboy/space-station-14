@@ -350,6 +350,8 @@
     retractedDamageModifierSetId: Metallic
     deployedDamageModifierSetId: FlimsyMetallic
   - type: StationAiTurret
+  - type: TurretTargeting
+    targetCyborgs: false
   - type: UseDelay
     delay: 1.2
   - type: ApcPowerReceiver

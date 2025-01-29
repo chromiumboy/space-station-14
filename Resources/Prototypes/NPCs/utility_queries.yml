@@ -210,8 +210,8 @@
       curve: !type:InverseBoolCurve
     - !type:TargetIsStamCritCon
       curve: !type:InverseBoolCurve
-    - !type:TargetIsBorgCon
-      curve: !type:InverseBoolCurve
+    - !type:TurretTargetingCon
+      curve: !type:BoolCurve
     - !type:TargetDistanceCon
       curve: !type:PresetCurve
         preset: TargetDistance
