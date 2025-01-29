@@ -101,7 +101,7 @@ public sealed partial class PopupTurretSystem : EntitySystem
         var planCooldown = ent.Comp.Enabled ? ent.Comp.DeploymentLength : ent.Comp.RetractionLength;
 
         if (TryComp<HTNComponent>(ent, out var htn))
-            _htn.SetHTNEnabled((ent, htn), ent.Comp.Enabled, planCooldown);
+            _htn.SetHTNEnabled((ent, htn), ent.Comp.Enabled, planCooldown + 0.5f);
 
         // Change the turret's damage modifiers
         if (TryComp<DamageableComponent>(ent, out var damageable))
