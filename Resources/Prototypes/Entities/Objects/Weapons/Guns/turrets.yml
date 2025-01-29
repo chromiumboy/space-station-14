@@ -353,7 +353,7 @@
   - type: UseDelay
     delay: 1.2
   - type: ApcPowerReceiver
-    powerLoad: 200
+    powerLoad: 250
   - type: ExtensionCableReceiver
   - type: AccessReader
     access: [["Command"]]
