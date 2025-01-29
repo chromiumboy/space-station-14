@@ -12,6 +12,12 @@ namespace Content.Server.Turrets;
 public sealed partial class PopupTurretComponent : SharedPopupTurretComponent
 {
     /// <summary>
+    /// Determines whether the turret is currently active or not
+    /// </summary>
+    [DataField]
+    public bool Enabled = false;
+
+    /// <summary>
     /// The physics fixture that will have its collisions disabled when the turret is retracted.
     /// </summary>
     [DataField]

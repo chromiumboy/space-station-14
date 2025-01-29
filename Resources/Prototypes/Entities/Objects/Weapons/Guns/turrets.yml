@@ -352,6 +352,8 @@
   - type: StationAiTurret
   - type: TurretTargeting
     targetCyborgs: false
+    authorizedAccessLevels:
+    - Command
   - type: UseDelay
     delay: 1.2
   - type: ApcPowerReceiver

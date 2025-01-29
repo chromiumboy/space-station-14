@@ -13,7 +13,7 @@ public sealed partial class PopupTurretComponent : SharedPopupTurretComponent
     /// <summary>
     /// The current visual state of the turret
     /// </summary>
-    [ViewVariables]
+    [ViewVariables(VVAccess.ReadOnly)]
     public PopupTurretVisualState CurrentState = PopupTurretVisualState.Retracted;
 
     /// <summary>
@@ -31,7 +31,7 @@ public sealed partial class PopupTurretComponent : SharedPopupTurretComponent
     /// <summary>
     /// The key used to index the animation played when turning the turret on/off.
     /// </summary>
-    [ViewVariables]
+    [ViewVariables(VVAccess.ReadOnly)]
     public const string AnimationKey = "popup_turret_animation";
 
     /// <summary>

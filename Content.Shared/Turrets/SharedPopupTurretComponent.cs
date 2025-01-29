@@ -1,3 +1,5 @@
+using Content.Shared.Access;
+using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization;
 
 namespace Content.Shared.Turrets;
@@ -7,12 +9,6 @@ namespace Content.Shared.Turrets;
 /// </summary>
 public abstract partial class SharedPopupTurretComponent : Component
 {
-    /// <summary>
-    /// Determines whether the turret is currently active or not
-    /// </summary>
-    [DataField, ViewVariables(VVAccess.ReadWrite)]
-    public bool Enabled = false;
-
     /// <summary>
     /// The length of the deployment animation (in seconds)
     /// </summary>
