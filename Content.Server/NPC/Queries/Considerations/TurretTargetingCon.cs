@@ -6,6 +6,7 @@ using Content.Shared.Contraband;
 using Content.Shared.CriminalRecords;
 using Content.Shared.Hands.Components;
 using Content.Shared.Humanoid;
+using Content.Shared.Inventory;
 using Content.Shared.Mobs.Components;
 using Content.Shared.Silicons.Borgs.Components;
 using Content.Shared.StationRecords;
@@ -24,6 +25,7 @@ public sealed partial class TurretTargetingCon : UtilityConsideration
     private AccessReaderSystem _accessReader = default!;
     private IdCardSystem _idCard = default!;
     private StationRecordsSystem _records = default!;
+    private InventorySystem _inventory = default!;
 
     public override void Initialize(IEntitySystemManager sysManager)
     {
@@ -57,12 +59,14 @@ public sealed partial class TurretTargetingCon : UtilityConsideration
         if (targeting.TargetAnimalsAndXenos && _entManager.HasComponent<BasicOrganicComponent>(targetUid))
             return 1f;
 
-        // Check for held contraband
-        if (targeting.TargetIsHoldingContraband && _entManager.TryGetComponent<HandsComponent>(targetUid, out var hands))
+        // Check for visible contraband
+        if (targeting.TargetVisibleContraband &&
+            _entManager.TryGetComponent<HandsComponent>(targetUid, out var hands) &&
+            _entManager.TryGetComponent<InventoryComponent>(targetUid, out var inventory))
         {
-            foreach (var held in _hands.EnumerateHeld(targetUid, hands))
+            foreach (var item in _inventory.GetHandOrInventoryEntities((targetUid, hands, inventory)))
             {
-                if (!_entManager.TryGetComponent<ContrabandComponent>(held, out var contraband))
+                if (!_entManager.TryGetComponent<ContrabandComponent>(item, out var contraband))
                     continue;
 
                 // Check if the item is under a blanket ban
