@@ -1,3 +1,5 @@
+using Content.Shared.TurretControls;
+using Content.Shared.Turrets;
 using Robust.Client.UserInterface;
 
 namespace Content.Client.TurretControls;
@@ -11,8 +13,15 @@ public sealed class TurretControlsBoundUserInterface : BoundUserInterface
 
     protected override void Open()
     {
+        if (UiKey is not TurretControlsUiKey)
+        {
+            Close();
+            return;
+        }
+
         _window = this.CreateWindow<TurretControlsWindow>();
-        //_window.SetEntity(Owner);
+        _window.SetOwnerAndUiKey(Owner, (TurretControlsUiKey)UiKey);
+        _window.OpenCentered();
     }
 
     protected override void UpdateState(BoundUserInterfaceState state)
@@ -20,8 +29,13 @@ public sealed class TurretControlsBoundUserInterface : BoundUserInterface
 
     }
 
-    /*public void SendMessage()
+    public void SendTurretControlsUpdatedMessage(Entity<TurretTargetingComponent> ent)
     {
-        SendMessage(new Message());
-    }*/
+        /*var ev = new TurretControlSettingsChangedMessage()
+        {
+            ent.Comp.
+        }
+
+        SendMessage((netEntity, group));*/
+    }
 }

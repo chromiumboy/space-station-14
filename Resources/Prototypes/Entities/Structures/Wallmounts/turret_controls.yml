@@ -58,10 +58,10 @@
     layoutId: Intercom
   - type: ActivatableUIRequiresPower
   - type: ActivatableUI
-    key: enum.TurretControlsUiKey.Key
+    key: enum.TurretControlsUiKey.StationAi
   - type: UserInterface
     interfaces:
-      enum.TurretControlsUiKey.Key:
+      enum.TurretControlsUiKey.StationAi:
         type: TurretControlsBoundUserInterface
       enum.WiresUiKey.Key:
         type: WiresBoundUserInterface
