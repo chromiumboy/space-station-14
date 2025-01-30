@@ -9,7 +9,7 @@ using Robust.Shared.Timing;
 
 namespace Content.Server.Chat.Systems;
 
-public sealed partial class ChatNoticationSystem : EntitySystem
+public sealed partial class ChatNotificationSystem : EntitySystem
 {
     [Dependency] private readonly IPrototypeManager _proto = default!;
     [Dependency] private readonly IChatManager _chats = default!;

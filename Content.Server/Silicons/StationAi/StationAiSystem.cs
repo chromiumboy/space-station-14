@@ -104,9 +104,9 @@ public sealed class StationAiSystem : SharedStationAiSystem
         return true;
     }
 
-    private void AnnounceSnip(EntityUid entity)
+    private void AnnounceSnip(EntityUid uid)
     {
-        var xform = Transform(entity);
+        var xform = Transform(uid);
 
         if (!TryComp(xform.GridUid, out MapGridComponent? grid))
             return;
@@ -115,6 +115,9 @@ public sealed class StationAiSystem : SharedStationAiSystem
 
         foreach (var ai in ais)
         {
+            if (!StationAiCanDetectWireSnipping(ai))
+                continue;
+
             var ev = new ChatNotificationEvent("AiWireSnipped", ai);
 
             var tile = Maps.LocalToTile(xform.GridUid.Value, grid, xform.Coordinates);
@@ -124,20 +127,30 @@ public sealed class StationAiSystem : SharedStationAiSystem
         }
     }
 
-    private HashSet<Entity<ActorComponent>> GetStationAIs(EntityUid gridUid)
+    private bool StationAiCanDetectWireSnipping(EntityUid uid)
+    {
+        // TODO: The ability to detect snipped AI interaction wires
+        // should be a MALF ability and/or a purchased upgrade rather
+        // than something available to the station AI by default.
+        // When these systems are added, add the checks appropriate
+        // checks here
+
+        return false;
+    }
+
+    public HashSet<EntityUid> GetStationAIs(EntityUid gridUid)
     {
         _stationAiCores.Clear();
         _lookup.GetChildEntities(gridUid, _stationAiCores);
 
-        var hashSet = new HashSet<Entity<ActorComponent>>();
+        var hashSet = new HashSet<EntityUid>();
 
         foreach (var stationAiCore in _stationAiCores)
         {
             if (!TryGetInsertedAI(stationAiCore, out var insertedAi))
                 continue;
 
-            if (TryComp<ActorComponent>(insertedAi, out var actor))
-                hashSet.Add((insertedAi.Value, actor));
+            hashSet.Add(insertedAi.Value);
         }
 
         return hashSet;
