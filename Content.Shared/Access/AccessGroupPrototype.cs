@@ -24,4 +24,12 @@ public sealed partial class AccessGroupPrototype : IPrototype
     /// </summary>
     [DataField("tags", required: true)]
     public HashSet<ProtoId<AccessLevelPrototype>> Tags = default!;
+
+    public string GetAccessGroupName()
+    {
+        if (Name is { } name)
+            return Loc.GetString(name);
+
+        return ID;
+    }
 }

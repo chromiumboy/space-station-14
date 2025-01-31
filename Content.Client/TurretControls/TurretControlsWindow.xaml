@@ -84,7 +84,7 @@
                                    HorizontalAlignment="Center" Margin="0 5 0 0" />
 
                             <!-- Access configuration -->
-                            <BoxContainer Orientation="Horizontal" Margin="10 5 10 10" VerticalExpand="True" HorizontalExpand="True" MinHeight="45">
+                            <BoxContainer Orientation="Horizontal" Margin="10 5 10 10" VerticalExpand="True" HorizontalExpand="True" MinHeight="48">
 
                                 <!-- Access groups -->
                                 <BoxContainer Name="AccessGroupList" Orientation="Vertical" MinWidth="128">

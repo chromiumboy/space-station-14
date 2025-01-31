@@ -214,7 +214,7 @@ public sealed partial class TurretControlsWindow : BaseWindow
             _tabIndex = _groupedAccessLevels.Count - 1;
 
         // Generate buttons for the access groups
-        _orderedAccessGroups = _groupedAccessLevels.Keys.OrderBy(x => x.Name == null).ThenBy(x => x.Name).ToList();
+        _orderedAccessGroups = _groupedAccessLevels.Keys.OrderBy(x => x.GetAccessGroupName()).ToList();
 
         for (int i = 0; i < _orderedAccessGroups.Count; i++)
         {
@@ -250,7 +250,7 @@ public sealed partial class TurretControlsWindow : BaseWindow
 
         // Generate buttons for the current tab
         var accessLevelsForTab = _groupedAccessLevels[_orderedAccessGroups[_tabIndex]];
-        accessLevelsForTab = accessLevelsForTab.OrderBy(x => x.Name).ToHashSet();
+        accessLevelsForTab = accessLevelsForTab.OrderBy(x => x.GetAccessLevelName()).ToHashSet();
 
         foreach (var accessLevel in accessLevelsForTab)
         {
