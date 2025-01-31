@@ -32,6 +32,7 @@
 
 - type: accessGroup
   id: Service
+  name: access-level-group-service
   tags:
   - HeadOfPersonnel
   - Bar

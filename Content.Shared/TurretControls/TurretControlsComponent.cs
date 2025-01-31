@@ -10,6 +10,12 @@ namespace Content.Shared.TurretControls;
 public sealed partial class TurretControlsComponent : Component
 {
     public Dictionary<Entity<TurretTargetingComponent>, string> LinkedTurrets = new();
+
+    [DataField]
+    public HashSet<ProtoId<AccessLevelPrototype>> AccessLevels = new();
+
+    [DataField]
+    public HashSet<ProtoId<AccessGroupPrototype>> AccessGroups = new();
 }
 
 /// <summary>

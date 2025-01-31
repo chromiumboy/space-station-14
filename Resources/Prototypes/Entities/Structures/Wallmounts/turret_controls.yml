@@ -9,7 +9,12 @@
   - type: Electrified
     enabled: false
     usesApcPower: true
-  - type: TelecomExempt
+  - type: TurretControls
+    accessGroups:
+    - Silicon
+    accessLevels:
+    - BasicSilicon
+    - Borg
   - type: ExtensionCableReceiver
   - type: Clickable
   - type: InteractionOutline
@@ -112,3 +117,54 @@
     mode: SnapgridCenter
     snap:
     - Wallmount
+
+- type: entity
+  parent: TurretControlPanel
+  id: TurretControlPanelFull
+  name: turret control panel
+  suffix: All access levels
+  description: Remotely configures the settings of connected automated defense turrets.
+  components:
+  - type: TurretControls
+    accessGroups:
+    - Cargo
+    - Command
+    - Engineering
+    - General
+    - Medical
+    - Research
+    - Security
+    - Service
+    - Silicon
+    accessLevels:
+    - Armory
+    - Atmospherics
+    - Bar
+    - BasicSilicon
+    - Borg
+    - Brig
+    - Detective
+    - Captain
+    - Cargo
+    - Chapel
+    - Chemistry
+    - ChiefEngineer
+    - ChiefMedicalOfficer
+    - Command
+    - Engineering
+    - External
+    - HeadOfPersonnel
+    - HeadOfSecurity
+    - Hydroponics
+    - Janitor
+    - Kitchen
+    - Lawyer
+    - Maintenance
+    - Medical
+    - Quartermaster
+    - Research
+    - ResearchDirector
+    - Salvage
+    - Security
+    - Service
+    - Theatre

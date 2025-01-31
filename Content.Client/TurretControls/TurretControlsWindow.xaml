@@ -74,23 +74,44 @@
                     </PanelContainer>
 
                     <!-- Targeting controls -->
-                    <PanelContainer Name="TargetingControlsPanel" Margin="10 0 10 10" ReservesSpace="False">
+                    <PanelContainer Name="TargetingControlsPanel" Margin="10 0 10 10" VerticalExpand="True" HorizontalExpand="True">
                         <PanelContainer.PanelOverride>
                             <gfx:StyleBoxFlat BorderColor="#FFFFFF" BorderThickness="2" />
                         </PanelContainer.PanelOverride>
 
-                        <BoxContainer Orientation="Vertical">
+                        <BoxContainer Orientation="Vertical" VerticalExpand="True" HorizontalExpand="True">
                             <Label Text="{Loc 'turret-controls-window-targeting-controls-label'}" StyleClasses="ConsoleSubHeading"
                                    HorizontalAlignment="Center" Margin="0 5 0 0" />
 
-                            <!-- Populated with C# code -->
-                            <BoxContainer Name="TargetingControlSettings" Orientation="Vertical" Margin="0 0 0 7.5"/>
- 
+                            <!-- Access configuration -->
+                            <BoxContainer Orientation="Horizontal" Margin="10 5 10 10" VerticalExpand="True" HorizontalExpand="True" MinHeight="45">
+
+                                <!-- Access groups -->
+                                <BoxContainer Name="AccessGroupList" Orientation="Vertical" MinWidth="128">
+
+                                    <!-- Access group buttons are added here by the C# code -->
+
+                                </BoxContainer>
+
+                                <PanelContainer StyleClasses="LowDivider" VerticalExpand="True" Margin="10 0 10 0" SetWidth="2">
+                                    <PanelContainer.PanelOverride>
+                                        <gfx:StyleBoxFlat BackgroundColor="#FFFFFF" />
+                                    </PanelContainer.PanelOverride>
+                                </PanelContainer>
+
+                                <!-- Access levels -->
+                                <ScrollContainer HorizontalExpand="True" VerticalExpand="True">
+                                    <BoxContainer Name="AccessLevelGrid" Orientation="Vertical" HorizontalAlignment="Left">
+
+                                        <!-- Access level buttons are added here by the C# code -->
+
+                                    </BoxContainer>
+                                </ScrollContainer>
+                            </BoxContainer>
+  
                         </BoxContainer>
                     </PanelContainer>
-
                 </BoxContainer>
-
             </Control>
         </Control>
         

@@ -1,5 +1,6 @@
 - type: accessGroup
   id: AllAccess
+  name: access-level-group-all-access
   tags:
   - EmergencyShuttleRepealAll
   - Captain
@@ -32,11 +33,9 @@
   - Chapel
   - Hydroponics
   - Atmospherics
-  
-- type: accessLevel
-  id: Borg
-  name: id-card-access-level-borg
-  
-- type: accessLevel
-  id: StationAi
-  name: id-card-access-level-station-ai
+ 
+- type: accessGroup
+  id: General
+  name: access-level-group-general
+  tags:
+  - Maintenance

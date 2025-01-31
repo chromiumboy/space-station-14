@@ -2,7 +2,7 @@
 turret-controls-window-title = Automated Defense System Controls
 turret-controls-window-turret-status-label = Linked turrets
 turret-controls-window-armament-controls-label = Armament status
-turret-controls-window-targeting-controls-label = Targeting overrides
+turret-controls-window-targeting-controls-label = Authorized personnel
 
 # Status reports
 turret-controls-window-no-turrets = <! No linked devices !>

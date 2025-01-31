@@ -12,6 +12,7 @@
 
 - type: accessGroup
   id: Engineering
+  name: access-level-group-engineering
   tags:
   - ChiefEngineer
   - Engineering

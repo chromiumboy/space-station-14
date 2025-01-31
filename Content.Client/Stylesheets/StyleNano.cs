@@ -161,6 +161,9 @@ namespace Content.Client.Stylesheets
         public const string StyleClassPinButtonPinned = "pinButtonPinned";
         public const string StyleClassPinButtonUnpinned = "pinButtonUnpinned";
 
+        // Check boxes
+        public const string StyleClassCheckBoxWhite = "checkBoxWhite";
+        public const string StyleClassCheckBoxWhiteChecked = "checkBoxWhiteChecked";
 
         public override Stylesheet Stylesheet { get; }
 
@@ -415,6 +418,9 @@ namespace Content.Client.Stylesheets
             // CheckBox
             var checkBoxTextureChecked = resCache.GetTexture("/Textures/Interface/Nano/checkbox_checked.svg.96dpi.png");
             var checkBoxTextureUnchecked = resCache.GetTexture("/Textures/Interface/Nano/checkbox_unchecked.svg.96dpi.png");
+
+            var checkBoxWhiteTextureChecked = resCache.GetTexture("/Textures/Interface/Nano/checkbox_checked_white.svg.96dpi.png");
+            var checkBoxWhiteTextureUnchecked = resCache.GetTexture("/Textures/Interface/Nano/checkbox_unchecked_white.svg.96dpi.png");
 
             // Tooltip box
             var tooltipTexture = resCache.GetTexture("/Textures/Interface/Nano/tooltip.png");
@@ -940,6 +946,22 @@ namespace Content.Client.Stylesheets
                 }),
 
                 new StyleRule(new SelectorElement(typeof(BoxContainer), new [] { CheckBox.StyleClassCheckBox }, null, null), new[]
+                {
+                    new StyleProperty(BoxContainer.StylePropertySeparation, 10),
+                }),
+
+                // CheckBox (white)
+                new StyleRule(new SelectorElement(typeof(TextureRect), new [] { StyleClassCheckBoxWhite }, null, null), new[]
+                {
+                    new StyleProperty(TextureRect.StylePropertyTexture, checkBoxWhiteTextureUnchecked),
+                }),
+
+                new StyleRule(new SelectorElement(typeof(TextureRect), new [] { StyleClassCheckBoxWhite, StyleClassCheckBoxWhiteChecked }, null, null), new[]
+                {
+                    new StyleProperty(TextureRect.StylePropertyTexture, checkBoxWhiteTextureChecked),
+                }),
+
+                new StyleRule(new SelectorElement(typeof(BoxContainer), new [] { StyleClassCheckBoxWhite }, null, null), new[]
                 {
                     new StyleProperty(BoxContainer.StylePropertySeparation, 10),
                 }),

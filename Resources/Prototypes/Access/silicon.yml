@@ -1,0 +1,19 @@
+﻿- type: accessLevel
+  id: Borg
+  name: id-card-access-level-borg
+
+- type: accessLevel
+  id: BasicSilicon
+  name: id-card-access-level-basic-silicon
+
+- type: accessLevel
+  id: StationAi
+  name: id-card-access-level-station-ai
+  
+- type: accessGroup
+  id: Silicon
+  name: access-level-group-silicon
+  tags:
+  - StationAi
+  - Borg
+  - BasicSilicon

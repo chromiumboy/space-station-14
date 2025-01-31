@@ -1,6 +1,5 @@
-﻿using Content.Shared.Access.Components;
+using Content.Shared.Access.Components;
 using Robust.Shared.Prototypes;
-using Robust.Shared.Serialization.TypeSerializers.Implementations.Custom.Prototype.Set;
 
 namespace Content.Shared.Access;
 
@@ -14,6 +13,15 @@ public sealed partial class AccessGroupPrototype : IPrototype
     [IdDataField]
     public string ID { get; private set; } = default!;
 
+    /// <summary>
+    /// The player-visible name of the access level group
+    /// </summary>
+    [DataField("name")]
+    public string? Name { get; set; }
+
+    /// <summary>
+    /// The access levels associated with this group
+    /// </summary>
     [DataField("tags", required: true)]
     public HashSet<ProtoId<AccessLevelPrototype>> Tags = default!;
 }

@@ -47,3 +47,16 @@ id-card-access-level-wizard = Wizard
 
 id-card-access-level-station-ai = Artifical Intelligence
 id-card-access-level-borg = Cyborg
+id-card-access-level-basic-silicon = Robot
+
+access-level-group-all-access = All access
+access-level-group-armory = Armory
+access-level-group-cargo = Cargo
+access-level-group-command = Command
+access-level-group-engineering = Engineering
+access-level-group-general = General
+access-level-group-medical = Medical
+access-level-group-research = Research
+access-level-group-security = Security
+access-level-group-service = Service
+access-level-group-silicon = Silicon

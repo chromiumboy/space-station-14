@@ -20,6 +20,7 @@
 
 - type: accessGroup
   id: Security
+  name: access-level-group-security
   tags:
   - HeadOfSecurity
   - Security
@@ -30,6 +31,7 @@
 
 - type: accessGroup
   id: Armory
+  name: access-level-group-armory
   tags:
   - Security
   - Armory
