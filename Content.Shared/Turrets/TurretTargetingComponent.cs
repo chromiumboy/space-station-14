@@ -1,4 +1,5 @@
 using Content.Shared.Access;
+using Content.Shared.TurretControls;
 using Robust.Shared.GameStates;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization;
@@ -8,6 +9,10 @@ namespace Content.Shared.Turrets;
 [RegisterComponent, NetworkedComponent, AutoGenerateComponentState]
 public sealed partial class TurretTargetingComponent : Component
 {
+    [DataField, ViewVariables(VVAccess.ReadWrite)]
+    [AutoNetworkedField]
+    public TurretControlsArmamentState ArmamentState = TurretControlsArmamentState.Safe;
+
     /// <summary>
     /// Determines whether the turret will attack cyborgs.
     /// </summary>

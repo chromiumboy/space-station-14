@@ -188,6 +188,7 @@ namespace Content.Client.Stylesheets
             var notoSansMono = resCache.GetFont("/EngineFonts/NotoSans/NotoSansMono-Regular.ttf", size: 12);
 
             var robotoMono10 = resCache.GetFont("/Fonts/RobotoMono/RobotoMono.ttf", size: 10);
+            var robotoMono11 = resCache.GetFont("/Fonts/RobotoMono/RobotoMono.ttf", size: 11);
             var robotoMono12 = resCache.GetFont("/Fonts/RobotoMono/RobotoMono.ttf", size: 12);
             var robotoMono14 = resCache.GetFont("/Fonts/RobotoMono/RobotoMono.ttf", size: 14);
 
@@ -1167,7 +1168,7 @@ namespace Content.Client.Stylesheets
                 // Console text
                 new StyleRule(new SelectorElement(typeof(Label), new[] {StyleClassConsoleText}, null, null), new[]
                 {
-                    new StyleProperty(Label.StylePropertyFont, robotoMono10)
+                    new StyleProperty(Label.StylePropertyFont, robotoMono11)
                 }),
 
                 new StyleRule(new SelectorElement(typeof(Label), new[] {StyleClassConsoleSubHeading}, null, null), new[]

@@ -36,17 +36,24 @@
                             <gfx:StyleBoxFlat BorderColor="#FFFFFF" BorderThickness="2" />
                         </PanelContainer.PanelOverride>
                         
-                        <BoxContainer Orientation="Vertical" MinHeight="200">
+                        <BoxContainer Orientation="Vertical" MinHeight="200" Margin="5 5 5 5">
                             <Label Text="{Loc 'turret-controls-window-turret-status-label'}" StyleClasses="ConsoleSubHeading"
-                                   HorizontalAlignment="Center" Margin="0 5 0 0" />
+                                   HorizontalAlignment="Center" />
 
-                            <BoxContainer Orientation="Vertical">
+                            <PanelContainer StyleClasses="LowDivider" HorizontalExpand="True" Margin="-5 5 -5 5" SetHeight="2">
+                                <PanelContainer.PanelOverride>
+                                    <gfx:StyleBoxFlat BackgroundColor="#FFFFFF" />
+                                </PanelContainer.PanelOverride>
+                            </PanelContainer>                           
+
+                            <BoxContainer Orientation="Vertical" VerticalExpand="True" HorizontalExpand="True">
                                 <Label Name="NoLinkedTurretsText" Text="{Loc 'turret-controls-window-no-turrets'}" StyleClasses="ConsoleText"
                                        HorizontalAlignment="Center" ReservesSpace="False"/>
 
                                 <!-- Populated with C# code -->
-                                <BoxContainer Name="LinkedTurretsContainer" Visible="False" ReservesSpace="False"/>
-
+                                <ScrollContainer VerticalExpand="True" HorizontalExpand="True">
+                                    <BoxContainer Name="LinkedTurretsContainer" Orientation="Vertical" Visible="False" ReservesSpace="False"/>
+                                </ScrollContainer>
                             </BoxContainer>
                         </BoxContainer>
                     </PanelContainer>
@@ -59,9 +66,15 @@
 
                         <BoxContainer Orientation="Vertical">
                             <Label Text="{Loc 'turret-controls-window-armament-controls-label'}" StyleClasses="ConsoleSubHeading"
-                                   HorizontalAlignment="Center" Margin="0 5 0 0" />
+                                   HorizontalAlignment="Center" Margin="0 5 0 5" />
 
-                            <BoxContainer Orientation="Horizontal" Margin="10 5 10 10">
+                            <PanelContainer StyleClasses="LowDivider" HorizontalExpand="True" SetHeight="2">
+                                <PanelContainer.PanelOverride>
+                                    <gfx:StyleBoxFlat BackgroundColor="#FFFFFF" />
+                                </PanelContainer.PanelOverride>
+                            </PanelContainer>
+
+                            <BoxContainer Orientation="Horizontal" Margin="10 10 10 10">
                                 <ui:MonoToneButton Name="SafeButton" Text="{Loc 'turret-controls-window-safe'}"
                                                    StyleClasses="OpenRight" Pressed="True" ToggleMode="True" HorizontalExpand="True"/>
                                 <ui:MonoToneButton Name="StunButton" Text="{Loc 'turret-controls-window-stun'}"
@@ -81,10 +94,16 @@
 
                         <BoxContainer Orientation="Vertical" VerticalExpand="True" HorizontalExpand="True">
                             <Label Text="{Loc 'turret-controls-window-targeting-controls-label'}" StyleClasses="ConsoleSubHeading"
-                                   HorizontalAlignment="Center" Margin="0 5 0 0" />
+                                   HorizontalAlignment="Center" Margin="0 5 0 5" />
+
+                            <PanelContainer StyleClasses="LowDivider" HorizontalExpand="True" SetHeight="2">
+                                <PanelContainer.PanelOverride>
+                                    <gfx:StyleBoxFlat BackgroundColor="#FFFFFF" />
+                                </PanelContainer.PanelOverride>
+                            </PanelContainer>
 
                             <!-- Access configuration -->
-                            <BoxContainer Orientation="Horizontal" Margin="10 5 10 10" VerticalExpand="True" HorizontalExpand="True" MinHeight="48">
+                            <BoxContainer Orientation="Horizontal" Margin="10 10 10 10" VerticalExpand="True" HorizontalExpand="True" MinHeight="50">
 
                                 <!-- Access groups -->
                                 <BoxContainer Name="AccessGroupList" Orientation="Vertical" MinWidth="128">
@@ -117,8 +136,10 @@
         
         <!--Footer-->
         <BoxContainer Orientation="Horizontal" SetHeight="28">
-            <Label Text="{Loc 'turret-controls-window-footer'}" StyleClasses="ItemStatus"
-                   HorizontalExpand="True" HorizontalAlignment="Center" Margin="0 0 0 6"/>
+            <Label Text="⚠" Margin="0 0 4 4" HorizontalExpand="True" HorizontalAlignment="Right"/>
+            <Label Name="Footer" Text="{Loc 'turret-controls-window-footer'}"
+                   HorizontalAlignment="Center" Margin="0 0 0 4"/>
+            <Label Text="⚠" Margin="4 0 0 4" HorizontalExpand="True" HorizontalAlignment="Left"/>
         </BoxContainer>
     </BoxContainer>
 </ui:TurretControlsWindow>
