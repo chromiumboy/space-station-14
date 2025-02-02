@@ -1,46 +1,48 @@
 using Content.Server.NPC.HTN;
-using Content.Server.Popups;
+using Content.Server.Power.Components;
 using Content.Server.Power.EntitySystems;
+using Content.Server.Repairable;
 using Content.Shared.Access.Components;
 using Content.Shared.Access.Systems;
 using Content.Shared.Damage;
 using Content.Shared.Database;
+using Content.Shared.Destructible;
 using Content.Shared.Interaction;
 using Content.Shared.Timing;
 using Content.Shared.Turrets;
 using Content.Shared.Verbs;
+using Content.Shared.Weapons.Ranged.Components;
+using Content.Shared.Weapons.Ranged.Events;
 using Robust.Shared.Utility;
 using Robust.Shared.Physics.Systems;
 using Robust.Shared.Physics;
-using Content.Server.Power.Components;
-using Content.Shared.Weapons.Ranged.Components;
-using Content.Shared.Weapons.Ranged.Events;
-using Content.Server.Repairable;
-using Content.Shared.Destructible;
+using Content.Shared.Popups;
+using Robust.Shared.Timing;
 
 namespace Content.Server.Turrets;
 
-public sealed partial class PopupTurretSystem : EntitySystem
+public sealed partial class DeployableTurretSystem : EntitySystem
 {
     [Dependency] private readonly UseDelaySystem _useDelay = default!;
     [Dependency] private readonly AccessReaderSystem _accessReader = default!;
-    [Dependency] private readonly PopupSystem _popup = default!;
+    [Dependency] private readonly SharedPopupSystem _popup = default!;
     [Dependency] private readonly SharedAppearanceSystem _appearance = default!;
     [Dependency] private readonly HTNSystem _htn = default!;
     [Dependency] private readonly DamageableSystem _damageable = default!;
     [Dependency] private readonly SharedPhysicsSystem _physics = default!;
+    [Dependency] private readonly IGameTiming _timing = default!;
 
     public override void Initialize()
     {
-        SubscribeLocalEvent<PopupTurretComponent, GetVerbsEvent<Verb>>(OnGetVerb);
-        SubscribeLocalEvent<PopupTurretComponent, ActivateInWorldEvent>(OnActivate);
-        SubscribeLocalEvent<PopupTurretComponent, AmmoShotEvent>(OnAmmoShot);
-        SubscribeLocalEvent<PopupTurretComponent, ChargeChangedEvent>(OnChargeChanged);
-        SubscribeLocalEvent<PopupTurretComponent, BreakageEventArgs>(OnBroken, after: [typeof(RepairableTurretSystem)]);
-        SubscribeLocalEvent<PopupTurretComponent, RepairedEvent>(OnRepaired, after: [typeof(RepairableTurretSystem)]);
+        SubscribeLocalEvent<DeployableTurretComponent, GetVerbsEvent<Verb>>(OnGetVerb);
+        SubscribeLocalEvent<DeployableTurretComponent, ActivateInWorldEvent>(OnActivate);
+        SubscribeLocalEvent<DeployableTurretComponent, AmmoShotEvent>(OnAmmoShot);
+        SubscribeLocalEvent<DeployableTurretComponent, ChargeChangedEvent>(OnChargeChanged);
+        SubscribeLocalEvent<DeployableTurretComponent, BreakageEventArgs>(OnBroken, after: [typeof(RepairableTurretSystem)]);
+        SubscribeLocalEvent<DeployableTurretComponent, RepairedEvent>(OnRepaired, after: [typeof(RepairableTurretSystem)]);
     }
 
-    private void OnGetVerb(Entity<PopupTurretComponent> ent, ref GetVerbsEvent<Verb> args)
+    private void OnGetVerb(Entity<DeployableTurretComponent> ent, ref GetVerbsEvent<Verb> args)
     {
         if (!args.CanAccess || !args.CanInteract || !args.CanComplexInteract)
             return;
@@ -53,74 +55,97 @@ public sealed partial class PopupTurretSystem : EntitySystem
         var verb = new Verb
         {
             Priority = 1,
-            Text = ent.Comp.Enabled ? Loc.GetString("popup-turret-component-deactivate") : Loc.GetString("popup-turret-component-activate"),
+            Text = ent.Comp.Enabled ? Loc.GetString("deployable-turret-component-deactivate") : Loc.GetString("deployable-turret-component-activate"),
             Icon = new SpriteSpecifier.Texture(new("/Textures/Interface/VerbIcons/Spare/poweronoff.svg.192dpi.png")),
             Disabled = !HasAmmo(ent),
             Impact = LogImpact.Low,
-            Act = () => { ToggleTurret(ent, user); }
+            Act = () => { TryToggleState(ent, user); }
         };
 
         args.Verbs.Add(verb);
     }
 
-    private void OnActivate(Entity<PopupTurretComponent> ent, ref ActivateInWorldEvent args)
+    private void OnActivate(Entity<DeployableTurretComponent> ent, ref ActivateInWorldEvent args)
     {
         if (TryComp(ent, out UseDelayComponent? useDelay) && !_useDelay.TryResetDelay((ent, useDelay), true))
             return;
 
         if (TryComp<AccessReaderComponent>(ent, out var reader) && !_accessReader.IsAllowed(args.User, ent, reader))
         {
-            _popup.PopupEntity(Loc.GetString("popup-turret-component-no-access"), ent, args.User);
+            _popup.PopupEntity(Loc.GetString("deployable-turret-component-no-access"), ent, args.User);
             return;
         }
 
-        ToggleTurret(ent, args.User);
+        TryToggleState(ent, args.User);
     }
 
-    private void OnAmmoShot(Entity<PopupTurretComponent> ent, ref AmmoShotEvent args)
+    private void OnAmmoShot(Entity<DeployableTurretComponent> ent, ref AmmoShotEvent args)
     {
         if (ent.Comp.Enabled && !HasAmmo(ent))
-            ToggleTurret(ent);
+            TryToggleState(ent);
     }
 
-    private void OnChargeChanged(Entity<PopupTurretComponent> ent, ref ChargeChangedEvent args)
+    private void OnChargeChanged(Entity<DeployableTurretComponent> ent, ref ChargeChangedEvent args)
     {
         if (ent.Comp.Enabled && !HasAmmo(ent))
-            ToggleTurret(ent);
+            TryToggleState(ent);
     }
 
-    private void OnBroken(Entity<PopupTurretComponent> ent, ref BreakageEventArgs args)
+    private void OnBroken(Entity<DeployableTurretComponent> ent, ref BreakageEventArgs args)
     {
         ent.Comp.Broken = true;
     }
 
-    private void OnRepaired(Entity<PopupTurretComponent> ent, ref RepairedEvent args)
+    private void OnRepaired(Entity<DeployableTurretComponent> ent, ref RepairedEvent args)
     {
         ent.Comp.Broken = false;
     }
 
-    private void ToggleTurret(Entity<PopupTurretComponent> ent, EntityUid? user = null)
+    public void TryToggleState(Entity<DeployableTurretComponent> ent, EntityUid? user = null)
+    {
+        TrySetState(ent, !ent.Comp.Enabled, user);
+    }
+
+    public bool TrySetState(Entity<DeployableTurretComponent> ent, bool enabled, EntityUid? user = null)
     {
         if (ent.Comp.Broken)
         {
             if (user != null)
-                _popup.PopupEntity(Loc.GetString("popup-turret-component-is-broken"), ent, user.Value);
+                _popup.PopupEntity(Loc.GetString("deployable-turret-component-is-broken"), ent, user.Value);
 
-            return;
+            return false;
         }
 
-        if (!ent.Comp.Enabled && !HasAmmo(ent))
+        if (enabled && !HasAmmo(ent))
         {
             if (user != null)
-                _popup.PopupEntity(Loc.GetString("popup-turret-component-no-ammo"), ent, user.Value);
+                _popup.PopupEntity(Loc.GetString("deployable-turret-component-no-ammo"), ent, user.Value);
 
-            return;
+            return false;
         }
 
-        ent.Comp.Enabled = !ent.Comp.Enabled;
+        SetState(ent, enabled, null);
+
+        return true;
+    }
+
+    private void SetState(Entity<DeployableTurretComponent> ent, bool enabled, EntityUid? user = null)
+    {
+        if (ent.Comp.Enabled == enabled)
+            return;
+
+        ent.Comp.Enabled = enabled;
+
+        // If animating, determine how much time is remaining
+        var animTimeRemaining = MathF.Max((float)(ent.Comp.AnimationCompletionTime - _timing.CurTime).TotalSeconds, 0f);
+
+        // Calculate the time the queued animation should end
+        var animTimeNext = ent.Comp.Enabled ? ent.Comp.DeploymentLength : ent.Comp.RetractionLength;
+        ent.Comp.AnimationCompletionTime = _timing.CurTime + TimeSpan.FromSeconds(animTimeNext + animTimeRemaining);
 
         // End/restart any tasks the NPC was doing
-        var planCooldown = ent.Comp.Enabled ? ent.Comp.DeploymentLength : ent.Comp.RetractionLength;
+        // Delay the resumption of any tasks based on the queued animation length
+        var planCooldown = animTimeRemaining + animTimeNext;
 
         if (TryComp<HTNComponent>(ent, out var htn))
             _htn.SetHTNEnabled((ent, htn), ent.Comp.Enabled, planCooldown + 0.5f);
@@ -143,7 +168,7 @@ public sealed partial class PopupTurretSystem : EntitySystem
         // Show message to the player
         if (user != null)
         {
-            var msg = ent.Comp.Enabled ? "popup-turret-component-activating" : "popup-turret-component-deactivating";
+            var msg = ent.Comp.Enabled ? "deployable-turret-component-activating" : "deployable-turret-component-deactivating";
             _popup.PopupEntity(Loc.GetString(msg), ent, user.Value);
         }
 
@@ -151,7 +176,7 @@ public sealed partial class PopupTurretSystem : EntitySystem
         UpdateAppearance(ent);
     }
 
-    private void UpdateAppearance(Entity<PopupTurretComponent> ent, AppearanceComponent? appearance = null)
+    private void UpdateAppearance(Entity<DeployableTurretComponent> ent, AppearanceComponent? appearance = null)
     {
         if (!Resolve(ent, ref appearance))
             return;
@@ -160,7 +185,7 @@ public sealed partial class PopupTurretSystem : EntitySystem
         _appearance.SetData(ent, PopupTurretVisuals.Turret, state, appearance);
     }
 
-    private bool HasAmmo(Entity<PopupTurretComponent> ent)
+    private bool HasAmmo(Entity<DeployableTurretComponent> ent)
     {
         if (TryComp<ProjectileBatteryAmmoProviderComponent>(ent, out var projectilebatteryAmmo) &&
             (projectilebatteryAmmo.Shots > 0 || this.IsPowered(ent, EntityManager)))

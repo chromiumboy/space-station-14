@@ -108,6 +108,16 @@ public sealed class BatteryWeaponFireModesSystem : EntitySystem
         SetFireMode(uid, component, index, user);
     }
 
+    public bool TrySetFireMode(EntityUid uid, BatteryWeaponFireModesComponent component, int index, EntityUid? user = null)
+    {
+        if (index < 0 || index >= component.FireModes.Count)
+            return false;
+
+        SetFireMode(uid, component, index, user);
+
+        return true;
+    }
+
     private void SetFireMode(EntityUid uid, BatteryWeaponFireModesComponent component, int index, EntityUid? user = null)
     {
         var fireMode = component.FireModes[index];

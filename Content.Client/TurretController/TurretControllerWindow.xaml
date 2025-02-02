@@ -1,5 +1,5 @@
-<ui:TurretControlsWindow xmlns="https://spacestation14.io"
-                        xmlns:ui="clr-namespace:Content.Client.TurretControls"
+<ui:TurretControllerWindow xmlns="https://spacestation14.io"
+                        xmlns:ui="clr-namespace:Content.Client.TurretController"
                         xmlns:gfx="clr-namespace:Robust.Client.Graphics;assembly=Robust.Client"
                         SetWidth="500"
                         Resizable="False"
@@ -19,7 +19,7 @@
         <Control Margin="18 0" RectClipContent="True" VerticalExpand="true"
                  HorizontalExpand="True">
             <PanelContainer Name="ContentBorder" StyleClasses="PdaBackground"/>
-            <Control Name="ContentsContainer" Margin="3 3" Modulate="#33e633">
+            <Control Name="ContentsContainer" Margin="3 3" Modulate="#FFFFFF">
 
                 <!-- Screen Background -->
                 <PanelContainer Name="ContentBackground" StyleClasses="PdaContentBackground"/>
@@ -76,7 +76,7 @@
 
                             <BoxContainer Orientation="Horizontal" Margin="10 10 10 10">
                                 <ui:MonoToneButton Name="SafeButton" Text="{Loc 'turret-controls-window-safe'}"
-                                                   StyleClasses="OpenRight" Pressed="True" ToggleMode="True" HorizontalExpand="True"/>
+                                                   StyleClasses="OpenRight" Pressed="False" ToggleMode="True" HorizontalExpand="True"/>
                                 <ui:MonoToneButton Name="StunButton" Text="{Loc 'turret-controls-window-stun'}"
                                                    StyleClasses="OpenBoth" Pressed="False" ToggleMode="True" HorizontalExpand="True"/>
                                 <ui:MonoToneButton Name="LethalButton" Text="{Loc 'turret-controls-window-lethal'}"
@@ -142,4 +142,4 @@
             <Label Text="⚠" Margin="4 0 0 4" HorizontalExpand="True" HorizontalAlignment="Left"/>
         </BoxContainer>
     </BoxContainer>
-</ui:TurretControlsWindow>
+</ui:TurretControllerWindow>

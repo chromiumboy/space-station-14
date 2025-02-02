@@ -7,8 +7,8 @@ namespace Content.Server.Turrets;
 /// <summary>
 /// Attached to turrets that deploy with an accompanying animation
 /// </summary>
-[RegisterComponent, Access(typeof(PopupTurretSystem))]
-public sealed partial class PopupTurretComponent : SharedPopupTurretComponent
+[RegisterComponent, Access(typeof(DeployableTurretSystem))]
+public sealed partial class DeployableTurretComponent : SharedDeployableTurretComponent
 {
     /// <summary>
     /// Determines whether the turret is currently active

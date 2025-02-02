@@ -5,7 +5,7 @@ namespace Content.Shared.Turrets;
 /// <summary>
 /// Attached to turrets that deploy with an accompanying animation
 /// </summary>
-public abstract partial class SharedPopupTurretComponent : Component
+public abstract partial class SharedDeployableTurretComponent : Component
 {
     /// <summary>
     /// The length of the deployment animation (in seconds)
@@ -18,6 +18,12 @@ public abstract partial class SharedPopupTurretComponent : Component
     /// </summary>
     [DataField]
     public float RetractionLength = 1.19f;
+
+    /// <summary>
+    /// The time that the current animation should complete (in seconds)
+    /// </summary>
+    [DataField]
+    public TimeSpan AnimationCompletionTime = TimeSpan.Zero;
 }
 
 [Serializable, NetSerializable]

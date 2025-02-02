@@ -4,17 +4,17 @@ using Robust.Client.GameObjects;
 
 namespace Content.Client.Turrets;
 
-public sealed partial class PopupTurretVisualizerSystem : VisualizerSystem<PopupTurretComponent>
+public sealed partial class DeployableTurretVisualizerSystem : VisualizerSystem<DeployableTurretComponent>
 {
     public override void Initialize()
     {
         base.Initialize();
 
-        SubscribeLocalEvent<PopupTurretComponent, ComponentInit>(OnComponentInit);
-        SubscribeLocalEvent<PopupTurretComponent, AnimationCompletedEvent>(OnAnimationCompleted);
+        SubscribeLocalEvent<DeployableTurretComponent, ComponentInit>(OnComponentInit);
+        SubscribeLocalEvent<DeployableTurretComponent, AnimationCompletedEvent>(OnAnimationCompleted);
     }
 
-    private void OnComponentInit(Entity<PopupTurretComponent> ent, ref ComponentInit args)
+    private void OnComponentInit(Entity<DeployableTurretComponent> ent, ref ComponentInit args)
     {
         ent.Comp.DeploymentAnimation = new Animation
         {
@@ -39,9 +39,9 @@ public sealed partial class PopupTurretVisualizerSystem : VisualizerSystem<Popup
         };
     }
 
-    private void OnAnimationCompleted(Entity<PopupTurretComponent> ent, ref AnimationCompletedEvent args)
+    private void OnAnimationCompleted(Entity<DeployableTurretComponent> ent, ref AnimationCompletedEvent args)
     {
-        if (args.Key != PopupTurretComponent.AnimationKey)
+        if (args.Key != DeployableTurretComponent.AnimationKey)
             return;
 
         if (!TryComp<SpriteComponent>(ent, out var sprite))
@@ -54,13 +54,13 @@ public sealed partial class PopupTurretVisualizerSystem : VisualizerSystem<Popup
             state = ent.Comp.CurrentState;
 
         // Convert to terminal state
-        var targetState = (ent.Comp.CurrentState == PopupTurretVisualState.Deployed || ent.Comp.CurrentState == PopupTurretVisualState.Deploying) ?
+        var targetState = (state == PopupTurretVisualState.Deployed || ent.Comp.CurrentState == PopupTurretVisualState.Deploying) ?
             PopupTurretVisualState.Deployed : PopupTurretVisualState.Retracted;
 
         UpdateVisuals(ent, targetState, sprite, animPlayer);
     }
 
-    protected override void OnAppearanceChange(EntityUid uid, PopupTurretComponent comp, ref AppearanceChangeEvent args)
+    protected override void OnAppearanceChange(EntityUid uid, DeployableTurretComponent comp, ref AppearanceChangeEvent args)
     {
         if (args.Sprite == null)
             return;
@@ -74,12 +74,12 @@ public sealed partial class PopupTurretVisualizerSystem : VisualizerSystem<Popup
         UpdateVisuals((uid, comp), state, args.Sprite, animPlayer);
     }
 
-    private void UpdateVisuals(Entity<PopupTurretComponent> ent, PopupTurretVisualState state, SpriteComponent sprite, AnimationPlayerComponent? animPlayer = null)
+    private void UpdateVisuals(Entity<DeployableTurretComponent> ent, PopupTurretVisualState state, SpriteComponent sprite, AnimationPlayerComponent? animPlayer = null)
     {
         if (!Resolve(ent, ref animPlayer))
             return;
 
-        if (AnimationSystem.HasRunningAnimation(ent, animPlayer, PopupTurretComponent.AnimationKey))
+        if (AnimationSystem.HasRunningAnimation(ent, animPlayer, DeployableTurretComponent.AnimationKey))
             return;
 
         if (state != ent.Comp.CurrentState)
@@ -97,7 +97,7 @@ public sealed partial class PopupTurretVisualizerSystem : VisualizerSystem<Popup
 
             // If these two states do not match, start the transition to the target state
             if (targetState != destinationState)
-                targetState = (targetState == PopupTurretVisualState.Deployed || targetState == PopupTurretVisualState.Deploying) ?
+                targetState = (targetState == PopupTurretVisualState.Deployed) ?
                     PopupTurretVisualState.Deploying : PopupTurretVisualState.Retracting;
 
             ent.Comp.CurrentState = state;
@@ -108,11 +108,11 @@ public sealed partial class PopupTurretVisualizerSystem : VisualizerSystem<Popup
         switch (state)
         {
             case PopupTurretVisualState.Deploying:
-                AnimationSystem.Play((ent, animPlayer), ent.Comp.DeploymentAnimation, PopupTurretComponent.AnimationKey);
+                AnimationSystem.Play((ent, animPlayer), ent.Comp.DeploymentAnimation, DeployableTurretComponent.AnimationKey);
                 break;
 
             case PopupTurretVisualState.Retracting:
-                AnimationSystem.Play((ent, animPlayer), ent.Comp.RetractionAnimation, PopupTurretComponent.AnimationKey);
+                AnimationSystem.Play((ent, animPlayer), ent.Comp.RetractionAnimation, DeployableTurretComponent.AnimationKey);
                 break;
 
             case PopupTurretVisualState.Deployed:

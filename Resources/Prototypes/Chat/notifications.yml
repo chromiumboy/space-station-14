@@ -7,7 +7,7 @@
   
 - type: chatNotification
   id: TurretIsAttacking
-  message: turret-is-attacking-warning
+  message: station-ai-turret-is-attacking-warning
   color: Orange
   sound: /Audio/Misc/notice2.ogg
   nextDelay: 12

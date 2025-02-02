@@ -88,13 +88,12 @@
       fireCost: 150
     - proto: BulletEnergyTurretLaser
       fireCost: 150
-  - type: TurretTargeting
-    targetCyborgs: false
-    authorizedAccessLevels:
-    - Command
+  - type: TurretTargetSettings
+    exemptAccessLevels:
+    - Borg
   
   # General properties
-  - type: PopupTurret
+  - type: DeployableTurret
     retractedDamageModifierSetId: Metallic
     deployedDamageModifierSetId: FlimsyMetallic 
   - type: UseDelay

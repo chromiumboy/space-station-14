@@ -9,8 +9,10 @@
   - type: Electrified
     enabled: false
     usesApcPower: true
-  - type: TurretTargeting
-  - type: TurretControls
+  - type: TurretTargetSettings
+    exemptAccessLevels:
+    - Borg
+  - type: DeployableTurretController
     accessGroups:
     - Silicon
     accessLevels:
@@ -64,11 +66,11 @@
     layoutId: Intercom
   - type: ActivatableUIRequiresPower
   - type: ActivatableUI
-    key: enum.TurretControlsUiKey.StationAi
+    key: enum.DeployableTurretControllerUiKey.StationAi
   - type: UserInterface
     interfaces:
-      enum.TurretControlsUiKey.StationAi:
-        type: TurretControlsBoundUserInterface
+      enum.DeployableTurretControllerUiKey.StationAi:
+        type: TurretControllerWindowBoundUserInterface
       enum.WiresUiKey.Key:
         type: WiresBoundUserInterface
 #  - type: Construction
@@ -126,7 +128,7 @@
   suffix: All access levels
   description: Remotely configures the settings of connected automated defense turrets.
   components:
-  - type: TurretControls
+  - type: DeployableTurretController
     accessGroups:
     - Cargo
     - Command
