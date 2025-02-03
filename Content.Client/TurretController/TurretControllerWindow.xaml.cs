@@ -64,7 +64,8 @@ public sealed partial class TurretControllerWindow : BaseWindow
 
         UpdateTheme(turretController.ArmamentState);
 
-        RefreshAccessControls();
+        if (_entManager.TryGetComponent<TurretTargetSettingsComponent>(_owner, out var turretTargetSettings))
+            RefreshAccessControls(turretTargetSettings.ExemptAccessLevels);
     }
 
     private void OnArmamentButtonPressed(Button pressedButton, int index)
@@ -97,9 +98,14 @@ public sealed partial class TurretControllerWindow : BaseWindow
 
     public void UpdateState(DeployableTurretControllerWindowBoundInterfaceState state)
     {
-        UpdateTheme(state.ArmamentState);
-        RefreshLinkedTurrets(state.TurretStates);
-        RefreshAccessControls();
+        if (state.TurretStates != null)
+            RefreshLinkedTurrets(state.TurretStates);
+
+        if (state.ArmamentState != null)
+            UpdateTheme(state.ArmamentState.Value);
+
+        if (state.ExemptAccessLevels != null)
+            RefreshAccessControls(state.ExemptAccessLevels);
     }
 
     public void RefreshLinkedTurrets(List<(string, string)> turretStates)
@@ -138,15 +144,12 @@ public sealed partial class TurretControllerWindow : BaseWindow
         }
     }
 
-    public void RefreshAccessControls()
+    public void RefreshAccessControls(HashSet<ProtoId<AccessLevelPrototype>> exemptAccessLevels)
     {
         if (_owner == null)
             return;
 
         if (!_entManager.TryGetComponent<DeployableTurretControllerComponent>(_owner, out var turretControls))
-            return;
-
-        if (!_entManager.TryGetComponent<TurretTargetSettingsComponent>(_owner, out var turretTargeting))
             return;
 
         var groupedAccessLevels = new Dictionary<AccessGroupPrototype, HashSet<AccessLevelPrototype>>();
@@ -242,7 +245,7 @@ public sealed partial class TurretControllerWindow : BaseWindow
                 Text = accessLevel.GetAccessLevelName(),
                 ToggleMode = true,
                 Margin = new Thickness(0f, 2f),
-                Pressed = turretTargeting.ExemptAccessLevels.Contains(accessLevel),
+                Pressed = exemptAccessLevels.Contains(accessLevel),
             };
 
             AccessLevelGrid.AddChild(newButton);
@@ -272,7 +275,9 @@ public sealed partial class TurretControllerWindow : BaseWindow
             return;
 
         _tabIndex = newTabIndex;
-        RefreshAccessControls();
+
+        if (_entManager.TryGetComponent<TurretTargetSettingsComponent>(_owner, out var turretTargetSettings))
+            RefreshAccessControls(turretTargetSettings.ExemptAccessLevels);
     }
 }
 

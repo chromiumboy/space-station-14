@@ -43,17 +43,9 @@ public sealed partial class DeployableTurretControllerComponent : Component
 [Serializable, NetSerializable]
 public sealed class DeployableTurretControllerWindowBoundInterfaceState : BoundUserInterfaceState
 {
-    public List<(string, string)> TurretStates;
-    public int ArmamentState;
-    public HashSet<ProtoId<AccessLevelPrototype>> ExemptAccessLevels;
-
-    public DeployableTurretControllerWindowBoundInterfaceState
-        (List<(string, string)> turretStates, int armamentState, HashSet<ProtoId<AccessLevelPrototype>> exemptAccessLevels)
-    {
-        TurretStates = turretStates;
-        ArmamentState = armamentState;
-        ExemptAccessLevels = exemptAccessLevels;
-    }
+    public List<(string, string)>? TurretStates = null;
+    public int? ArmamentState = null;
+    public HashSet<ProtoId<AccessLevelPrototype>>? ExemptAccessLevels = null;
 }
 
 [Serializable, NetSerializable]
@@ -79,6 +71,13 @@ public sealed class DeployableTurretExemptAccessLevelChangedMessage : BoundUserI
         Enabled = enabled;
     }
 }
+
+[Serializable, NetSerializable]
+public enum TurretControllerVisuals : byte
+{
+    ControlPanel,
+}
+
 
 [Serializable, NetSerializable]
 public enum DeployableTurretControllerUiKey : byte
