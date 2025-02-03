@@ -31,6 +31,9 @@
   - type: NpcFactionMember
     factions:
     - SimpleNeutral
+  - type: Access
+    tags:
+    - BasicSilicon
   - type: IntrinsicRadioReceiver
   - type: ActiveRadio
     channels:
@@ -107,7 +110,6 @@
   - type: ProtectedFromStepTriggers
   - type: NoSlip
   - type: Insulated
-  - type: BasicSilicon
 
 - type: entity
   parent: MobSiliconBase

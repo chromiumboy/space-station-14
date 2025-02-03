@@ -25,12 +25,12 @@ public sealed partial class TurretTargetingCon : UtilityConsideration
             return 1f;
 
         // Check for authorized access
-        var idCardAccessLevels = _accessReader.FindAccessTags(targetUid);
+        var accessLevels = _accessReader.FindAccessTags(targetUid);
 
         if (targeting.ExemptAccessLevels.Count > 0)
         {
-            // If the ID card contains an access level on the exemption list, they will be ignored
-            foreach (var accessLevel in idCardAccessLevels)
+            // If the entity has an exempt access level, they will be ignored as a potential target
+            foreach (var accessLevel in accessLevels)
             {
                 if (targeting.ExemptAccessLevels.Contains(accessLevel))
                     return 0f;
