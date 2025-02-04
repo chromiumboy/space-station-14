@@ -161,10 +161,6 @@ namespace Content.Client.Stylesheets
         public const string StyleClassPinButtonPinned = "pinButtonPinned";
         public const string StyleClassPinButtonUnpinned = "pinButtonUnpinned";
 
-        // Check boxes
-        public const string StyleClassCheckBoxWhite = "checkBoxWhite";
-        public const string StyleClassCheckBoxWhiteChecked = "checkBoxWhiteChecked";
-
         public override Stylesheet Stylesheet { get; }
 
         public StyleNano(IResourceCache resCache) : base(resCache)
@@ -952,17 +948,17 @@ namespace Content.Client.Stylesheets
                 }),
 
                 // CheckBox (white)
-                new StyleRule(new SelectorElement(typeof(TextureRect), new [] { StyleClassCheckBoxWhite }, null, null), new[]
+                new StyleRule(new SelectorElement(typeof(TextureRect), new [] { MonotoneCheckBox.StyleClassCheckBoxWhite }, null, null), new[]
                 {
                     new StyleProperty(TextureRect.StylePropertyTexture, checkBoxWhiteTextureUnchecked),
                 }),
 
-                new StyleRule(new SelectorElement(typeof(TextureRect), new [] { StyleClassCheckBoxWhite, StyleClassCheckBoxWhiteChecked }, null, null), new[]
+                new StyleRule(new SelectorElement(typeof(TextureRect), new [] { MonotoneCheckBox.StyleClassCheckBoxWhite, MonotoneCheckBox.StyleClassCheckBoxWhiteChecked }, null, null), new[]
                 {
                     new StyleProperty(TextureRect.StylePropertyTexture, checkBoxWhiteTextureChecked),
                 }),
 
-                new StyleRule(new SelectorElement(typeof(BoxContainer), new [] { StyleClassCheckBoxWhite }, null, null), new[]
+                new StyleRule(new SelectorElement(typeof(BoxContainer), new [] { MonotoneCheckBox.StyleClassCheckBoxWhite }, null, null), new[]
                 {
                     new StyleProperty(BoxContainer.StylePropertySeparation, 10),
                 }),
