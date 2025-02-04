@@ -229,7 +229,6 @@ public sealed partial class TurretControllerWindow : BaseWindow
                 Text = accessGroup.Name != null ? Loc.GetString(accessGroup.Name) : "???",
                 ToggleMode = true,
                 Pressed = _tabIndex == orderedAccessGroups.IndexOf(accessGroup),
-
             };
 
             monotoneButton.Label.AddStyleClass("ConsoleText");
@@ -293,29 +292,22 @@ public sealed partial class TurretControllerWindow : BaseWindow
                 HorizontalExpand = true,
             };
 
-            var panel1 = new PanelContainer()
+            var isEndOfList = accessLevel == accessLevelsForTab.Last();
+
+            var lines = new List<(Vector2, Vector2)>()
             {
+                (new Vector2(0.5f, 0f), new Vector2(0.5f, isEndOfList ? 0.5f : 1f)),
+                (new Vector2(0.5f, 0.5f), new Vector2(1f, 0.5f)),
+            };
+
+            var link = new LineRenderer(lines)
+            {
+                SetWidth = 22,
                 VerticalExpand = true,
-                Margin = new Thickness(9f, -1f, 0f, -1f),
-                SetWidth = 2f,
+                Margin = new Thickness(0, -1),
             };
 
-            panel1.AddStyleClass("LowDivider");
-            panel1.PanelOverride = new StyleBoxFlat(Color.White);
-
-            container.AddChild(panel1);
-
-            var panel2 = new PanelContainer()
-            {
-                Margin = new Thickness(0f, 5f, 0f, 5f),
-                SetWidth = 10f,
-                SetHeight = 2f,
-            };
-
-            panel2.AddStyleClass("LowDivider");
-            panel2.PanelOverride = new StyleBoxFlat(Color.White);
-
-            container.AddChild(panel2);
+            container.AddChild(link);
 
             var checkBox = new MonotoneCheckBox
             {

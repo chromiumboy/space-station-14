@@ -1,6 +1,5 @@
 using Content.Shared.Access;
 using Content.Shared.TurretController;
-using Content.Shared.Turrets;
 using Robust.Client.UserInterface;
 using Robust.Shared.Prototypes;
 
