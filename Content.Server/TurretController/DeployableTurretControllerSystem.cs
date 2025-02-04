@@ -128,11 +128,14 @@ public sealed partial class DeployableTurretControllerSystem : SharedDeployableT
         if (!TryComp<TurretTargetSettingsComponent>(ent, out var targetSettings))
             return;
 
-        if (args.Enabled)
-            targetSettings.ExemptAccessLevels.Add(args.AccessLevel);
+        foreach (var (accessLevel, enabled) in args.AccessLevels)
+        {
+            if (enabled)
+                targetSettings.ExemptAccessLevels.Add(accessLevel);
 
-        else
-            targetSettings.ExemptAccessLevels.Remove(args.AccessLevel);
+            else
+                targetSettings.ExemptAccessLevels.Remove(accessLevel);
+        }
 
         Dirty(ent, targetSettings);
 

@@ -7,7 +7,6 @@ turret-controls-window-targeting-controls-label = Authorized personnel
 # Status reports
 turret-controls-window-no-turrets = <! No linked devices !>
 turret-controls-window-turret-status = » {$device} - Status: {$status}
-
 turret-controls-window-turret-broken = ***OFFLINE***
 turret-controls-window-turret-disabled = INACTIVE
 turret-controls-window-turret-enabled = SEARCHING...
@@ -22,6 +21,7 @@ turret-controls-window-stun = Stun
 turret-controls-window-lethal = Lethal
 turret-controls-window-ignore = Ignore
 turret-controls-window-target = Target
+turret-controls-window-all-checkbox = All
 
 # Flavor
 turret-controls-window-footer = Unauthorized personnel should ensure defenses are inactive before proceeding

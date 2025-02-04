@@ -62,13 +62,11 @@ public sealed class DeployableTurretArmamentSettingChangedMessage : BoundUserInt
 [Serializable, NetSerializable]
 public sealed class DeployableTurretExemptAccessLevelChangedMessage : BoundUserInterfaceMessage
 {
-    public ProtoId<AccessLevelPrototype> AccessLevel;
-    public bool Enabled;
+    public Dictionary<ProtoId<AccessLevelPrototype>, bool> AccessLevels;
 
-    public DeployableTurretExemptAccessLevelChangedMessage(ProtoId<AccessLevelPrototype> accessLevel, bool enabled)
+    public DeployableTurretExemptAccessLevelChangedMessage(Dictionary<ProtoId<AccessLevelPrototype>, bool> accessLevels)
     {
-        AccessLevel = accessLevel;
-        Enabled = enabled;
+        AccessLevels = accessLevels;
     }
 }
 
