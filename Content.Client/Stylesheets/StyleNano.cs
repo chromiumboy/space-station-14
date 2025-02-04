@@ -416,8 +416,8 @@ namespace Content.Client.Stylesheets
             var checkBoxTextureChecked = resCache.GetTexture("/Textures/Interface/Nano/checkbox_checked.svg.96dpi.png");
             var checkBoxTextureUnchecked = resCache.GetTexture("/Textures/Interface/Nano/checkbox_unchecked.svg.96dpi.png");
 
-            var checkBoxWhiteTextureChecked = resCache.GetTexture("/Textures/Interface/Nano/checkbox_checked_white.svg.96dpi.png");
-            var checkBoxWhiteTextureUnchecked = resCache.GetTexture("/Textures/Interface/Nano/checkbox_unchecked_white.svg.96dpi.png");
+            var monotoneCheckBoxTextureChecked = resCache.GetTexture("/Textures/Interface/Nano/Monotone/monotone_checkbox_checked.svg.96dpi.png");
+            var monotoneCheckBoxTextureUnchecked = resCache.GetTexture("/Textures/Interface/Nano/Monotone/monotone_checkbox_unchecked.svg.96dpi.png");
 
             // Tooltip box
             var tooltipTexture = resCache.GetTexture("/Textures/Interface/Nano/tooltip.png");
@@ -948,17 +948,17 @@ namespace Content.Client.Stylesheets
                 }),
 
                 // CheckBox (white)
-                new StyleRule(new SelectorElement(typeof(TextureRect), new [] { MonotoneCheckBox.StyleClassCheckBoxWhite }, null, null), new[]
+                new StyleRule(new SelectorElement(typeof(TextureRect), new [] { MonotoneCheckBox.StyleClassCheckBox }, null, null), new[]
                 {
-                    new StyleProperty(TextureRect.StylePropertyTexture, checkBoxWhiteTextureUnchecked),
+                    new StyleProperty(TextureRect.StylePropertyTexture, monotoneCheckBoxTextureUnchecked),
                 }),
 
-                new StyleRule(new SelectorElement(typeof(TextureRect), new [] { MonotoneCheckBox.StyleClassCheckBoxWhite, MonotoneCheckBox.StyleClassCheckBoxWhiteChecked }, null, null), new[]
+                new StyleRule(new SelectorElement(typeof(TextureRect), new [] { MonotoneCheckBox.StyleClassCheckBox, MonotoneCheckBox.StyleClassCheckBoxChecked }, null, null), new[]
                 {
-                    new StyleProperty(TextureRect.StylePropertyTexture, checkBoxWhiteTextureChecked),
+                    new StyleProperty(TextureRect.StylePropertyTexture, monotoneCheckBoxTextureChecked),
                 }),
 
-                new StyleRule(new SelectorElement(typeof(BoxContainer), new [] { MonotoneCheckBox.StyleClassCheckBoxWhite }, null, null), new[]
+                new StyleRule(new SelectorElement(typeof(BoxContainer), new [] { MonotoneCheckBox.StyleClassCheckBox }, null, null), new[]
                 {
                     new StyleProperty(BoxContainer.StylePropertySeparation, 10),
                 }),

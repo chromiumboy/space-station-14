@@ -4,15 +4,15 @@ namespace Content.Client.UserInterface.Controls;
 
 public sealed class MonotoneCheckBox : CheckBox
 {
-    public const string StyleClassCheckBoxWhite = "checkBoxWhite";
-    public const string StyleClassCheckBoxWhiteChecked = "checkBoxWhiteChecked";
+    public new const string StyleClassCheckBox = "monotoneCheckBox";
+    public new const string StyleClassCheckBoxChecked = "monotoneCheckBoxChecked";
 
     public MonotoneCheckBox()
     {
         Label.AddStyleClass("ConsoleText");
 
-        TextureRect.RemoveStyleClass(StyleClassCheckBox);
-        TextureRect.AddStyleClass(StyleClassCheckBoxWhite);
+        TextureRect.RemoveStyleClass(CheckBox.StyleClassCheckBox);
+        TextureRect.AddStyleClass(StyleClassCheckBox);
     }
 
     protected override void DrawModeChanged()
@@ -22,9 +22,9 @@ public sealed class MonotoneCheckBox : CheckBox
         if (TextureRect != null)
         {
             if (Pressed)
-                TextureRect.AddStyleClass(StyleClassCheckBoxWhiteChecked);
+                TextureRect.AddStyleClass(StyleClassCheckBoxChecked);
             else
-                TextureRect.RemoveStyleClass(StyleClassCheckBoxWhiteChecked);
+                TextureRect.RemoveStyleClass(StyleClassCheckBoxChecked);
         }
     }
 }
