@@ -19,7 +19,7 @@ public sealed partial class DeployableTurretComponent : SharedDeployableTurretCo
     /// <summary>
     /// Indicates whether the turret is currently broken
     /// </summary>
-    [ViewVariables]
+    [DataField]
     public bool Broken = false;
 
     /// <summary>

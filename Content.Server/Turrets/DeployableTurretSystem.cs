@@ -18,6 +18,8 @@ using Robust.Shared.Physics.Systems;
 using Robust.Shared.Physics;
 using Content.Shared.Popups;
 using Robust.Shared.Timing;
+using Robust.Shared.Audio.Systems;
+using Robust.Shared.Audio;
 
 namespace Content.Server.Turrets;
 
@@ -30,6 +32,7 @@ public sealed partial class DeployableTurretSystem : EntitySystem
     [Dependency] private readonly HTNSystem _htn = default!;
     [Dependency] private readonly DamageableSystem _damageable = default!;
     [Dependency] private readonly SharedPhysicsSystem _physics = default!;
+    [Dependency] private readonly SharedAudioSystem _audio = default!;
     [Dependency] private readonly IGameTiming _timing = default!;
 
     public override void Initialize()
@@ -72,7 +75,9 @@ public sealed partial class DeployableTurretSystem : EntitySystem
 
         if (TryComp<AccessReaderComponent>(ent, out var reader) && !_accessReader.IsAllowed(args.User, ent, reader))
         {
-            _popup.PopupEntity(Loc.GetString("deployable-turret-component-no-access"), ent, args.User);
+            _popup.PopupEntity(Loc.GetString("deployable-turret-component-access-denied"), ent, args.User);
+            _audio.PlayPvs(ent.Comp.AccessDeniedSound, ent);
+
             return;
         }
 
@@ -165,12 +170,14 @@ public sealed partial class DeployableTurretSystem : EntitySystem
             _physics.SetHard(ent, fixture, ent.Comp.Enabled);
         }
 
-        // Show message to the player
+        // Messages / audio
         if (user != null)
         {
             var msg = ent.Comp.Enabled ? "deployable-turret-component-activating" : "deployable-turret-component-deactivating";
             _popup.PopupEntity(Loc.GetString(msg), ent, user.Value);
         }
+
+        _audio.PlayPvs(ent.Comp.Enabled ? ent.Comp.DeploymentSound : ent.Comp.RetractionSound, ent, new AudioParams { Volume = -10f });
 
         // Update appearance
         UpdateAppearance(ent);

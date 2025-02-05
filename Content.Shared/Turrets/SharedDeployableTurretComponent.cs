@@ -1,3 +1,4 @@
+using Robust.Shared.Audio;
 using Robust.Shared.Serialization;
 
 namespace Content.Shared.Turrets;
@@ -24,6 +25,24 @@ public abstract partial class SharedDeployableTurretComponent : Component
     /// </summary>
     [DataField]
     public TimeSpan AnimationCompletionTime = TimeSpan.Zero;
+
+    /// <summary>
+    /// Sound to play when the denied access to the turret.
+    /// </summary>
+    [DataField]
+    public SoundSpecifier AccessDeniedSound = new SoundPathSpecifier("/Audio/Machines/custom_deny.ogg");
+
+    /// <summary>
+    /// Sound to play when the turret deploys.
+    /// </summary>
+    [DataField]
+    public SoundSpecifier DeploymentSound = new SoundPathSpecifier("/Audio/Machines/blastdoor.ogg");
+
+    /// <summary>
+    /// Sound to play when the turret retracts.
+    /// </summary>
+    [DataField]
+    public SoundSpecifier RetractionSound = new SoundPathSpecifier("/Audio/Machines/blastdoor.ogg");
 }
 
 [Serializable, NetSerializable]
