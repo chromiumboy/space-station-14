@@ -102,9 +102,6 @@
   name: laser turret
   abstract: true
   components:
-    - type: ContainerContainer
-      containers:
-        ballistic-ammo: !type:Container
     - type: Gun
       projectileSpeed: 15
       fireRate: 1.5
