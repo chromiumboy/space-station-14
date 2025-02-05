@@ -1,8 +1,8 @@
 - type: entity
   parent: BaseWeaponEnergyTurret
-  id: WeaponTurretAIDefense
-  name: automated AI defense turret
-  description: A high-tech automated weapon system designed to protect sensitive areas.
+  id: WeaponEnergyTurretStation
+  name: automated defense turret
+  description: A high-tech automated weapons platform designed to keep unauthorized personnel out of sensitive areas.
   components:
   
   # Physics
@@ -71,12 +71,11 @@
   
   # Faction / control
   - type: StationAiWhitelist
-  - type: StationAiTurret
   - type: NpcFactionMember
     factions:
     - AllHostile
   - type: AccessReader
-    access: [["Command"]]
+    access: [["Command"], ["Security"]]
     
   # Weapon systems
   - type: ProjectileBatteryAmmoProvider
@@ -92,10 +91,21 @@
     exemptAccessLevels:
     - Borg
   
+  # Device network
+  - type: DeviceNetwork
+    deviceNetId: Wired
+    receiveFrequencyId: TurretControl
+    transmitFrequencyId: TurretControl
+    prefix: device-address-prefix-turret
+    sendBroadcastAttemptEvent: true
+    examinableAddress: true
+  - type: DeviceNetworkRequiresPower
+  - type: WiredNetworkConnection
+  
   # General properties
   - type: DeployableTurret
     retractedDamageModifierSetId: Metallic
-    deployedDamageModifierSetId: FlimsyMetallic 
+    deployedDamageModifierSetId: FlimsyMetallic
   - type: UseDelay
     delay: 1.2
   - type: Damageable
@@ -116,13 +126,12 @@
             sound:
               collection: MetalGlassBreak
   
-  # Device network
-  - type: DeviceNetwork
-    deviceNetId: Wired
-    receiveFrequencyId: TurretControl
-    transmitFrequencyId: TurretControl
-    prefix: device-address-prefix-turret
-    sendBroadcastAttemptEvent: true
-    examinableAddress: true
-  - type: DeviceNetworkRequiresPower
-  - type: WiredNetworkConnection
+- type: entity
+  parent: WeaponEnergyTurretStation
+  id: WeaponEnergyTurretAI
+  name: AI automated defense turret
+  description: A high-tech automated weapons platform under the direct control of an artifical intelligence.
+  components:
+  - type: StationAiTurret
+  - type: AccessReader
+    access: [["StationAI"]]
