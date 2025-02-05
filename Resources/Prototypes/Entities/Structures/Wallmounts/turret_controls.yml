@@ -1,88 +1,26 @@
 - type: entity
-  id: TurretControlPanel
-  name: turret control panel
-  description: Remotely configures the settings of connected automated defense turrets.
+  id: WeaponEnergyTurretControlPanelFrame
+  name: automated defense control system assembly
+  description: An incomplete assembly for an automated defense control system.
   components:
-  - type: StationAiWhitelist
-  - type: WallMount
-  - type: ApcPowerReceiver
-  - type: Electrified
-    enabled: false
-    usesApcPower: true
-  - type: TurretTargetSettings
-    exemptAccessLevels:
-    - Borg
-  - type: DeployableTurretController
-    accessGroups:
-    - Silicon
-    accessLevels:
-    - BasicSilicon
-    - Borg
-  - type: ExtensionCableReceiver
-  - type: Clickable
-  - type: InteractionOutline
-  - type: Appearance
-  - type: WiresVisuals
-  - type: WiresPanelSecurity
-#  - type: ContainerFill
-#    containers:
-#      board: [ ]
-  - type: AccessReader
-    access: [["Command"]]
-  - type: DeviceNetwork
-    deviceNetId: Wired
-    receiveFrequencyId: TurretControl
-    transmitFrequencyId: TurretControl
-    prefix: device-address-prefix-console
-    sendBroadcastAttemptEvent: true
-  - type: WiredNetworkConnection
-  - type: DeviceList
-  - type: DeviceNetworkRequiresPower
   - type: Sprite
     noRot: false
     drawdepth: SmallObjects
     sprite: Structures/Wallmounts/turret_controls.rsi
     layers:
     - state: base
-    - state: safe
-      map: ["enum.PowerDeviceVisualLayers.Powered"]
-      shader: unshaded
-#    - state: panel
-#      map: ["enum.WiresVisualLayers.MaintenancePanel"]
-#      visible: false
-  - type: GenericVisualizer
-    visuals:
-      enum.WiresVisualLayers.MaintenancePanel:
-        enum.WiresVisualLayers.MaintenancePanel:
-          True: { visible: true }
-          False: { visible: false }
-      enum.PowerDeviceVisuals.Powered:
-        enum.PowerDeviceVisualLayers.Powered:
-          True: { visible: true }
-          False: { visible: false }
-      enum.TurretControllerVisuals.ControlPanel:
-        enum.PowerDeviceVisualLayers.Powered:
-          -1: { state: safe }
-          0: { state: stun }
-          1: { state: lethal }
-  - type: Transform
-    anchored: true
-  - type: WiresPanel
-  - type: Wires
-    boardName: wires-board-name-intercom
-    layoutId: Intercom
-  - type: ActivatableUIRequiresPower
-  - type: ActivatableUI
-    key: enum.DeployableTurretControllerUiKey.StationAi
-  - type: UserInterface
-    interfaces:
-      enum.DeployableTurretControllerUiKey.StationAi:
-        type: TurretControllerWindowBoundUserInterface
-      enum.WiresUiKey.Key:
-        type: WiresBoundUserInterface
-#  - type: Construction
-#    graph: Intercom
-#    node: intercom
+  - type: Clickable
+  - type: InteractionOutline
+  - type: WallMount
+  - type: ContainerFill
+    containers:
+      board: [ ]
+  - type: ContainerContainer
+    containers:
+      board: !type:Container
+  - type: Construction
+    graph: WeaponEnergyTurretControlPanel
+    node: start
   - type: Damageable
     damageContainer: StructuralInorganic
     damageModifierSet: StructuralMetallic
@@ -105,19 +43,52 @@
               collection: MetalGlassBreak
               params:
                 volume: -4
-
   placement:
     mode: SnapgridCenter
     snap:
     - Wallmount
-
+    
 - type: entity
-  parent: TurretControlPanel
-  id: TurretControlPanelFull
-  name: turret control panel
-  suffix: All access levels
-  description: Remotely configures the settings of connected automated defense turrets.
+  parent: WeaponEnergyTurretControlPanelFrame
+  id: WeaponEnergyTurretStationControlPanel
+  name: automated defense control system
+  description: An interface for remotely configuring the operational parameters of any connected automated defense turrets.
   components:
+  
+  # Sprites and appearance
+  - type: Appearance
+  - type: Sprite
+    noRot: false
+    drawdepth: SmallObjects
+    sprite: Structures/Wallmounts/turret_controls.rsi
+    layers:
+    - state: base
+    - state: safe
+      map: ["enum.PowerDeviceVisualLayers.Powered"]
+      shader: unshaded
+  - type: GenericVisualizer
+    visuals:
+      enum.WiresVisualLayers.MaintenancePanel:
+        enum.WiresVisualLayers.MaintenancePanel:
+          True: { visible: true }
+          False: { visible: false }
+      enum.PowerDeviceVisuals.Powered:
+        enum.PowerDeviceVisualLayers.Powered:
+          True: { visible: true }
+          False: { visible: false }
+      enum.TurretControllerVisuals.ControlPanel:
+        enum.PowerDeviceVisualLayers.Powered:
+          -1: { state: safe }
+          0: { state: stun }
+          1: { state: lethal }
+          
+  # Faction / control
+  - type: StationAiWhitelist
+  - type: AccessReader
+    access: [["Command"], ["Security"]]
+    
+  # Turret related
+  - type: TurretTargetSettings
   - type: DeployableTurretController
     accessGroups:
     - Cargo
@@ -161,3 +132,54 @@
     - Security
     - Service
     - Theatre
+    
+  # Device network
+  - type: DeviceList
+  - type: DeviceNetwork
+    deviceNetId: Wired
+    receiveFrequencyId: TurretControl
+    transmitFrequencyId: TurretControl
+    prefix: device-address-prefix-console
+    sendBroadcastAttemptEvent: true
+  - type: DeviceNetworkRequiresPower
+  - type: WiredNetworkConnection
+
+  # UI
+  - type: ActivatableUI 
+    key: enum.DeployableTurretControllerUiKey.Key  
+  - type: ActivatableUIRequiresPower
+  - type: UserInterface
+    interfaces:
+      enum.DeployableTurretControllerUiKey.Key:
+        type: TurretControllerWindowBoundUserInterface
+  
+  # General properties
+  - type: ApcPowerReceiver
+  - type: ExtensionCableReceiver
+  - type: Electrified
+    enabled: false
+    usesApcPower: true
+  - type: ContainerFill
+    containers:
+      board: [ WeaponEnergyTurretStationControlPanelElectronics ]
+
+- type: entity
+  parent: WeaponEnergyTurretStationControlPanel
+  id: WeaponEnergyTurretAIControlPanel
+  name: AI automated defense control system
+  description: An interface that allows a local artifical intelligence to adjust the operational parameters of any connected automated defense turrets.
+  components:
+  - type: AccessReader
+    access: [["StationAi"]]
+  - type: ContainerFill
+    containers:
+      board: [ WeaponEnergyTurretAIControlPanelElectronics ]
+  - type: TurretTargetSettings
+    exemptAccessLevels:
+    - Borg
+  - type: DeployableTurretController
+    accessGroups:
+    - Silicon
+    accessLevels:
+    - BasicSilicon
+    - Borg

@@ -1,0 +1,18 @@
+- type: entity
+  id: WeaponEnergyTurretStationControlPanelElectronics
+  parent: BaseElectronics
+  name: automated defense control system electronics
+  description: An electronics board used in an automated defense control system.
+  components:
+  - type: Sprite
+    sprite: Objects/Misc/module.rsi
+    state: command
+  - type: Tag
+    tags:
+    - TurretControlElectronics
+
+- type: entity
+  id: WeaponEnergyTurretAIControlPanelElectronics
+  parent: WeaponEnergyTurretStationControlPanelElectronics
+  name: AI automated defense control system electronics
+  description: An electronics board used in an AI automated defense control system.

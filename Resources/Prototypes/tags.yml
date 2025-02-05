@@ -1287,6 +1287,9 @@
 
 - type: Tag
   id: Truncheon
+  
+- type: Tag
+  id: TurretControlElectronics
 
 - type: Tag
   id: Unimplantable

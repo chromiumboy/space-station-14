@@ -870,3 +870,22 @@
   canBuildInImpassable: true
   conditions:
   - !type:WallmountCondition
+
+# DEFENSES
+- type: construction
+  name: automated defense control system
+  id: WeaponEnergyTurretControlPanel
+  graph: WeaponEnergyTurretControlPanel
+  startNode: start
+  targetNode: finish
+  category: construction-category-utilities
+  description: "An interface for remotely configuring the operational parameters of any connected automated defense turrets."
+  icon:
+    sprite: Structures/Wallmounts/turret_controls.rsi
+    state: base
+  objectType: Structure
+  canRotate: true
+  placementMode: SnapgridCenter
+  canBuildInImpassable: true
+  conditions:
+  - !type:WallmountCondition
