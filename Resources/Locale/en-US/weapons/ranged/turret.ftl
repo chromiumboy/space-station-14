@@ -3,7 +3,7 @@ deployable-turret-component-activating = Deploying...
 deployable-turret-component-deactivating = Deactivating...
 deployable-turret-component-activate = Activate
 deployable-turret-component-deactivate = Deactivate
-deployable-turret-component-no-access = Access denied
+deployable-turret-component-access-denied = Access denied
 deployable-turret-component-no-ammo = No ammunition
 deployable-turret-component-is-broken = The turret is too badly damaged and must be repaired
 
