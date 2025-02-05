@@ -1,5 +1,6 @@
 using Content.Shared.Access;
 using Content.Shared.Turrets;
+using Robust.Shared.Audio;
 using Robust.Shared.GameStates;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization;
@@ -16,15 +17,14 @@ public sealed partial class DeployableTurretControllerComponent : Component
     /// <summary>
     /// A list of turrets being directed by this entity, indexed by their device address.
     /// </summary>
-    [ViewVariables(VVAccess.ReadWrite)]
+    [ViewVariables]
     public Dictionary<string, Entity<SharedDeployableTurretComponent>> LinkedTurrets = new();
 
     /// <summary>
     /// The current armament state of the linked turrets.
     /// [-1: Inactive, 0: weapon mode A, 1: weapon mode B, etc]
     /// </summary>
-    [ViewVariables(VVAccess.ReadWrite)]
-    [AutoNetworkedField]
+    [DataField, AutoNetworkedField]
     public int ArmamentState = -1;
 
     /// <summary>
@@ -38,14 +38,23 @@ public sealed partial class DeployableTurretControllerComponent : Component
     /// </summary>
     [DataField]
     public HashSet<ProtoId<AccessGroupPrototype>> AccessGroups = new();
+
+    /// <summary>
+    /// Sound to play when denied access.
+    /// </summary>
+    [DataField]
+    public SoundSpecifier AccessDeniedSound = new SoundPathSpecifier("/Audio/Machines/custom_deny.ogg");
 }
 
 [Serializable, NetSerializable]
 public sealed class DeployableTurretControllerWindowBoundInterfaceState : BoundUserInterfaceState
 {
-    public List<(string, string)>? TurretStates = null;
-    public int? ArmamentState = null;
-    public HashSet<ProtoId<AccessLevelPrototype>>? ExemptAccessLevels = null;
+    public List<(string, string)> TurretStates;
+
+    public DeployableTurretControllerWindowBoundInterfaceState(List<(string, string)> turretStates)
+    {
+        TurretStates = turretStates;
+    }
 }
 
 [Serializable, NetSerializable]
@@ -62,11 +71,13 @@ public sealed class DeployableTurretArmamentSettingChangedMessage : BoundUserInt
 [Serializable, NetSerializable]
 public sealed class DeployableTurretExemptAccessLevelChangedMessage : BoundUserInterfaceMessage
 {
-    public Dictionary<ProtoId<AccessLevelPrototype>, bool> AccessLevels;
+    public HashSet<ProtoId<AccessLevelPrototype>> AccessLevels;
+    public bool Enabled;
 
-    public DeployableTurretExemptAccessLevelChangedMessage(Dictionary<ProtoId<AccessLevelPrototype>, bool> accessLevels)
+    public DeployableTurretExemptAccessLevelChangedMessage(HashSet<ProtoId<AccessLevelPrototype>> accessLevels, bool enabled)
     {
         AccessLevels = accessLevels;
+        Enabled = enabled;
     }
 }
 
@@ -80,6 +91,5 @@ public enum TurretControllerVisuals : byte
 [Serializable, NetSerializable]
 public enum DeployableTurretControllerUiKey : byte
 {
-    General,
-    StationAi,
+    Key,
 }

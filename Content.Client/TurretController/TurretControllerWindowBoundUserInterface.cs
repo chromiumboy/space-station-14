@@ -21,7 +21,7 @@ public sealed class TurretControllerWindowBoundUserInterface : BoundUserInterfac
         }
 
         _window = this.CreateWindow<TurretControllerWindow>();
-        _window.SetOwnerAndUiKey(Owner, (DeployableTurretControllerUiKey)UiKey);
+        _window.SetOwner(Owner);
         _window.OpenCentered();
 
         _window.OnAccessLevelsChangedEvent += OnAccessLevelChanged;
@@ -30,6 +30,8 @@ public sealed class TurretControllerWindowBoundUserInterface : BoundUserInterfac
 
     protected override void UpdateState(BoundUserInterfaceState state)
     {
+        base.UpdateState(state);
+
         if (_window == null)
             return;
 
@@ -39,13 +41,13 @@ public sealed class TurretControllerWindowBoundUserInterface : BoundUserInterfac
         _window.UpdateState(castState);
     }
 
-    private void OnAccessLevelChanged(Dictionary<ProtoId<AccessLevelPrototype>, bool> accessLevels)
+    private void OnAccessLevelChanged(HashSet<ProtoId<AccessLevelPrototype>> accessLevels, bool enabled)
     {
-        SendMessage(new DeployableTurretExemptAccessLevelChangedMessage(accessLevels));
+        SendPredictedMessage(new DeployableTurretExemptAccessLevelChangedMessage(accessLevels, enabled));
     }
 
     private void OnArmamentSettingChanged(int setting)
     {
-        SendMessage(new DeployableTurretArmamentSettingChangedMessage(setting));
+        SendPredictedMessage(new DeployableTurretArmamentSettingChangedMessage(setting));
     }
 }

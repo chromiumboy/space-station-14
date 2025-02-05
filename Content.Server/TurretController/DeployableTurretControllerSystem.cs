@@ -1,11 +1,8 @@
 using Content.Server.DeviceNetwork.Components;
-using Content.Server.DeviceNetwork.Systems;
 using Content.Server.NPC.HTN;
 using Content.Server.NPC.HTN.PrimitiveTasks.Operators.Combat.Ranged;
 using Content.Server.Turrets;
-using Content.Shared.Access.Systems;
 using Content.Shared.DeviceNetwork.Systems;
-using Content.Shared.Popups;
 using Content.Shared.Turrets;
 using Content.Shared.Weapons.Ranged.Components;
 using Content.Shared.Weapons.Ranged.Systems;
@@ -18,24 +15,17 @@ namespace Content.Shared.TurretController;
 
 public sealed partial class DeployableTurretControllerSystem : SharedDeployableTurretControllerSystem
 {
-    [Dependency] private readonly AccessReaderSystem _accessreader = default!;
-    [Dependency] private readonly DeviceNetworkSystem _deviceNet = default!;
     [Dependency] private readonly UserInterfaceSystem _userInterfaceSystem = default!;
-    [Dependency] private readonly SharedPopupSystem _popups = default!;
     [Dependency] private readonly BatteryWeaponFireModesSystem _fireModes = default!;
     [Dependency] private readonly DeployableTurretSystem _deployableTurret = default!;
-    [Dependency] private readonly SharedAppearanceSystem _appearance = default!;
     [Dependency] private readonly IGameTiming _timing = default!;
 
     public override void Initialize()
     {
         base.Initialize();
 
+        // Device networking events
         SubscribeLocalEvent<DeployableTurretControllerComponent, DeviceListUpdateEvent>(OnDeviceListUpdate);
-
-        // Handling of client messages
-        SubscribeLocalEvent<DeployableTurretControllerComponent, DeployableTurretArmamentSettingChangedMessage>(OnArmamentSettingChanged);
-        SubscribeLocalEvent<DeployableTurretControllerComponent, DeployableTurretExemptAccessLevelChangedMessage>(OnAccessLevelChangedChanged);
     }
 
     private void OnDeviceListUpdate(Entity<DeployableTurretControllerComponent> ent, ref DeviceListUpdateEvent args)
@@ -67,113 +57,32 @@ public sealed partial class DeployableTurretControllerSystem : SharedDeployableT
             ent.Comp.LinkedTurrets.Remove(address);
 
         // Update any open UIs
-        var turretStates = new List<(string, string)>();
-
-        foreach (var (address, turret) in ent.Comp.LinkedTurrets)
-            turretStates.Add((address, GetTurretStateDescription(turret)));
-
-        var state = new DeployableTurretControllerWindowBoundInterfaceState()
-        {
-            TurretStates = turretStates
-        };
-
-        _userInterfaceSystem.SetUiState(ent.Owner, DeployableTurretControllerUiKey.StationAi, state);
+        UpdateUIState(ent);
     }
 
-    private void OnArmamentSettingChanged(Entity<DeployableTurretControllerComponent> ent, ref DeployableTurretArmamentSettingChangedMessage args)
+    protected override void ChangeArmamentSetting(Entity<DeployableTurretControllerComponent> ent, int armamentState, EntityUid? user = null)
     {
-        if (!_accessreader.IsAllowed(args.Actor, ent))
-        {
-            _popups.PopupEntity(Loc.GetString("turret-controls-access-denied"), ent, args.Actor);
-            // Play sound
-            return;
-        }
+        base.ChangeArmamentSetting(ent, armamentState, user);
 
-        // Update the controller
-        ent.Comp.ArmamentState = args.ArmamentState;
-        Dirty(ent);
-
-        // Update its appearance
-        if (TryComp<AppearanceComponent>(ent, out var appearance))
-            _appearance.SetData(ent, TurretControllerVisuals.ControlPanel, args.ArmamentState);
-
-        // Update linked turrets
+        // Update linked turret weapon and deployment status
         foreach (var (address, turret) in ent.Comp.LinkedTurrets)
         {
             if (TryComp<BatteryWeaponFireModesComponent>(turret, out var batteryWeaponFireModes))
-                _fireModes.TrySetFireMode(turret, batteryWeaponFireModes, ent.Comp.ArmamentState, args.Actor);
+                _fireModes.TrySetFireMode(turret, batteryWeaponFireModes, ent.Comp.ArmamentState, user);
 
-            _deployableTurret.TrySetState((turret, (DeployableTurretComponent)turret.Comp), ent.Comp.ArmamentState >= 0, args.Actor);
+            _deployableTurret.TrySetState((turret, (DeployableTurretComponent)turret.Comp), ent.Comp.ArmamentState >= 0, user);
         }
-
-        // Update any open UIs
-        var state = new DeployableTurretControllerWindowBoundInterfaceState()
-        {
-            ArmamentState = ent.Comp.ArmamentState
-        };
-
-        _userInterfaceSystem.SetUiState(ent.Owner, DeployableTurretControllerUiKey.StationAi, state);
-    }
-
-    private void OnAccessLevelChangedChanged(Entity<DeployableTurretControllerComponent> ent, ref DeployableTurretExemptAccessLevelChangedMessage args)
-    {
-        if (!_accessreader.IsAllowed(args.Actor, ent))
-        {
-            _popups.PopupEntity(Loc.GetString("turret-controls-access-denied"), ent, args.Actor);
-            // Play sound
-            return;
-        }
-
-        // Update the controller
-        if (!TryComp<TurretTargetSettingsComponent>(ent, out var targetSettings))
-            return;
-
-        foreach (var (accessLevel, enabled) in args.AccessLevels)
-        {
-            if (enabled)
-                targetSettings.ExemptAccessLevels.Add(accessLevel);
-
-            else
-                targetSettings.ExemptAccessLevels.Remove(accessLevel);
-        }
-
-        Dirty(ent, targetSettings);
-
-        // Update linked turrets
-        foreach (var (address, turret) in ent.Comp.LinkedTurrets)
-        {
-            if (!TryComp<TurretTargetSettingsComponent>(turret, out var turretTargetSettings))
-                continue;
-
-            turretTargetSettings.ExemptAccessLevels = targetSettings.ExemptAccessLevels;
-            Dirty(turret, turretTargetSettings);
-        }
-
-        // Update any open UIs
-        var state = new DeployableTurretControllerWindowBoundInterfaceState()
-        {
-            ExemptAccessLevels = targetSettings.ExemptAccessLevels
-        };
-
-        _userInterfaceSystem.SetUiState(ent.Owner, DeployableTurretControllerUiKey.StationAi, state);
     }
 
     private void UpdateUIState(Entity<DeployableTurretControllerComponent> ent)
     {
-        if (!TryComp<TurretTargetSettingsComponent>(ent, out var targeting))
-            return;
-
         var turretStates = new List<(string, string)>();
 
         foreach (var (address, turret) in ent.Comp.LinkedTurrets)
             turretStates.Add((address, GetTurretStateDescription(turret)));
 
-        var state = new DeployableTurretControllerWindowBoundInterfaceState()
-        {
-            TurretStates = turretStates
-        };
-
-        _userInterfaceSystem.SetUiState(ent.Owner, DeployableTurretControllerUiKey.StationAi, state);
+        var state = new DeployableTurretControllerWindowBoundInterfaceState(turretStates);
+        _userInterfaceSystem.SetUiState(ent.Owner, DeployableTurretControllerUiKey.Key, state);
     }
 
     private string GetTurretStateDescription(EntityUid uid)
