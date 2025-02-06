@@ -3,7 +3,6 @@ using Content.Shared.Access.Systems;
 using Content.Shared.Popups;
 using Content.Shared.Turrets;
 using Robust.Shared.Audio.Systems;
-using Robust.Shared.Network;
 using Robust.Shared.Prototypes;
 
 namespace Content.Shared.TurretController;
@@ -16,7 +15,6 @@ public abstract partial class SharedDeployableTurretControllerSystem : EntitySys
     [Dependency] private readonly SharedPopupSystem _popups = default!;
     [Dependency] private readonly SharedAudioSystem _audio = default!;
     [Dependency] private readonly SharedAppearanceSystem _appearance = default!;
-    [Dependency] private readonly INetManager _net = default!;
 
     public override void Initialize()
     {
@@ -66,6 +64,9 @@ public abstract partial class SharedDeployableTurretControllerSystem : EntitySys
 
         foreach (var accessLevel in exemptions)
         {
+            if (!ent.Comp.AccessLevels.Contains(accessLevel))
+                continue;
+
             if (enabled)
                 _turretTargetingSettings.AddAccessLevelExemption(controller, accessLevel);
 
