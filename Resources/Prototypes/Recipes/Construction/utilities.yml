@@ -879,7 +879,7 @@
   startNode: start
   targetNode: finish
   category: construction-category-utilities
-  description: "An interface for remotely configuring the operational parameters of any connected automated defense turrets."
+  description: "An interface for remotely configuring the operational parameters of linked automated defense turrets."
   icon:
     sprite: Structures/Wallmounts/turret_controls.rsi
     state: base

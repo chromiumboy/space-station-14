@@ -1,0 +1,28 @@
+- type: entity
+  id: WeaponEnergyTurretStationMachineCircuitboard
+  parent: BaseMachineCircuitboard
+  name: automated defense turret machine board
+  description: A machine printed circuit board for an automated defense turret.
+  components:
+  - type: MachineBoard
+    prototype: WeaponEnergyTurretStation
+    tagRequirements:
+      Taser:
+        amount: 1
+        defaultPrototype: WeaponDisabler
+      ProximitySensor:
+        amount: 1
+        defaultPrototype: ProximitySensor
+    componentRequirements:
+      PowerCell:
+        amount: 1
+        defaultPrototype: PowerCellMedium
+          
+- type: entity
+  id: WeaponEnergyTurretAIMachineCircuitboard
+  parent: WeaponEnergyTurretStationMachineCircuitboard
+  name: AI automated defense turret machine board
+  description: A machine printed circuit board for an AI automated defense turret.
+  components:
+  - type: MachineBoard
+    prototype: WeaponEnergyTurretAI

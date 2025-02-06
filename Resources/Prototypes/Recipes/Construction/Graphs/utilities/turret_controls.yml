@@ -20,7 +20,7 @@
           sprite: Objects/Misc/module.rsi
           state: command
         store: board
-              
+
     - to: start
       completed:
       - !type:GivePrototype
@@ -46,7 +46,7 @@
         pickup: true
       steps:
       - tool: Prying
-        doAfter: 1
+        doAfter: 4
 
   - node: glass
     edges:
@@ -62,7 +62,16 @@
         amount: 1
       steps:
       - tool: Prying
-        doAfter: 1
+        doAfter: 2
   
   - node: finish
     entity: !type:BoardNodeEntity { container: board }
+    edges:
+    - to: board
+      completed:
+      - !type:GivePrototype
+        prototype: SheetGlass1
+        amount: 1
+      steps:
+      - tool: Prying
+        doAfter: 4

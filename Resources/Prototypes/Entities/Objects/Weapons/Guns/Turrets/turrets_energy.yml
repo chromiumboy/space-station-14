@@ -1,5 +1,5 @@
 - type: entity
-  parent: BaseWeaponEnergyTurret
+  parent: [BaseWeaponEnergyTurret, ConstructibleMachine]
   id: WeaponEnergyTurretStation
   name: automated defense turret
   description: A high-tech automated weapons platform designed to keep unauthorized personnel out of sensitive areas.
@@ -43,6 +43,10 @@
     - state: cover_closed
       map: [ "enum.PopupTurretVisualLayers.Turret" ]
       renderingStrategy: NoRotation
+    - state: panel
+      map: [ "enum.WiresVisualLayers.MaintenancePanel" ]
+      renderingStrategy: NoRotation
+      visible: false
   - type: AnimationPlayer
   - type: Appearance
   - type: GenericVisualizer
@@ -62,6 +66,10 @@
           True: { state: destroyed }
           False: { state: base }
         enum.PopupTurretVisualLayers.Weapon:
+          True: { visible: false }
+          False: { visible: true }
+      enum.WiresVisuals.MaintenancePanelState:
+        enum.WiresVisualLayers.MaintenancePanel:
           True: { visible: false }
           False: { visible: true }
   
@@ -89,8 +97,38 @@
       fireCost: 150
   - type: TurretTargetSettings
     exemptAccessLevels:
+    - Captain
+    - HeadOfPersonnel
+    - ResearchDirector
+    - ChiefEngineer
+    - ChiefMedicalOfficer
+    - HeadOfSecurity
+    - Quartermaster
     - Borg
-  
+    - BasicSilicon
+    
+  # Defenses / destruction
+  - type: DeployableTurret
+    retractedDamageModifierSetId: Metallic
+    deployedDamageModifierSetId: FlimsyMetallic
+  - type: Damageable
+    damageModifierSet: Metallic
+  - type: Repairable
+    doAfterDelay: 10
+    allowSelfRepair: false
+  - type: RepairableTurret
+  - type: Destructible
+    thresholds:
+    - trigger:
+        !type:DamageTrigger
+        damage: 300
+      behaviors:
+        - !type:DoActsBehavior
+          acts: [ "Breakage" ]
+        - !type:PlaySoundBehavior
+          sound:
+            collection: MetalGlassBreak
+            
   # Device network
   - type: DeviceNetwork
     deviceNetId: Wired
@@ -102,30 +140,27 @@
   - type: DeviceNetworkRequiresPower
   - type: WiredNetworkConnection
   
-  # General properties
-  - type: DeployableTurret
-    retractedDamageModifierSetId: Metallic
-    deployedDamageModifierSetId: FlimsyMetallic
+  # Wires
+  - type: UserInterface
+    interfaces:
+      enum.WiresUiKey.Key:
+        type: WiresBoundUserInterface
+  - type: WiresPanel
+  - type: WiresVisuals
+  - type: Wires
+    boardName: wires-board-name-weapon-energy-turret
+    layoutId: WeaponEnergyTurret
+  - type: Lock
+    locked: true
+    unlockOnClick: false
+  - type: LockedWiresPanel
+  
+  # General properties  
+  - type: Machine
+    board: WeaponEnergyTurretStationMachineCircuitboard
   - type: UseDelay
     delay: 1.2
-  - type: Damageable
-    damageModifierSet: Metallic
-  - type: Repairable
-    doAfterDelay: 10
-    allowSelfRepair: false
-  - type: RepairableTurret
-  - type: Destructible
-    thresholds:
-      - trigger:
-          !type:DamageTrigger
-          damage: 300
-        behaviors:
-          - !type:DoActsBehavior
-            acts: [ "Breakage" ]
-          - !type:PlaySoundBehavior
-            sound:
-              collection: MetalGlassBreak
-  
+
 - type: entity
   parent: WeaponEnergyTurretStation
   id: WeaponEnergyTurretAI
@@ -135,3 +170,9 @@
   - type: StationAiTurret
   - type: AccessReader
     access: [["StationAI"]]
+  - type: TurretTargetSettings
+    exemptAccessLevels:
+    - Borg
+    - BasicSilicon
+  - type: Machine
+    board: WeaponEnergyTurretAIMachineCircuitboard

@@ -2,25 +2,18 @@
   id: WeaponEnergyTurretControlPanelFrame
   name: automated defense control system assembly
   description: An incomplete assembly for an automated defense control system.
+  categories: [ HideSpawnMenu ]
   components:
+  
+  # Sprites and appearance
   - type: Sprite
     noRot: false
     drawdepth: SmallObjects
     sprite: Structures/Wallmounts/turret_controls.rsi
     layers:
     - state: base
-  - type: Clickable
-  - type: InteractionOutline
-  - type: WallMount
-  - type: ContainerFill
-    containers:
-      board: [ ]
-  - type: ContainerContainer
-    containers:
-      board: !type:Container
-  - type: Construction
-    graph: WeaponEnergyTurretControlPanel
-    node: start
+
+  # Destruction
   - type: Damageable
     damageContainer: StructuralInorganic
     damageModifierSet: StructuralMetallic
@@ -43,6 +36,22 @@
               collection: MetalGlassBreak
               params:
                 volume: -4
+  
+  # General properties
+  - type: Transform
+    anchored: true
+  - type: WallMount
+  - type: Clickable
+  - type: InteractionOutline
+  - type: ContainerFill
+    containers:
+      board: [ ]
+  - type: ContainerContainer
+    containers:
+      board: !type:Container
+  - type: Construction
+    graph: WeaponEnergyTurretControlPanel
+    node: frame
   placement:
     mode: SnapgridCenter
     snap:
@@ -52,7 +61,7 @@
   parent: WeaponEnergyTurretControlPanelFrame
   id: WeaponEnergyTurretStationControlPanel
   name: automated defense control system
-  description: An interface for remotely configuring the operational parameters of any connected automated defense turrets.
+  description: An interface for remotely configuring the operational parameters of linked automated defense turrets.
   components:
   
   # Sprites and appearance
@@ -152,6 +161,18 @@
     interfaces:
       enum.DeployableTurretControllerUiKey.Key:
         type: TurretControllerWindowBoundUserInterface
+      enum.WiresUiKey.Key:
+        type: WiresBoundUserInterface
+        
+  # Wires
+  - type: WiresPanel
+  - type: Wires
+    boardName: wires-board-name-turret-controls
+    layoutId: TurretControls
+  - type: Lock
+    locked: true
+    unlockOnClick: false
+  - type: LockedWiresPanel
   
   # General properties
   - type: ApcPowerReceiver
@@ -167,7 +188,7 @@
   parent: WeaponEnergyTurretStationControlPanel
   id: WeaponEnergyTurretAIControlPanel
   name: AI automated defense control system
-  description: An interface that allows a local artifical intelligence to adjust the operational parameters of any connected automated defense turrets.
+  description: An interface that allows a local artifical intelligence to adjust the operational parameters of linked automated defense turrets.
   components:
   - type: AccessReader
     access: [["StationAi"]]
