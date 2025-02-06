@@ -8,18 +8,20 @@ using Content.Shared.Damage;
 using Content.Shared.Database;
 using Content.Shared.Destructible;
 using Content.Shared.Interaction;
+using Content.Shared.Popups;
 using Content.Shared.Timing;
 using Content.Shared.Turrets;
 using Content.Shared.Verbs;
 using Content.Shared.Weapons.Ranged.Components;
 using Content.Shared.Weapons.Ranged.Events;
+using Content.Shared.Wires;
 using Robust.Shared.Utility;
 using Robust.Shared.Physics.Systems;
 using Robust.Shared.Physics;
-using Content.Shared.Popups;
 using Robust.Shared.Timing;
 using Robust.Shared.Audio.Systems;
 using Robust.Shared.Audio;
+using Content.Server.Wires;
 
 namespace Content.Server.Turrets;
 
@@ -33,16 +35,20 @@ public sealed partial class DeployableTurretSystem : EntitySystem
     [Dependency] private readonly DamageableSystem _damageable = default!;
     [Dependency] private readonly SharedPhysicsSystem _physics = default!;
     [Dependency] private readonly SharedAudioSystem _audio = default!;
+    [Dependency] private readonly SharedWiresSystem _wires = default!;
     [Dependency] private readonly IGameTiming _timing = default!;
 
     public override void Initialize()
     {
+        base.Initialize();
+
         SubscribeLocalEvent<DeployableTurretComponent, GetVerbsEvent<Verb>>(OnGetVerb);
         SubscribeLocalEvent<DeployableTurretComponent, ActivateInWorldEvent>(OnActivate);
         SubscribeLocalEvent<DeployableTurretComponent, AmmoShotEvent>(OnAmmoShot);
         SubscribeLocalEvent<DeployableTurretComponent, ChargeChangedEvent>(OnChargeChanged);
         SubscribeLocalEvent<DeployableTurretComponent, BreakageEventArgs>(OnBroken, after: [typeof(RepairableTurretSystem)]);
         SubscribeLocalEvent<DeployableTurretComponent, RepairedEvent>(OnRepaired, after: [typeof(RepairableTurretSystem)]);
+        SubscribeLocalEvent<DeployableTurretComponent, AttemptChangePanelEvent>(OnAttemptChangeWirePanelWire);
     }
 
     private void OnGetVerb(Entity<DeployableTurretComponent> ent, ref GetVerbsEvent<Verb> args)
@@ -106,6 +112,17 @@ public sealed partial class DeployableTurretSystem : EntitySystem
         ent.Comp.Broken = false;
     }
 
+    private void OnAttemptChangeWirePanelWire(Entity<DeployableTurretComponent> ent, ref AttemptChangePanelEvent args)
+    {
+        if (!ent.Comp.Enabled || args.Cancelled)
+            return;
+
+        if (args.User != null)
+            _popup.PopupEntity(Loc.GetString("deployable-turret-component-cant-access-wires"), ent, args.User.Value);
+
+        args.Cancelled = true;
+    }
+
     public void TryToggleState(Entity<DeployableTurretComponent> ent, EntityUid? user = null)
     {
         TrySetState(ent, !ent.Comp.Enabled, user);
@@ -139,6 +156,11 @@ public sealed partial class DeployableTurretSystem : EntitySystem
         if (ent.Comp.Enabled == enabled)
             return;
 
+        // Close the wires panel UI on activation
+        if (enabled && TryComp<WiresPanelComponent>(ent, out var wires))
+            _wires.TogglePanel(ent, wires, false);
+
+        // Update status
         ent.Comp.Enabled = enabled;
 
         // If animating, determine how much time is remaining
