@@ -12,7 +12,7 @@ public abstract partial class SharedDeployableTurretControllerSystem : EntitySys
     [Dependency] private readonly AccessReaderSystem _accessreader = default!;
     [Dependency] private readonly TurretTargetSettingsSystem _turretTargetingSettings = default!;
     [Dependency] private readonly SharedUserInterfaceSystem _userInterfaceSystem = default!;
-    [Dependency] private readonly SharedPopupSystem _popups = default!;
+    [Dependency] private readonly SharedPopupSystem _popup = default!;
     [Dependency] private readonly SharedAudioSystem _audio = default!;
     [Dependency] private readonly SharedAppearanceSystem _appearance = default!;
 
@@ -91,7 +91,7 @@ public abstract partial class SharedDeployableTurretControllerSystem : EntitySys
     {
         if (!_accessreader.IsAllowed(user, ent))
         {
-            _popups.PopupClient(Loc.GetString("turret-controls-access-denied"), ent, user);
+            _popup.PopupClient(Loc.GetString("turret-controls-access-denied"), ent, user);
             _audio.PlayPredicted(ent.Comp.AccessDeniedSound, ent, user);
 
             return false;

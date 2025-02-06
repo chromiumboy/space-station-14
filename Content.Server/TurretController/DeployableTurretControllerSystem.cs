@@ -31,7 +31,7 @@ public sealed partial class DeployableTurretControllerSystem : SharedDeployableT
     private void OnDeviceListUpdate(Entity<DeployableTurretControllerComponent> ent, ref DeviceListUpdateEvent args)
     {
         // Find all turrets linked to the controller
-        var turrets = new Dictionary<string, Entity<SharedDeployableTurretComponent>>();
+        var turrets = new Dictionary<string, Entity<DeployableTurretComponent>>();
 
         foreach (var turret in args.Devices)
         {
