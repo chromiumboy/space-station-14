@@ -98,6 +98,16 @@
     
   # Turret related
   - type: TurretTargetSettings
+    exemptAccessLevels:
+    - Captain
+    - HeadOfPersonnel
+    - ResearchDirector
+    - ChiefEngineer
+    - ChiefMedicalOfficer
+    - HeadOfSecurity
+    - Quartermaster
+    - Borg
+    - BasicSilicon
   - type: DeployableTurretController
     accessGroups:
     - Cargo
@@ -144,12 +154,13 @@
     
   # Device network
   - type: DeviceList
+    isAllowList: true
   - type: DeviceNetwork
     deviceNetId: Wired
-    receiveFrequencyId: TurretControl
+    receiveFrequencyId: Turret
     transmitFrequencyId: TurretControl
-    prefix: device-address-prefix-console
     sendBroadcastAttemptEvent: true
+    prefix: device-address-prefix-console
   - type: DeviceNetworkRequiresPower
   - type: WiredNetworkConnection
 
@@ -197,6 +208,7 @@
       board: [ WeaponEnergyTurretAIControlPanelElectronics ]
   - type: TurretTargetSettings
     exemptAccessLevels:
+    - BasicSilicon
     - Borg
   - type: DeployableTurretController
     accessGroups:

@@ -45,12 +45,13 @@ public abstract partial class SharedDeployableTurretControllerSystem : EntitySys
 
     protected virtual void ChangeArmamentSetting(Entity<DeployableTurretControllerComponent> ent, int armamentState, EntityUid? user = null)
     {
-        // Update the controller (linked turrets are updated on the server side)
         ent.Comp.ArmamentState = armamentState;
         Dirty(ent);
 
         if (TryComp<AppearanceComponent>(ent, out var appearance))
             _appearance.SetData(ent, TurretControllerVisuals.ControlPanel, armamentState);
+
+        // Linked turrets are updated on the server side
     }
 
     protected virtual void ChangeExemptAccessLevels
@@ -67,24 +68,12 @@ public abstract partial class SharedDeployableTurretControllerSystem : EntitySys
             if (!ent.Comp.AccessLevels.Contains(accessLevel))
                 continue;
 
-            if (enabled)
-                _turretTargetingSettings.AddAccessLevelExemption(controller, accessLevel);
-
-            else
-                _turretTargetingSettings.RemoveAccessLevelExemption(controller, accessLevel);
+            _turretTargetingSettings.SetAccessLevelExemption(controller, accessLevel, enabled);
         }
 
         Dirty(controller);
 
-        // Update linked turrets
-        foreach (var (address, turret) in ent.Comp.LinkedTurrets)
-        {
-            if (!TryComp<TurretTargetSettingsComponent>(turret, out var turretTargetSettings))
-                continue;
-
-            _turretTargetingSettings.SyncAccessLevelExemptions(controller, (turret, turretTargetSettings));
-            Dirty(turret, turretTargetSettings);
-        }
+        // Linked turrets are updated on the server side
     }
 
     public bool IsUserAllowedAccess(Entity<DeployableTurretControllerComponent> ent, EntityUid user)

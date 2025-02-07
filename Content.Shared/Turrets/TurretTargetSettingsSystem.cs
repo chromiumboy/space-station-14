@@ -1,7 +1,6 @@
 using Content.Shared.Access;
 using Content.Shared.Access.Systems;
 using Robust.Shared.Prototypes;
-using System.Linq;
 
 namespace Content.Shared.Turrets;
 
@@ -14,32 +13,29 @@ public sealed partial class TurretTargetSettingsSystem : EntitySystem
         base.Initialize();
     }
 
-    public void AddAccessLevelExemption(Entity<TurretTargetSettingsComponent> ent, ProtoId<AccessLevelPrototype> exemption)
+    public void SetAccessLevelExemption(Entity<TurretTargetSettingsComponent> ent, ProtoId<AccessLevelPrototype> exemption, bool enabled)
     {
-        ent.Comp.ExemptAccessLevels.Add(exemption);
+        if (enabled)
+            ent.Comp.ExemptAccessLevels.Add(exemption);
+        else
+            ent.Comp.ExemptAccessLevels.Remove(exemption);
     }
 
-    public void AddAccessLevelExemptions(Entity<TurretTargetSettingsComponent> ent, ICollection<ProtoId<AccessLevelPrototype>> exemptions)
-    {
-        foreach (var exemption in exemptions)
-            AddAccessLevelExemption(ent, exemption);
-    }
-
-    public void RemoveAccessLevelExemption(Entity<TurretTargetSettingsComponent> ent, ProtoId<AccessLevelPrototype> exemption)
-    {
-        ent.Comp.ExemptAccessLevels.Remove(exemption);
-    }
-
-    public void RemoveAccessLevelExemptions(Entity<TurretTargetSettingsComponent> ent, ICollection<ProtoId<AccessLevelPrototype>> exemptions)
+    public void SetAccessLevelExemptions(Entity<TurretTargetSettingsComponent> ent, ICollection<ProtoId<AccessLevelPrototype>> exemptions, bool enabled)
     {
         foreach (var exemption in exemptions)
-            RemoveAccessLevelExemption(ent, exemption);
+            SetAccessLevelExemption(ent, exemption, enabled);
     }
 
-    public void SyncAccessLevelExemptions(Entity<TurretTargetSettingsComponent> source, Entity<TurretTargetSettingsComponent> target)
+    public void SyncAccessLevelExemptions(Entity<TurretTargetSettingsComponent> target, ICollection<ProtoId<AccessLevelPrototype>> exemptions)
     {
         target.Comp.ExemptAccessLevels.Clear();
-        AddAccessLevelExemptions(target, source.Comp.ExemptAccessLevels);
+        SetAccessLevelExemptions(target, exemptions, true);
+    }
+
+    public void SyncAccessLevelExemptions(Entity<TurretTargetSettingsComponent> target, Entity<TurretTargetSettingsComponent> source)
+    {
+        SyncAccessLevelExemptions(target, source.Comp.ExemptAccessLevels);
     }
 
     public bool HasAccessLevelExemption(Entity<TurretTargetSettingsComponent> ent, ProtoId<AccessLevelPrototype> exemption)
@@ -55,7 +51,13 @@ public sealed partial class TurretTargetSettingsSystem : EntitySystem
         if (ent.Comp.ExemptAccessLevels.Count == 0)
             return false;
 
-        return ent.Comp.ExemptAccessLevels.Any(exemptions.Contains);
+        foreach (var exemption in exemptions)
+        {
+            if (HasAccessLevelExemption(ent, exemption))
+                return true;
+        }
+
+        return false;
     }
 
     public bool EntityIsTargetForTurret(Entity<TurretTargetSettingsComponent> ent, EntityUid target)

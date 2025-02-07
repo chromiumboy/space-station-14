@@ -1,77 +1,108 @@
+using Content.Server.DeviceNetwork;
 using Content.Server.DeviceNetwork.Components;
-using Content.Server.NPC.HTN;
-using Content.Server.NPC.HTN.PrimitiveTasks.Operators.Combat.Ranged;
-using Content.Server.Turrets;
+using Content.Server.DeviceNetwork.Systems;
+using Content.Shared.Access;
+using Content.Shared.DeviceNetwork;
 using Content.Shared.DeviceNetwork.Systems;
+using Content.Shared.TurretController;
 using Content.Shared.Turrets;
-using Content.Shared.Weapons.Ranged.Components;
-using Content.Shared.Weapons.Ranged.Systems;
-using Microsoft.Extensions.DependencyModel;
 using Robust.Server.GameObjects;
+using Robust.Shared.Prototypes;
 using Robust.Shared.Timing;
 using System.Linq;
 
-namespace Content.Shared.TurretController;
+namespace Content.Server.TurretController;
 
 public sealed partial class DeployableTurretControllerSystem : SharedDeployableTurretControllerSystem
 {
     [Dependency] private readonly UserInterfaceSystem _userInterfaceSystem = default!;
-    [Dependency] private readonly BatteryWeaponFireModesSystem _fireModes = default!;
-    [Dependency] private readonly DeployableTurretSystem _deployableTurret = default!;
+    [Dependency] private readonly DeviceNetworkSystem _deviceNetwork = default!;
     [Dependency] private readonly IGameTiming _timing = default!;
+
+    public const string CmdSetArmamemtState = "set_armament_state";
+    public const string CmdSetAccessExemptions = "set_access_exemption";
 
     public override void Initialize()
     {
         base.Initialize();
 
-        // Device networking events
         SubscribeLocalEvent<DeployableTurretControllerComponent, DeviceListUpdateEvent>(OnDeviceListUpdate);
+        SubscribeLocalEvent<DeployableTurretControllerComponent, DeviceNetworkPacketEvent>(OnPacketReceived);
     }
 
     private void OnDeviceListUpdate(Entity<DeployableTurretControllerComponent> ent, ref DeviceListUpdateEvent args)
     {
-        // Find all turrets linked to the controller
-        var turrets = new Dictionary<string, Entity<DeployableTurretComponent>>();
+        if (!TryComp<DeviceNetworkComponent>(ent, out var deviceNetwork))
+            return;
 
-        foreach (var turret in args.Devices)
+        // List of new added turrets
+        var turretsToAdd = args.Devices.Except(args.OldDevices);
+
+        // Request data from newly added devices
+        var payload = new NetworkPayload
         {
-            if (!TryComp<DeployableTurretComponent>(turret, out var deployableTurret))
+            [DeviceNetworkConstants.Command] = DeviceNetworkConstants.CmdUpdatedState,
+        };
+
+        foreach (var turretUid in turretsToAdd)
+        {
+            if (!HasComp<DeployableTurretComponent>(turretUid))
                 continue;
 
-            if (!TryComp<DeviceNetworkComponent>(turret, out var deviceNetwork))
+            if (!TryComp<DeviceNetworkComponent>(turretUid, out var turretDeviceNetwork))
                 continue;
 
-            turrets.Add(deviceNetwork.Address, (turret, deployableTurret));
+            _deviceNetwork.QueuePacket(ent, turretDeviceNetwork.Address, payload, device: deviceNetwork);
         }
+    }
 
-        // Add new turrets to the controller
-        var turretsToAdd = turrets.Keys.Except(ent.Comp.LinkedTurrets.Keys);
+    private void OnPacketReceived(Entity<DeployableTurretControllerComponent> ent, ref DeviceNetworkPacketEvent args)
+    {
+        if (!args.Data.TryGetValue(DeviceNetworkConstants.Command, out string? command))
+            return;
 
-        foreach (var address in turretsToAdd)
-            ent.Comp.LinkedTurrets.Add(address, turrets[address]);
-
-        // Remove stale turrets from the controller
-        var turretsToRemove = ent.Comp.LinkedTurrets.Keys.Except(turrets.Keys);
-
-        foreach (var address in turretsToRemove)
-            ent.Comp.LinkedTurrets.Remove(address);
-
-        // Update any open UIs
-        UpdateUIState(ent);
+        if (command == DeviceNetworkConstants.CmdUpdatedState &&
+            args.Data.TryGetValue(command, out DeployableTurretState? updatedState))
+        {
+            ent.Comp.LinkedTurrets[args.SenderAddress] = updatedState.Value;
+            UpdateUIState(ent);
+        }
     }
 
     protected override void ChangeArmamentSetting(Entity<DeployableTurretControllerComponent> ent, int armamentState, EntityUid? user = null)
     {
         base.ChangeArmamentSetting(ent, armamentState, user);
 
-        // Update linked turret weapon and deployment status
-        foreach (var (address, turret) in ent.Comp.LinkedTurrets)
-        {
-            if (TryComp<BatteryWeaponFireModesComponent>(turret, out var batteryWeaponFireModes))
-                _fireModes.TrySetFireMode(turret, batteryWeaponFireModes, ent.Comp.ArmamentState, user);
+        if (!TryComp<DeviceNetworkComponent>(ent, out var device))
+            return;
 
-            _deployableTurret.TrySetState((turret, (DeployableTurretComponent)turret.Comp), ent.Comp.ArmamentState >= 0, user);
-        }
+        // Update linked turrets' armament statuses
+        var payload = new NetworkPayload
+        {
+            [DeviceNetworkConstants.Command] = CmdSetArmamemtState,
+            [CmdSetArmamemtState] = armamentState,
+        };
+
+        _deviceNetwork.QueuePacket(ent, null, payload, device: device);
+    }
+
+    protected override void ChangeExemptAccessLevels
+        (Entity<DeployableTurretControllerComponent> ent, HashSet<ProtoId<AccessLevelPrototype>> exemptions, bool enabled, EntityUid? user = null)
+    {
+        base.ChangeExemptAccessLevels(ent, exemptions, enabled, user);
+
+        if (!TryComp<DeviceNetworkComponent>(ent, out var device) ||
+            !TryComp<TurretTargetSettingsComponent>(ent, out var turretTargetingSettings))
+            return;
+
+        // Update linked turrets' target selection exemptions
+        var payload = new NetworkPayload
+        {
+            [DeviceNetworkConstants.Command] = CmdSetAccessExemptions,
+            [CmdSetAccessExemptions] = turretTargetingSettings.ExemptAccessLevels,
+        };
+
+        _deviceNetwork.QueuePacket(ent, null, payload, device: device);
     }
 
     private void UpdateUIState(Entity<DeployableTurretControllerComponent> ent)
@@ -85,33 +116,27 @@ public sealed partial class DeployableTurretControllerSystem : SharedDeployableT
         _userInterfaceSystem.SetUiState(ent.Owner, DeployableTurretControllerUiKey.Key, state);
     }
 
-    private string GetTurretStateDescription(EntityUid uid)
+    private string GetTurretStateDescription(DeployableTurretState state)
     {
-        if (!TryComp<DeployableTurretComponent>(uid, out var deployableTurret) ||
-            !TryComp<HTNComponent>(uid, out var htn))
-            return "turret-controls-window-turret-error";
-
-        if (deployableTurret.Broken)
-            return "turret-controls-window-turret-broken";
-
-        if (htn.Plan?.CurrentTask.Operator is GunOperator)
-            return "turret-controls-window-turret-firing";
-
-        if (deployableTurret.Enabled)
+        switch (state)
         {
-            if (deployableTurret.AnimationCompletionTime > _timing.CurTime)
+            case DeployableTurretState.Broken:
+                return "turret-controls-window-turret-broken";
+            case DeployableTurretState.Unpowered:
+                return "turret-controls-window-turret-broken";
+            case DeployableTurretState.Firing:
+                return "turret-controls-window-turret-firing";
+            case DeployableTurretState.Deploying:
                 return "turret-controls-window-turret-activating";
-
-            return "turret-controls-window-turret-enabled";
-        }
-
-        else
-        {
-            if (deployableTurret.AnimationCompletionTime > _timing.CurTime)
+            case DeployableTurretState.Deployed:
+                return "turret-controls-window-turret-enabled";
+            case DeployableTurretState.Retracting:
                 return "turret-controls-window-turret-deactivating";
-
-            return "turret-controls-window-turret-disabled";
+            case DeployableTurretState.Retracted:
+                return "turret-controls-window-turret-disabled";
         }
+
+        return "turret-controls-window-turret-error";
     }
 
     private TimeSpan _nextUpdate = TimeSpan.Zero;

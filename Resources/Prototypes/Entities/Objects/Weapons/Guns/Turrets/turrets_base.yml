@@ -109,9 +109,9 @@
         path: /Audio/Weapons/Guns/Gunshots/taser2.ogg
     - type: ProjectileBatteryAmmoProvider
       proto: BulletEnergyTurretLaser
-      fireCost: 150
+      fireCost: 100
     - type: Battery
-      maxCharge: 3000
+      maxCharge: 2000
       startingCharge: 0
     - type: BatterySelfRecharger
       autoRecharge: true

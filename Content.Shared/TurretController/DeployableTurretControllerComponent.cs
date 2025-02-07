@@ -15,10 +15,10 @@ namespace Content.Shared.TurretController;
 public sealed partial class DeployableTurretControllerComponent : Component
 {
     /// <summary>
-    /// A list of turrets being directed by this entity, indexed by their device address.
+    /// The states of the turrets linked to this entity, indexed by their device address.
     /// </summary>
     [ViewVariables]
-    public Dictionary<string, Entity<DeployableTurretComponent>> LinkedTurrets = new();
+    public Dictionary<string, DeployableTurretState> LinkedTurrets = new();
 
     /// <summary>
     /// The current armament state of the linked turrets.

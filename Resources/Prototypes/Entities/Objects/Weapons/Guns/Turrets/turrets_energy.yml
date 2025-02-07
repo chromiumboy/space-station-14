@@ -133,9 +133,9 @@
   - type: DeviceNetwork
     deviceNetId: Wired
     receiveFrequencyId: TurretControl
-    transmitFrequencyId: TurretControl
-    prefix: device-address-prefix-turret
+    transmitFrequencyId: Turret
     sendBroadcastAttemptEvent: true
+    prefix: device-address-prefix-turret
     examinableAddress: true
   - type: DeviceNetworkRequiresPower
   - type: WiredNetworkConnection

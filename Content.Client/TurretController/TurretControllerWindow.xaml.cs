@@ -115,8 +115,7 @@ public sealed partial class TurretControllerWindow : BaseWindow
         if (_entManager.TryGetComponent<TurretTargetSettingsComponent>(_owner, out var turretTargetSettings))
             RefreshAccessControls(turretTargetSettings.ExemptAccessLevels);
 
-        if (state.TurretStates != null)
-            RefreshLinkedTurrets(state.TurretStates);
+        RefreshLinkedTurrets(state.TurretStates);
     }
 
     public void RefreshLinkedTurrets(List<(string, string)> turretStates)
@@ -164,7 +163,7 @@ public sealed partial class TurretControllerWindow : BaseWindow
             return;
 
         var groupedAccessLevels = new Dictionary<AccessGroupPrototype, HashSet<AccessLevelPrototype>>();
- 
+
         AccessGroupList.DisposeAllChildren();
         AccessLevelGrid.DisposeAllChildren();
 

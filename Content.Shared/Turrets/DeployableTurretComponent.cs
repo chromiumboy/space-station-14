@@ -14,22 +14,28 @@ namespace Content.Shared.Turrets;
 public sealed partial class DeployableTurretComponent : Component
 {
     /// <summary>
-    /// Determines whether the turret is currently active
+    /// Whether the turret is toggled 'on' or 'off'
     /// </summary>
     [DataField, AutoNetworkedField]
     public bool Enabled = false;
 
     /// <summary>
-    /// Indicates whether the turret is currently broken (required until repairs are predicted)
+    /// Whether the turret is currently broken
     /// </summary>
     [DataField, AutoNetworkedField]
     public bool Broken = false;
 
     /// <summary>
-    /// Indicates whether the turret is currently powered (required until power is predicted)
+    /// Whether the turret is currently powered (required until power is predicted)
     /// </summary>
     [DataField, AutoNetworkedField]
     public bool Powered = false;
+
+    /// <summary>
+    /// The summarized current state of the turret. Used to inform the device network of the turrets status. 
+    /// </summary>
+    [DataField, AutoNetworkedField]
+    public DeployableTurretState CurrentState = DeployableTurretState.Invalid;
 
     /// <summary>
     /// The physics fixture that will have its collisions disabled when the turret is retracted.
@@ -158,6 +164,19 @@ public enum DeployableTurretVisualLayers : byte
 {
     Turret,
     Weapon,
+}
+
+[Serializable, NetSerializable]
+public enum DeployableTurretState : byte
+{
+    Invalid,
+    Retracted,
+    Deploying,
+    Deployed,
+    Retracting,
+    Firing,
+    Unpowered,
+    Broken,
 }
 
 [Serializable, NetSerializable]
