@@ -28,6 +28,10 @@ public sealed partial class TurretControllerWindow : BaseWindow
     private readonly ButtonGroup _armamentButtons = new();
     private readonly ButtonGroup _accessGroupsButtons = new();
 
+    private List<CheckBox> _checkBoxes = new();
+    private HashSet<AccessLevelPrototype> _accessLevelsForTab = new();
+    private List<AccessLevelEntry> _accessLevelEntries = new();
+
     // Events
     private event Action<int>? OnAccessGroupChangedEvent;
 
@@ -162,10 +166,8 @@ public sealed partial class TurretControllerWindow : BaseWindow
         if (!_entManager.TryGetComponent<DeployableTurretControllerComponent>(_owner, out var turretControls))
             return;
 
+        // Create a list of known access groups with which to populate the UI
         var groupedAccessLevels = new Dictionary<AccessGroupPrototype, HashSet<AccessLevelPrototype>>();
-
-        AccessGroupList.DisposeAllChildren();
-        AccessLevelGrid.DisposeAllChildren();
 
         foreach (var accessGroup in turretControls.AccessGroups)
         {
@@ -175,19 +177,22 @@ public sealed partial class TurretControllerWindow : BaseWindow
             groupedAccessLevels.Add(accessGroupProto, new());
         }
 
+        // Ensure that the 'general' access group is added to handle 
+        // misc. access levels that aren't associated with any group
         if (_protoManager.TryIndex<AccessGroupPrototype>("General", out var generalAccessProto) &&
-            groupedAccessLevels.Keys.FirstOrDefault(x => x.ID != "General") == null)
+                        groupedAccessLevels.Keys.FirstOrDefault(x => x.ID != "General") == null)
         {
             groupedAccessLevels.Add(generalAccessProto, new());
         }
 
-        // Try to combine the access levels under broader access groups
+        // Assign known access levels with their associated groups
         foreach (var accessLevel in turretControls.AccessLevels)
         {
             if (!_protoManager.TryIndex(accessLevel, out var accessLevelProto))
                 continue;
 
-            IEnumerable<AccessGroupPrototype> associatedGroups = groupedAccessLevels.Keys.Where(x => x.Tags.Contains(accessLevelProto.ID) == true);
+            IEnumerable<AccessGroupPrototype> associatedGroups =
+                            groupedAccessLevels.Keys.Where(x => x.Tags.Contains(accessLevelProto.ID) == true);
 
             if (!associatedGroups.Any() && generalAccessProto != null)
                 groupedAccessLevels[generalAccessProto].Add(accessLevelProto);
@@ -199,92 +204,166 @@ public sealed partial class TurretControllerWindow : BaseWindow
             }
         }
 
-        // Remove access groups with no entries
+        // Remove access groups that have no assigned access levels
         foreach (var (group, accessLevels) in groupedAccessLevels)
         {
             if (accessLevels.Count == 0)
                 groupedAccessLevels.Remove(group);
         }
 
+        // Did something go wrong...?
+        if (groupedAccessLevels.Count == 0)
+        {
+            AccessGroupList.DisposeAllChildren();
+            AccessLevelGrid.DisposeAllChildren();
+
+            return;
+        }
+
+        // Adjust the current tab index so it remains in range
         if (_tabIndex >= groupedAccessLevels.Count)
             _tabIndex = groupedAccessLevels.Count - 1;
 
-        // Generate buttons for the access groups
+        // Reorder the access groups alphabetically
         var orderedAccessGroups = groupedAccessLevels.Keys.OrderBy(x => x.GetAccessGroupName()).ToList();
 
-        for (int i = 0; i < orderedAccessGroups.Count; i++)
-        {
-            var accessGroup = orderedAccessGroups[i];
+        // Remove excess group access buttons from the UI
+        while (AccessGroupList.ChildCount > orderedAccessGroups.Count)
+            AccessGroupList.RemoveChild(orderedAccessGroups.Count - 1);
 
+        // Add missing group access buttons to the UI
+        while (AccessGroupList.ChildCount < orderedAccessGroups.Count)
+        {
             var monotoneButton = new MonotoneButton
             {
-                Text = accessGroup.Name != null ? Loc.GetString(accessGroup.Name) : "???",
                 ToggleMode = true,
-                Pressed = _tabIndex == orderedAccessGroups.IndexOf(accessGroup),
             };
-
-            monotoneButton.Label.AddStyleClass("ConsoleText");
-            monotoneButton.Group = _accessGroupsButtons;
 
             AccessGroupList.AddChild(monotoneButton);
 
-            monotoneButton.OnPressed += _ =>
-            {
-                OnAccessGroupChangedEvent?.Invoke(monotoneButton.GetPositionInParent());
-            };
+            // Add button styling
+            monotoneButton.Label.AddStyleClass("ConsoleText");
+            monotoneButton.Group = _accessGroupsButtons;
 
-            // Style the button depending where it is on the list
+            var childIndex = AccessGroupList.ChildCount - 1;
+
             if (orderedAccessGroups.Count > 1)
             {
-                if (i == 0)
+                if (childIndex == 0)
                     monotoneButton.Shape = MonotoneButtonShape.OpenLeft;
 
-                else if (orderedAccessGroups.Count > 1 && i == (orderedAccessGroups.Count - 1))
+                else if (orderedAccessGroups.Count > 1 && childIndex == (orderedAccessGroups.Count - 1))
                     monotoneButton.Shape = MonotoneButtonShape.OpenRight;
 
                 else
                     monotoneButton.Shape = MonotoneButtonShape.OpenBoth;
             }
+
+            // Add button events
+            monotoneButton.OnPressed += _ =>
+            {
+                OnAccessGroupChangedEvent?.Invoke(monotoneButton.GetPositionInParent());
+            };
         }
 
-        // Get access levels for the current tab
-        var accessLevelsForTab = groupedAccessLevels[orderedAccessGroups[_tabIndex]];
-        accessLevelsForTab = accessLevelsForTab.OrderBy(x => x.GetAccessLevelName()).ToHashSet();
-
-        // Generate an 'all' checkbox
-        var checkBoxes = new List<CheckBox>();
-
-        var allCheckBox = new MonotoneCheckBox
+        // Update the group access buttons
+        for (int i = 0; i < orderedAccessGroups.Count; i++)
         {
-            Text = Loc.GetString("turret-controls-window-all-checkbox"),
-            ToggleMode = true,
-        };
+            if (AccessGroupList.GetChild(i) is not Button { } accessGroupButton)
+                continue;
 
-        allCheckBox.Label.AddStyleClass("ConsoleText");
+            var accessGroup = orderedAccessGroups[i];
 
-        AccessLevelGrid.AddChild(allCheckBox);
+            accessGroupButton.Text = accessGroup.Name != null ? Loc.GetString(accessGroup.Name) : "???";
+            accessGroupButton.Pressed = _tabIndex == orderedAccessGroups.IndexOf(accessGroup);
+        }
 
-        allCheckBox.OnPressed += args =>
+        // Get the access levels associated with the current tab
+        _accessLevelsForTab = groupedAccessLevels[orderedAccessGroups[_tabIndex]];
+        _accessLevelsForTab = _accessLevelsForTab.OrderBy(x => x.GetAccessLevelName()).ToHashSet();
+
+        // Remove excess access level buttons from the UI
+        // Note: if _accessLevelsForTab is length 'n', AccessLevelGrid should have 'n + 1' children at the end
+        while (AccessLevelGrid.ChildCount > (_accessLevelsForTab.Count + 1))
         {
-            SetCheckBoxPressedState(checkBoxes, allCheckBox.Pressed);
+            var index = AccessLevelGrid.ChildCount - 1;
 
-            var set = new HashSet<ProtoId<AccessLevelPrototype>>();
+            if (AccessLevelGrid.GetChild(AccessLevelGrid.ChildCount - 1) is AccessLevelEntry { } accessLevelEntry)
+                _accessLevelEntries.Remove(accessLevelEntry);
 
-            foreach (var accessLevel in accessLevelsForTab)
-                set.Add(accessLevel);
+            AccessLevelGrid.RemoveChild(index);
+        }
 
-            OnAccessLevelsChangedEvent?.Invoke(set, allCheckBox.Pressed);
-        };
-
-        // Generate the remaining checkboxes
-        foreach (var accessLevel in accessLevelsForTab)
+        // Add an 'all' checkbox as the first child of the list if it hasn't been initalized yet
+        // Toggling this checkbox on will mark all other boxes below it on/off
+        if (AccessLevelGrid.ChildCount == 0)
         {
-            var container = new BoxContainer()
+            var checkBox = new MonotoneCheckBox
             {
-                HorizontalExpand = true,
+                Text = Loc.GetString("turret-controls-window-all-checkbox"),
+                Margin = new Thickness(0, 0, 0, 3),
+                ToggleMode = true,
+                ReservesSpace = false,
             };
 
-            var isEndOfList = accessLevel == accessLevelsForTab.Last();
+            AccessLevelGrid.AddChild(checkBox);
+
+            // Add checkbox styling
+            checkBox.Label.AddStyleClass("ConsoleText");
+
+            // Add checkbox events
+            checkBox.OnPressed += args =>
+            {
+                SetCheckBoxPressedState(_checkBoxes, checkBox.Pressed);
+
+                var accessLevels = new HashSet<ProtoId<AccessLevelPrototype>>();
+
+                foreach (var accessLevel in _accessLevelsForTab)
+                    accessLevels.Add(accessLevel);
+
+                OnAccessLevelsChangedEvent?.Invoke(accessLevels, checkBox.Pressed);
+            };
+        }
+
+        // Hide the 'all' checkbox if the tab has only one access level
+        var allCheckBoxVisible = _accessLevelsForTab.Count > 1;
+
+        // Did something go wrong...?
+        if (AccessLevelGrid.GetChild(0) is not CheckBox { } allCheckBox)
+            return;
+
+        allCheckBox.Visible = allCheckBoxVisible;
+
+        // Add any remaining missing access level buttons to the UI
+        while (AccessLevelGrid.ChildCount < (_accessLevelsForTab.Count + 1))
+        {
+            var accessLevelEntry = new AccessLevelEntry();
+            AccessLevelGrid.AddChild(accessLevelEntry);
+
+            _accessLevelEntries.Add(accessLevelEntry);
+
+            // Add checkbox events
+            accessLevelEntry.CheckBox.OnPressed += args =>
+            {
+                // If the checkbox and its siblings are checked, check the 'all' checkbox too
+                allCheckBox.Pressed = AreAllCheckBoxesPressed(_accessLevelEntries.Select(x => (CheckBox)x.CheckBox));
+
+                OnAccessLevelsChangedEvent?.Invoke
+                    (new HashSet<ProtoId<AccessLevelPrototype>>() { accessLevelEntry.AccessLevel }, accessLevelEntry.CheckBox.Pressed);
+            };
+        }
+
+        // Update the access levels buttons' appearance
+        for (int i = 0; i < _accessLevelEntries.Count; i++)
+        {
+            var accessLevel = _accessLevelsForTab.ElementAt(i);
+            var accessLevelEntry = _accessLevelEntries[i];
+
+            accessLevelEntry.AccessLevel = accessLevel;
+            accessLevelEntry.CheckBox.Text = accessLevel.GetAccessLevelName();
+            accessLevelEntry.CheckBox.Pressed = exemptAccessLevels.Contains(accessLevel);
+
+            var isEndOfList = i == (_accessLevelEntries.Count - 1);
 
             var lines = new List<(Vector2, Vector2)>()
             {
@@ -292,44 +371,16 @@ public sealed partial class TurretControllerWindow : BaseWindow
                 (new Vector2(0.5f, 0.5f), new Vector2(1f, 0.5f)),
             };
 
-            var link = new LineRenderer(lines)
-            {
-                SetWidth = 22,
-                VerticalExpand = true,
-                Margin = new Thickness(0, -1),
-            };
-
-            container.AddChild(link);
-
-            var checkBox = new MonotoneCheckBox
-            {
-                Text = accessLevel.GetAccessLevelName(),
-                ToggleMode = true,
-                Margin = new Thickness(0f, 2f, 0f, 2f),
-                Pressed = exemptAccessLevels.Contains(accessLevel),
-            };
-
-            checkBox.Label.AddStyleClass("ConsoleText");
-
-            checkBoxes.Add(checkBox);
-            container.AddChild(checkBox);
-
-            checkBox.OnPressed += args =>
-            {
-                allCheckBox.Pressed = AreAllCheckBoxesPressed(checkBoxes);
-
-                OnAccessLevelsChangedEvent?.Invoke
-                    (new HashSet<ProtoId<AccessLevelPrototype>>() { accessLevel }, checkBox.Pressed);
-            };
-
-            AccessLevelGrid.AddChild(container);
+            accessLevelEntry.UpdateCheckBoxLink(lines);
+            accessLevelEntry.CheckBoxLink.Visible = allCheckBoxVisible;
         }
 
         // Press the 'all' checkbox if all others are pressed
-        allCheckBox.Pressed = AreAllCheckBoxesPressed(checkBoxes);
+        allCheckBox.Pressed = AreAllCheckBoxesPressed(_accessLevelEntries.Select(x => x.CheckBox));
     }
 
-    private bool AreAllCheckBoxesPressed(List<CheckBox> checkBoxes)
+
+    private bool AreAllCheckBoxesPressed(IEnumerable<CheckBox> checkBoxes)
     {
         foreach (var checkBox in checkBoxes)
         {
@@ -340,7 +391,7 @@ public sealed partial class TurretControllerWindow : BaseWindow
         return true;
     }
 
-    private void SetCheckBoxPressedState(List<CheckBox> checkBoxes, bool pressed)
+    private void SetCheckBoxPressedState(IEnumerable<CheckBox> checkBoxes, bool pressed)
     {
         foreach (var checkBox in checkBoxes)
             checkBox.Pressed = pressed;
@@ -360,5 +411,48 @@ public sealed partial class TurretControllerWindow : BaseWindow
 
         if (_entManager.TryGetComponent<TurretTargetSettingsComponent>(_owner, out var turretTargetSettings))
             RefreshAccessControls(turretTargetSettings.ExemptAccessLevels);
+    }
+
+    private sealed class AccessLevelEntry : BoxContainer
+    {
+        public ProtoId<AccessLevelPrototype> AccessLevel = default!;
+        public MonotoneCheckBox CheckBox;
+        public LineRenderer CheckBoxLink;
+
+        public AccessLevelEntry()
+        {
+            HorizontalExpand = true;
+
+            var lines = new List<(Vector2, Vector2)>()
+            {
+                (new Vector2(0,0), new Vector2(0,0)),
+                (new Vector2(0,0), new Vector2(0,0))
+            };
+
+            CheckBoxLink = new LineRenderer(lines)
+            {
+                SetWidth = 22,
+                VerticalExpand = true,
+                Margin = new Thickness(0, -1),
+                ReservesSpace = false,
+            };
+
+            AddChild(CheckBoxLink);
+
+            CheckBox = new MonotoneCheckBox
+            {
+                ToggleMode = true,
+                Margin = new Thickness(0f, 0f, 0f, 3f),
+            };
+
+            AddChild(CheckBox);
+
+            CheckBox.Label.AddStyleClass("ConsoleText");
+        }
+
+        public void UpdateCheckBoxLink(List<(Vector2, Vector2)> lines)
+        {
+            CheckBoxLink.Lines = lines;
+        }
     }
 }
