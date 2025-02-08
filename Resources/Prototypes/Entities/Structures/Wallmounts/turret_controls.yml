@@ -43,9 +43,6 @@
   - type: WallMount
   - type: Clickable
   - type: InteractionOutline
-  - type: ContainerFill
-    containers:
-      board: [ ]
   - type: ContainerContainer
     containers:
       board: !type:Container
@@ -75,6 +72,9 @@
     - state: safe
       map: ["enum.PowerDeviceVisualLayers.Powered"]
       shader: unshaded
+    - state: wires
+      map: ["enum.WiresVisualLayers.MaintenancePanel"]
+      visible: false
   - type: GenericVisualizer
     visuals:
       enum.WiresVisualLayers.MaintenancePanel:
@@ -177,6 +177,7 @@
         
   # Wires
   - type: WiresPanel
+  - type: WiresVisuals
   - type: Wires
     boardName: wires-board-name-turret-controls
     layoutId: TurretControls
@@ -193,7 +194,11 @@
     usesApcPower: true
   - type: ContainerFill
     containers:
-      board: [ WeaponEnergyTurretStationControlPanelElectronics ]
+      board: 
+      - WeaponEnergyTurretStationControlPanelElectronics
+  - type: Construction
+    graph: WeaponEnergyTurretControlPanel
+    node: finish
 
 - type: entity
   parent: WeaponEnergyTurretStationControlPanel
@@ -205,7 +210,8 @@
     access: [["StationAi"]]
   - type: ContainerFill
     containers:
-      board: [ WeaponEnergyTurretAIControlPanelElectronics ]
+      board: 
+      - WeaponEnergyTurretAIControlPanelElectronics
   - type: TurretTargetSettings
     exemptAccessLevels:
     - BasicSilicon
