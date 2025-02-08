@@ -20,6 +20,7 @@
 - type: entity
   parent: MuzzleFlashEffect
   id: MuzzleFlashEffectOmnilaser
+  categories: [ HideSpawnMenu ]
   components:
   - type: Sprite
     drawdepth: BelowMobs
@@ -33,6 +34,7 @@
 - type: entity
   parent: MuzzleFlashEffect
   id: MuzzleFlashEffectHeavyLaser
+  categories: [ HideSpawnMenu ]
   components:
   - type: Sprite
     drawdepth: BelowMobs
