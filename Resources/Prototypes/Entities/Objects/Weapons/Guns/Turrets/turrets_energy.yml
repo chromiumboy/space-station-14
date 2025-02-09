@@ -2,7 +2,7 @@
   parent: [BaseWeaponEnergyTurret, ConstructibleMachine]
   id: WeaponEnergyTurretStation
   name: sentry turret
-  description: A high-tech automated weapons system designed to keep unauthorized personnel out of sensitive areas.
+  description: A high-tech autonomous weapons system designed to keep unauthorized personnel out of sensitive areas.
   components:
   
   # Physics
@@ -84,13 +84,13 @@
   # Weapon systems
   - type: ProjectileBatteryAmmoProvider
     proto: BulletEnergyTurretDisabler
-    fireCost: 150
+    fireCost: 100
   - type: BatteryWeaponFireModes
     fireModes:
     - proto: BulletEnergyTurretDisabler
-      fireCost: 150
+      fireCost: 100
     - proto: BulletEnergyTurretLaser
-      fireCost: 150
+      fireCost: 100
   - type: TurretTargetSettings
     exemptAccessLevels:
     - Captain
@@ -161,7 +161,7 @@
   parent: WeaponEnergyTurretStation
   id: WeaponEnergyTurretAI
   name: AI sentry turret
-  description: A high-tech automated weapons system under the direct control of a local artifical intelligence.
+  description: A high-tech autonomous weapons system under the direct control of a local artifical intelligence.
   components:
   - type: StationAiTurret
   - type: AccessReader

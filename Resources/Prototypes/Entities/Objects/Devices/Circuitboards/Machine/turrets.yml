@@ -4,6 +4,9 @@
   name: sentry turret machine board
   description: A machine printed circuit board for a sentry turret.
   components:
+  - type: Sprite
+    sprite: Objects/Misc/module.rsi
+    state: security
   - type: MachineBoard
     prototype: WeaponEnergyTurretStation
     tagRequirements:
@@ -24,5 +27,8 @@
   name: AI sentry turret machine board
   description: A machine printed circuit board for an AI sentry turret.
   components:
+  - type: Sprite
+    sprite: Objects/Misc/module.rsi
+    state: command
   - type: MachineBoard
     prototype: WeaponEnergyTurretAI

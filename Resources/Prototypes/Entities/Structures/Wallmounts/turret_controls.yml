@@ -203,7 +203,7 @@
 - type: entity
   parent: WeaponEnergyTurretStationControlPanel
   id: WeaponEnergyTurretAIControlPanel
-  name: AI sentry control panel
+  name: AI sentry turret control panel
   description: A wall-mounted interface that allows a local artifical intelligence to adjust the operational parameters of linked sentry turrets.
   components:
   - type: AccessReader
