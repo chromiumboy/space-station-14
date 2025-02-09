@@ -80,6 +80,7 @@
 - type: entity
   parent: BaseWeaponTurret
   id: BaseWeaponBallisticTurret
+  description: A ballistic machine gun auto-turret.
   name: ballistic turret
   abstract: true
   components:
@@ -100,8 +101,19 @@
   parent: BaseWeaponTurret
   id: BaseWeaponEnergyTurret
   name: laser turret
+  description: An auto-turret armed with a heavy laser. Its weapon will recharge while connected to an active power grid.
   abstract: true
   components:
+    - type: Sprite
+      sprite: Objects/Weapons/Guns/Turrets/sentry_turret.rsi
+      drawdepth: FloorObjects
+      granularLayersRendering: true
+      layers:
+      - state: support
+        renderingStrategy: NoRotation
+      - state: base
+      - state: lethal
+        shader: "unshaded"
     - type: Gun
       projectileSpeed: 15
       fireRate: 1.5

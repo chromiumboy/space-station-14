@@ -28,7 +28,7 @@
         
   # Sprites and appearance
   - type: Sprite
-    sprite: Objects/Weapons/Guns/Turrets/ai_turret.rsi
+    sprite: Objects/Weapons/Guns/Turrets/sentry_turret.rsi
     drawdepth: FloorObjects
     granularLayersRendering: true
     layers:
