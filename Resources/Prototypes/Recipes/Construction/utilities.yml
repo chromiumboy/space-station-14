@@ -873,13 +873,13 @@
 
 # DEFENSES
 - type: construction
-  name: automated defense control system
+  name: sentry turret control panel
   id: WeaponEnergyTurretControlPanel
   graph: WeaponEnergyTurretControlPanel
   startNode: start
   targetNode: finish
   category: construction-category-utilities
-  description: "An interface for remotely configuring the operational parameters of linked automated defense turrets."
+  description: "A wall-mounted interface for remotely configuring the operational parameters of linked sentry turrets."
   icon:
     sprite: Structures/Wallmounts/turret_controls.rsi
     state: base

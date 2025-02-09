@@ -1,7 +1,7 @@
 - type: entity
   id: WeaponEnergyTurretControlPanelFrame
-  name: automated defense control system assembly
-  description: An incomplete assembly for an automated defense control system.
+  name: sentry turret control panel assembly
+  description: An incomplete wall-mounted assembly for a sentry turret control panel.
   categories: [ HideSpawnMenu ]
   components:
   
@@ -57,8 +57,8 @@
 - type: entity
   parent: WeaponEnergyTurretControlPanelFrame
   id: WeaponEnergyTurretStationControlPanel
-  name: automated defense control system
-  description: An interface for remotely configuring the operational parameters of linked automated defense turrets.
+  name: sentry turret control panel
+  description: A wall-mounted interface for remotely configuring the operational parameters of linked sentry turrets.
   components:
   
   # Sprites and appearance
@@ -203,8 +203,8 @@
 - type: entity
   parent: WeaponEnergyTurretStationControlPanel
   id: WeaponEnergyTurretAIControlPanel
-  name: AI automated defense control system
-  description: An interface that allows a local artifical intelligence to adjust the operational parameters of linked automated defense turrets.
+  name: AI sentry control panel
+  description: A wall-mounted interface that allows a local artifical intelligence to adjust the operational parameters of linked sentry turrets.
   components:
   - type: AccessReader
     access: [["StationAi"]]

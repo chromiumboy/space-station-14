@@ -1,8 +1,8 @@
 - type: entity
   id: WeaponEnergyTurretStationMachineCircuitboard
   parent: BaseMachineCircuitboard
-  name: automated defense turret machine board
-  description: A machine printed circuit board for an automated defense turret.
+  name: sentry turret machine board
+  description: A machine printed circuit board for a sentry turret.
   components:
   - type: MachineBoard
     prototype: WeaponEnergyTurretStation
@@ -21,8 +21,8 @@
 - type: entity
   id: WeaponEnergyTurretAIMachineCircuitboard
   parent: WeaponEnergyTurretStationMachineCircuitboard
-  name: AI automated defense turret machine board
-  description: A machine printed circuit board for an AI automated defense turret.
+  name: AI sentry turret machine board
+  description: A machine printed circuit board for an AI sentry turret.
   components:
   - type: MachineBoard
     prototype: WeaponEnergyTurretAI

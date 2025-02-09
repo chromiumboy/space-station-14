@@ -1,8 +1,8 @@
 - type: entity
   parent: [BaseWeaponEnergyTurret, ConstructibleMachine]
   id: WeaponEnergyTurretStation
-  name: automated defense turret
-  description: A high-tech automated weapons platform designed to keep unauthorized personnel out of sensitive areas.
+  name: sentry turret
+  description: A high-tech automated weapons system designed to keep unauthorized personnel out of sensitive areas.
   components:
   
   # Physics
@@ -160,8 +160,8 @@
 - type: entity
   parent: WeaponEnergyTurretStation
   id: WeaponEnergyTurretAI
-  name: AI automated defense turret
-  description: A high-tech automated weapons platform under the direct control of an artifical intelligence.
+  name: AI sentry turret
+  description: A high-tech automated weapons system under the direct control of a local artifical intelligence.
   components:
   - type: StationAiTurret
   - type: AccessReader

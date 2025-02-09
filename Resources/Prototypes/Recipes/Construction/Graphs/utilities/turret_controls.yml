@@ -15,7 +15,7 @@
     - to: board
       steps:
       - tag: TurretControlElectronics
-        name: automated defense control system electronics
+        name: sentry turret control panel electronics
         icon:
           sprite: Objects/Misc/module.rsi
           state: command
