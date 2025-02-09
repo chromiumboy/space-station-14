@@ -7,12 +7,12 @@ turret-controls-window-targeting-controls-label = Authorized personnel
 # Status reports
 turret-controls-window-no-turrets = <! No linked devices !>
 turret-controls-window-turret-status = » {$device} - Status: {$status}
-turret-controls-window-turret-broken = ***OFFLINE***
-turret-controls-window-turret-disabled = INACTIVE
-turret-controls-window-turret-enabled = SEARCHING...
+turret-controls-window-turret-disabled = ***OFFLINE***
+turret-controls-window-turret-retracted = INACTIVE
+turret-controls-window-turret-retracting = DEACTIVATING
+turret-controls-window-turret-deployed = SEARCHING...
+turret-controls-window-turret-deploying = ACTIVATING
 turret-controls-window-turret-firing = ENGAGING TARGET
-turret-controls-window-turret-activating = ACTIVATING
-turret-controls-window-turret-deactivating = DEACTIVATING
 turret-controls-window-turret-error = ERROR [404]
 
 # Buttons

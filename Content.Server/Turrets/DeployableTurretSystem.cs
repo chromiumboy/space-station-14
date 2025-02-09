@@ -46,14 +46,14 @@ public sealed partial class DeployableTurretSystem : SharedDeployableTurretSyste
 
     private void OnAmmoShot(Entity<DeployableTurretComponent> ent, ref AmmoShotEvent args)
     {
-        if (ent.Comp.Enabled && !HasAmmo(ent))
-            TryToggleState(ent);
+        if (!HasAmmo(ent))
+            SetState(ent, false);
     }
 
     private void OnChargeChanged(Entity<DeployableTurretComponent> ent, ref ChargeChangedEvent args)
     {
-        if (ent.Comp.Enabled && !HasAmmo(ent))
-            TryToggleState(ent);
+        if (!HasAmmo(ent))
+            SetState(ent, false);
     }
 
     private void OnPowerChanged(Entity<DeployableTurretComponent> ent, ref PowerChangedEvent args)
@@ -61,14 +61,16 @@ public sealed partial class DeployableTurretSystem : SharedDeployableTurretSyste
         ent.Comp.Powered = args.Powered;
         Dirty(ent);
 
-        if (!ent.Comp.Powered && !HasAmmo(ent))
-            TrySetState(ent, false);
+        if (!HasAmmo(ent))
+            SetState(ent, false);
     }
 
     private void OnBroken(Entity<DeployableTurretComponent> ent, ref BreakageEventArgs args)
     {
         ent.Comp.Broken = true;
         Dirty(ent);
+
+        SetState(ent, false);
     }
 
     private void OnRepaired(Entity<DeployableTurretComponent> ent, ref RepairedEvent args)
@@ -159,45 +161,23 @@ public sealed partial class DeployableTurretSystem : SharedDeployableTurretSyste
         if (TryComp<HTNComponent>(ent, out var htn))
             _htn.SetHTNEnabled((ent, htn), ent.Comp.Enabled, planCooldown);
 
-        // Update appearance and play audio (isn't shared to prevent visual/audio mispredicts)
-        if (TryComp<AppearanceComponent>(ent, out var appearance))
-        {
-            var state = ent.Comp.Enabled ? DeployableTurretVisualState.Deployed : DeployableTurretVisualState.Retracted;
-            _appearance.SetData(ent, DeployableTurretVisuals.Turret, state, appearance);
-        }
-
+        // Play audio
         _audio.PlayPvs(ent.Comp.Enabled ? ent.Comp.DeploymentSound : ent.Comp.RetractionSound, ent, new AudioParams { Volume = -10f });
     }
 
     private DeployableTurretState GetTurretState(Entity<DeployableTurretComponent> ent)
     {
-        if (!TryComp<HTNComponent>(ent, out var htn))
-            return DeployableTurretState.Invalid;
-
-        if (ent.Comp.Broken)
-            return DeployableTurretState.Broken;
-
-        if (!ent.Comp.Powered)
-            return DeployableTurretState.Unpowered;
+        if (!TryComp<HTNComponent>(ent, out var htn) ||
+            ent.Comp.Broken || !HasAmmo(ent))
+            return DeployableTurretState.Disabled;
 
         if (htn.Plan?.CurrentTask.Operator is GunOperator)
             return DeployableTurretState.Firing;
 
-        if (ent.Comp.Enabled)
-        {
-            if (ent.Comp.AnimationCompletionTime > _timing.CurTime)
-                return DeployableTurretState.Deploying;
+        if (ent.Comp.AnimationCompletionTime > _timing.CurTime)
+            return ent.Comp.Enabled ? DeployableTurretState.Deploying : DeployableTurretState.Retracting;
 
-            return DeployableTurretState.Deployed;
-        }
-
-        else
-        {
-            if (ent.Comp.AnimationCompletionTime > _timing.CurTime)
-                return DeployableTurretState.Retracting;
-
-            return DeployableTurretState.Retracted;
-        }
+        return ent.Comp.Enabled ? DeployableTurretState.Deployed : DeployableTurretState.Retracted;
     }
 
     public override void Update(float frameTime)
@@ -207,16 +187,18 @@ public sealed partial class DeployableTurretSystem : SharedDeployableTurretSyste
         var query = EntityQueryEnumerator<DeployableTurretComponent>();
         while (query.MoveNext(out var uid, out var deployableTurret))
         {
+            // Check if the turret state has changed since the last update,
+            // and if so, inform the device network
             var ent = new Entity<DeployableTurretComponent>(uid, deployableTurret);
-
-            // We need a timer to check if the turrets are animating,
-            // so we might as well check the whole turret state
             var newState = GetTurretState(ent);
 
             if (newState != deployableTurret.CurrentState)
             {
                 deployableTurret.CurrentState = newState;
                 SendStateUpdateToDeviceNetwork(ent);
+
+                if (TryComp<AppearanceComponent>(ent, out var appearance))
+                    _appearance.SetData(ent, DeployableTurretVisuals.Turret, newState, appearance);
             }
         }
     }

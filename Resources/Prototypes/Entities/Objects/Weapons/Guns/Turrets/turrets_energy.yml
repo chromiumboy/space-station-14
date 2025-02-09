@@ -37,12 +37,17 @@
     - state: base
       map: [ "base" ]
     - state: stun
-      map: [ "enum.DeployableTurretVisualLayers.Weapon" ]
+      map: [ "enum.DeployableTurretVisuals.Weapon" ]
       shader: "unshaded"
       visible: false
     - state: cover_closed
-      map: [ "enum.DeployableTurretVisualLayers.Turret" ]
+      map: [ "enum.DeployableTurretVisuals.Turret" ]
       renderingStrategy: NoRotation
+    - state: cover_light_on
+      map: [ "enum.PowerDeviceVisualLayers.Powered" ]
+      shader: "unshaded"
+      renderingStrategy: NoRotation
+      visible: false
     - state: panel
       map: [ "enum.WiresVisualLayers.MaintenancePanel" ]
       renderingStrategy: NoRotation
@@ -52,22 +57,13 @@
   - type: GenericVisualizer
     visuals:
       enum.BatteryWeaponFireModeVisuals.State:
-        enum.DeployableTurretVisualLayers.Weapon:
+        enum.DeployableTurretVisuals.Weapon:
           BulletEnergyTurretDisabler: { state: stun }
           BulletEnergyTurretLaser: { state: lethal }
-      enum.DeployableTurretVisuals.Turret:
-        enum.DeployableTurretVisualLayers.Weapon:
-          Retracted: { visible: false }
-          Deploying: { visible: true }
-          Deployed: { visible: true }
-          Retracting: { visible: false }
       enum.RepairableTurretVisuals.Broken:
         base:
           True: { state: destroyed }
           False: { state: base }
-        enum.DeployableTurretVisualLayers.Weapon:
-          True: { visible: false }
-          False: { visible: true }
       enum.WiresVisuals.MaintenancePanelState:
         enum.WiresVisualLayers.MaintenancePanel:
           True: { visible: false }

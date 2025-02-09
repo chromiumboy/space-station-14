@@ -92,7 +92,7 @@ public abstract partial class SharedDeployableTurretSystem : EntitySystem
 
     public bool TrySetState(Entity<DeployableTurretComponent> ent, bool enabled, EntityUid? user = null)
     {
-        if (ent.Comp.Broken)
+        if (enabled && ent.Comp.Broken)
         {
             if (user != null)
                 _popup.PopupClient(Loc.GetString("deployable-turret-component-is-broken"), ent, user.Value);

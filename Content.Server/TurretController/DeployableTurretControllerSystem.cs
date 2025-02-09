@@ -62,9 +62,9 @@ public sealed partial class DeployableTurretControllerSystem : SharedDeployableT
             return;
 
         if (command == DeviceNetworkConstants.CmdUpdatedState &&
-            args.Data.TryGetValue(command, out DeployableTurretState? updatedState))
+            args.Data.TryGetValue(command, out DeployableTurretState updatedState))
         {
-            ent.Comp.LinkedTurrets[args.SenderAddress] = updatedState.Value;
+            ent.Comp.LinkedTurrets[args.SenderAddress] = updatedState;
             UpdateUIState(ent);
         }
     }
@@ -120,20 +120,18 @@ public sealed partial class DeployableTurretControllerSystem : SharedDeployableT
     {
         switch (state)
         {
-            case DeployableTurretState.Broken:
-                return "turret-controls-window-turret-broken";
-            case DeployableTurretState.Unpowered:
-                return "turret-controls-window-turret-broken";
+            case DeployableTurretState.Disabled:
+                return "turret-controls-window-turret-disabled";
             case DeployableTurretState.Firing:
                 return "turret-controls-window-turret-firing";
             case DeployableTurretState.Deploying:
-                return "turret-controls-window-turret-activating";
+                return "turret-controls-window-turret-deploying";
             case DeployableTurretState.Deployed:
-                return "turret-controls-window-turret-enabled";
+                return "turret-controls-window-turret-deployed";
             case DeployableTurretState.Retracting:
-                return "turret-controls-window-turret-deactivating";
+                return "turret-controls-window-turret-retracting";
             case DeployableTurretState.Retracted:
-                return "turret-controls-window-turret-disabled";
+                return "turret-controls-window-turret-retracted";
         }
 
         return "turret-controls-window-turret-error";

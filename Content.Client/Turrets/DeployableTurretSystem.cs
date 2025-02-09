@@ -1,3 +1,4 @@
+using Content.Client.Power;
 using Content.Shared.Turrets;
 using Robust.Client.Animations;
 using Robust.Client.GameObjects;
@@ -25,7 +26,7 @@ public sealed partial class DeployableTurretSystem : SharedDeployableTurretSyste
             Length = TimeSpan.FromSeconds(ent.Comp.DeploymentLength),
             AnimationTracks = {
                 new AnimationTrackSpriteFlick() {
-                    LayerKey = DeployableTurretVisualLayers.Turret,
+                    LayerKey = DeployableTurretVisuals.Turret,
                     KeyFrames = {new AnimationTrackSpriteFlick.KeyFrame(ent.Comp.DeployingState, 0f)}
                 },
             }
@@ -36,7 +37,7 @@ public sealed partial class DeployableTurretSystem : SharedDeployableTurretSyste
             Length = TimeSpan.FromSeconds(ent.Comp.RetractionLength),
             AnimationTracks = {
                 new AnimationTrackSpriteFlick() {
-                    LayerKey = DeployableTurretVisualLayers.Turret,
+                    LayerKey = DeployableTurretVisuals.Turret,
                     KeyFrames = {new AnimationTrackSpriteFlick.KeyFrame(ent.Comp.RetractingState, 0f)}
                 },
             }
@@ -54,12 +55,11 @@ public sealed partial class DeployableTurretSystem : SharedDeployableTurretSyste
         if (!TryComp<AnimationPlayerComponent>(ent, out var animPlayer))
             return;
 
-        if (!_appearance.TryGetData<DeployableTurretVisualState>(ent, DeployableTurretVisuals.Turret, out var state))
+        if (!_appearance.TryGetData<DeployableTurretState>(ent, DeployableTurretVisuals.Turret, out var state))
             state = ent.Comp.VisualState;
 
         // Convert to terminal state
-        var targetState = (state == DeployableTurretVisualState.Deployed || ent.Comp.VisualState == DeployableTurretVisualState.Deploying) ?
-            DeployableTurretVisualState.Deployed : DeployableTurretVisualState.Retracted;
+        var targetState = state & DeployableTurretState.Deployed;
 
         UpdateVisuals(ent, targetState, sprite, animPlayer);
     }
@@ -72,13 +72,13 @@ public sealed partial class DeployableTurretSystem : SharedDeployableTurretSyste
         if (!TryComp<AnimationPlayerComponent>(ent, out var animPlayer))
             return;
 
-        if (!_appearance.TryGetData<DeployableTurretVisualState>(ent, DeployableTurretVisuals.Turret, out var state, args.Component))
-            state = DeployableTurretVisualState.Retracted;
+        if (!_appearance.TryGetData<DeployableTurretState>(ent, DeployableTurretVisuals.Turret, out var state, args.Component))
+            state = DeployableTurretState.Retracted;
 
         UpdateVisuals(ent, state, args.Sprite, animPlayer);
     }
 
-    private void UpdateVisuals(Entity<DeployableTurretComponent> ent, DeployableTurretVisualState state, SpriteComponent sprite, AnimationPlayerComponent? animPlayer = null)
+    private void UpdateVisuals(Entity<DeployableTurretComponent> ent, DeployableTurretState state, SpriteComponent sprite, AnimationPlayerComponent? animPlayer = null)
     {
         if (!Resolve(ent, ref animPlayer))
             return;
@@ -86,45 +86,38 @@ public sealed partial class DeployableTurretSystem : SharedDeployableTurretSyste
         if (_animation.HasRunningAnimation(ent, animPlayer, DeployableTurretComponent.AnimationKey))
             return;
 
-        if (state != ent.Comp.VisualState)
+        if (state == ent.Comp.VisualState)
+            return;
+
+        var targetState = state & DeployableTurretState.Deployed;
+        var destinationState = ent.Comp.VisualState & DeployableTurretState.Deployed;
+
+        if (targetState != destinationState)
+            targetState = targetState | DeployableTurretState.Retracting;
+
+        ent.Comp.VisualState = state;
+
+        // Toggle layer visibility
+        sprite.LayerSetVisible(DeployableTurretVisuals.Weapon, (targetState & DeployableTurretState.Deployed) > 0);
+        sprite.LayerSetVisible(PowerDeviceVisualLayers.Powered, HasAmmo(ent) && targetState == DeployableTurretState.Retracted);
+
+        // Change the visual state
+        switch (targetState)
         {
-            // Compare whether the current destination state matches the one of the target state
-            var targetState = DeployableTurretVisualState.Deployed;
-
-            if (state == DeployableTurretVisualState.Retracting || state == DeployableTurretVisualState.Retracted)
-                targetState = DeployableTurretVisualState.Retracted;
-
-            var destinationState = DeployableTurretVisualState.Deployed;
-
-            if (ent.Comp.VisualState == DeployableTurretVisualState.Retracting || ent.Comp.VisualState == DeployableTurretVisualState.Retracted)
-                destinationState = DeployableTurretVisualState.Retracted;
-
-            // If these two states do not match, start the transition to the target state
-            if (targetState != destinationState)
-                targetState = (targetState == DeployableTurretVisualState.Deployed) ?
-                    DeployableTurretVisualState.Deploying : DeployableTurretVisualState.Retracting;
-
-            ent.Comp.VisualState = state;
-            state = targetState;
-        }
-
-        // Adjust sprite data
-        switch (state)
-        {
-            case DeployableTurretVisualState.Deploying:
+            case DeployableTurretState.Deploying:
                 _animation.Play((ent, animPlayer), (Animation)ent.Comp.DeploymentAnimation, DeployableTurretComponent.AnimationKey);
                 break;
 
-            case DeployableTurretVisualState.Retracting:
+            case DeployableTurretState.Retracting:
                 _animation.Play((ent, animPlayer), (Animation)ent.Comp.RetractionAnimation, DeployableTurretComponent.AnimationKey);
                 break;
 
-            case DeployableTurretVisualState.Deployed:
-                sprite.LayerSetState(DeployableTurretVisualLayers.Turret, ent.Comp.DeployedState);
+            case DeployableTurretState.Deployed:
+                sprite.LayerSetState(DeployableTurretVisuals.Turret, ent.Comp.DeployedState);
                 break;
 
-            case DeployableTurretVisualState.Retracted:
-                sprite.LayerSetState(DeployableTurretVisualLayers.Turret, ent.Comp.RetractedState);
+            case DeployableTurretState.Retracted:
+                sprite.LayerSetState(DeployableTurretVisuals.Turret, ent.Comp.RetractedState);
                 break;
         }
     }

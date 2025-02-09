@@ -32,10 +32,16 @@ public sealed partial class DeployableTurretComponent : Component
     public bool Powered = false;
 
     /// <summary>
-    /// The summarized current state of the turret. Used to inform the device network of the turrets status. 
+    /// The summarized current state of the turret. Used to inform the device network of the turret's status. 
     /// </summary>
     [DataField, AutoNetworkedField]
-    public DeployableTurretState CurrentState = DeployableTurretState.Invalid;
+    public DeployableTurretState CurrentState = DeployableTurretState.Retracted;
+
+    /// <summary>
+    /// The summarized visual state of the turret. Used on the client-side. 
+    /// </summary>
+    [DataField]
+    public DeployableTurretState VisualState = DeployableTurretState.Retracted;
 
     /// <summary>
     /// The physics fixture that will have its collisions disabled when the turret is retracted.
@@ -120,12 +126,6 @@ public sealed partial class DeployableTurretComponent : Component
     #region: Visual state data
 
     /// <summary>
-    /// The current visual state of the turret
-    /// </summary>
-    [ViewVariables(VVAccess.ReadOnly)]
-    public DeployableTurretVisualState VisualState = DeployableTurretVisualState.Retracted;
-
-    /// <summary>
     /// The visual state to use when the turret is deployed.
     /// </summary>
     [DataField]
@@ -160,30 +160,12 @@ public enum DeployableTurretVisuals : byte
 }
 
 [Serializable, NetSerializable]
-public enum DeployableTurretVisualLayers : byte
-{
-    Turret,
-    Weapon,
-}
-
-[Serializable, NetSerializable]
 public enum DeployableTurretState : byte
 {
-    Invalid,
-    Retracted,
-    Deploying,
-    Deployed,
-    Retracting,
-    Firing,
-    Unpowered,
-    Broken,
-}
-
-[Serializable, NetSerializable]
-public enum DeployableTurretVisualState : byte
-{
-    Retracted,
-    Deploying,
-    Deployed,
-    Retracting,
+    Retracted = 0,
+    Deployed = (1 << 0),
+    Retracting = (1 << 1),
+    Deploying = (1 << 1) | Deployed,
+    Firing = (1 << 2) | Deployed,
+    Disabled = (1 << 3),
 }
