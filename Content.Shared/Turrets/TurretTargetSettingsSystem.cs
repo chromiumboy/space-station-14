@@ -1,5 +1,6 @@
 using Content.Shared.Access;
 using Content.Shared.Access.Systems;
+using Content.Shared.Silicons.Borgs.Components;
 using Robust.Shared.Prototypes;
 
 namespace Content.Shared.Turrets;
@@ -7,6 +8,9 @@ namespace Content.Shared.Turrets;
 public sealed partial class TurretTargetSettingsSystem : EntitySystem
 {
     [Dependency] private readonly AccessReaderSystem _accessReader = default!;
+
+    private ProtoId<AccessLevelPrototype> _accessLevelBorg = "Borg";
+    private ProtoId<AccessLevelPrototype> _accessLevelBasicSilicon = "BasicSilicon";
 
     public override void Initialize()
     {
@@ -63,6 +67,12 @@ public sealed partial class TurretTargetSettingsSystem : EntitySystem
     public bool EntityIsTargetForTurret(Entity<TurretTargetSettingsComponent> ent, EntityUid target)
     {
         var accessLevels = _accessReader.FindAccessTags(target);
+
+        if (accessLevels.Contains(_accessLevelBorg))
+            return !HasAccessLevelExemption(ent, _accessLevelBorg);
+
+        if (accessLevels.Contains(_accessLevelBasicSilicon))
+            return !HasAccessLevelExemption(ent, _accessLevelBasicSilicon);
 
         return !HasAnyAccessLevelExemption(ent, accessLevels);
     }

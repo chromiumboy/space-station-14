@@ -7,7 +7,6 @@ public sealed partial class TurretTargetingCon : UtilityConsideration
 {
     [Dependency] private readonly IEntityManager _entManager = default!;
 
-
     private TurretTargetSettingsSystem _turretTargetSettings = default!;
 
     public override void Initialize(IEntitySystemManager sysManager)
