@@ -1,6 +1,5 @@
 - type: accessGroup
   id: AllAccess
-  name: access-level-group-all-access
   tags:
   - EmergencyShuttleRepealAll
   - Captain
@@ -36,6 +35,5 @@
  
 - type: accessGroup
   id: General
-  name: access-level-group-general
   tags:
   - Maintenance

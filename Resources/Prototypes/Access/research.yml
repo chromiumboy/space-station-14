@@ -8,7 +8,6 @@
 
 - type: accessGroup
   id: Research
-  name: access-level-group-research
   tags:
   - ResearchDirector
   - Research
