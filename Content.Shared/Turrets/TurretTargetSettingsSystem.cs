@@ -1,6 +1,5 @@
 using Content.Shared.Access;
 using Content.Shared.Access.Systems;
-using Content.Shared.Silicons.Borgs.Components;
 using Robust.Shared.Prototypes;
 
 namespace Content.Shared.Turrets;
