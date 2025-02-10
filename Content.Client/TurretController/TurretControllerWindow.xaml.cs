@@ -130,9 +130,6 @@ public sealed partial class TurretControllerWindow : BaseWindow
         NoLinkedTurretsText.Visible = !hasTurrets;
         LinkedTurretsContainer.Visible = hasTurrets;
 
-        if (!hasTurrets)
-            return;
-
         LinkedTurretsContainer.RemoveAllChildren();
 
         foreach (var turretState in turretStates)
@@ -156,6 +153,8 @@ public sealed partial class TurretControllerWindow : BaseWindow
             box.AddChild(label);
             LinkedTurretsContainer.AddChild(box);
         }
+
+        TurretStatusHeader.Text = Loc.GetString("turret-controls-window-turret-status-label", ("count", turretCount));
     }
 
     public void RefreshAccessControls(HashSet<ProtoId<AccessLevelPrototype>> exemptAccessLevels)
@@ -179,11 +178,8 @@ public sealed partial class TurretControllerWindow : BaseWindow
 
         // Ensure that the 'general' access group is added to handle 
         // misc. access levels that aren't associated with any group
-        if (_protoManager.TryIndex<AccessGroupPrototype>("General", out var generalAccessProto) &&
-                        groupedAccessLevels.Keys.FirstOrDefault(x => x.ID != "General") == null)
-        {
-            groupedAccessLevels.Add(generalAccessProto, new());
-        }
+        if (_protoManager.TryIndex<AccessGroupPrototype>("General", out var generalAccessProto))
+            groupedAccessLevels.TryAdd(generalAccessProto, new());
 
         // Assign known access levels with their associated groups
         foreach (var accessLevel in turretControls.AccessLevels)
@@ -192,7 +188,7 @@ public sealed partial class TurretControllerWindow : BaseWindow
                 continue;
 
             IEnumerable<AccessGroupPrototype> associatedGroups =
-                            groupedAccessLevels.Keys.Where(x => x.Tags.Contains(accessLevelProto.ID) == true);
+                groupedAccessLevels.Keys.Where(x => x.Tags.Contains(accessLevelProto.ID) == true);
 
             if (!associatedGroups.Any() && generalAccessProto != null)
                 groupedAccessLevels[generalAccessProto].Add(accessLevelProto);
@@ -243,6 +239,8 @@ public sealed partial class TurretControllerWindow : BaseWindow
 
             // Add button styling
             monotoneButton.Label.AddStyleClass("ConsoleText");
+            monotoneButton.Label.HorizontalAlignment = HAlignment.Left;
+
             monotoneButton.Group = _accessGroupsButtons;
 
             var childIndex = AccessGroupList.ChildCount - 1;
@@ -273,8 +271,11 @@ public sealed partial class TurretControllerWindow : BaseWindow
                 continue;
 
             var accessGroup = orderedAccessGroups[i];
+            var prefix = groupedAccessLevels[accessGroup].Any(x => exemptAccessLevels.Contains(x)) ? "»" : " ";
 
-            accessGroupButton.Text = accessGroup.Name != null ? Loc.GetString(accessGroup.Name) : "???";
+            accessGroupButton.Text = Loc.GetString("turret-controls-window-access-group-label",
+                ("prefix", prefix), ("label", accessGroup.GetAccessGroupName()));
+
             accessGroupButton.Pressed = _tabIndex == orderedAccessGroups.IndexOf(accessGroup);
         }
 

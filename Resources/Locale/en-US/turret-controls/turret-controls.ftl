@@ -1,6 +1,6 @@
 # Headings
-turret-controls-window-title = Automated Defense Control System
-turret-controls-window-turret-status-label = Linked devices
+turret-controls-window-title = Automonous Defense Control System
+turret-controls-window-turret-status-label = Linked devices [{$count}]
 turret-controls-window-armament-controls-label = Armament setting
 turret-controls-window-targeting-controls-label = Authorized personnel
 
@@ -21,6 +21,7 @@ turret-controls-window-stun = Stun
 turret-controls-window-lethal = Lethal
 turret-controls-window-ignore = Ignore
 turret-controls-window-target = Target
+turret-controls-window-access-group-label = {$prefix} {$label}
 turret-controls-window-all-checkbox = All
 
 # Flavor
