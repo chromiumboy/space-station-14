@@ -79,7 +79,7 @@
     factions:
     - AllHostile
   - type: AccessReader
-    access: [["Command"], ["Security"]]
+    access: [["Security"]]
     
   # Weapon systems
   - type: ProjectileBatteryAmmoProvider
@@ -94,12 +94,11 @@
   - type: TurretTargetSettings
     exemptAccessLevels:
     - Captain
-    - HeadOfPersonnel
-    - ResearchDirector
-    - ChiefEngineer
-    - ChiefMedicalOfficer
     - HeadOfSecurity
-    - Quartermaster
+    - Security
+    - Armory
+    - Brig
+    - Detective
     - Borg
     - BasicSilicon
     
@@ -165,7 +164,7 @@
   components:
   - type: StationAiTurret
   - type: AccessReader
-    access: [["StationAI"]]
+    access: [["StationAi"]]
   - type: TurretTargetSettings
     exemptAccessLevels:
     - Borg

@@ -94,18 +94,17 @@
   # Faction / control
   - type: StationAiWhitelist
   - type: AccessReader
-    access: [["Command"], ["Security"]]
+    access: [["Security"]]
     
   # Turret related
   - type: TurretTargetSettings
     exemptAccessLevels:
     - Captain
-    - HeadOfPersonnel
-    - ResearchDirector
-    - ChiefEngineer
-    - ChiefMedicalOfficer
     - HeadOfSecurity
-    - Quartermaster
+    - Security
+    - Armory
+    - Brig
+    - Detective
     - Borg
     - BasicSilicon
   - type: DeployableTurretController
@@ -134,6 +133,7 @@
     - ChiefEngineer
     - ChiefMedicalOfficer
     - Command
+    - Cryogenics
     - Engineering
     - External
     - HeadOfPersonnel
