@@ -33,6 +33,6 @@ public sealed partial class TargetInLOSPrecondition : HTNPrecondition
         var range = blackboard.GetValueOrDefault<float>(RangeKey, _entManager);
         var collisionGroup = UseOpaqueForLOSChecksKey ? CollisionGroup.Opaque : (CollisionGroup.Impassable | CollisionGroup.InteractImpassable);
 
-        return _interaction.InRangeUnobstructed(owner, target, range, CollisionGroup.Opaque);
+        return _interaction.InRangeUnobstructed(owner, target, range, collisionGroup);
     }
 }
