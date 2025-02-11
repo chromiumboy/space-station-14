@@ -34,6 +34,8 @@
     layers:
     - state: support
       renderingStrategy: NoRotation
+    - state: base_shadow
+      map: [ "shadow" ]
     - state: base
       map: [ "base" ]
     - state: stun
