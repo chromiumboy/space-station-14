@@ -62,7 +62,7 @@
         enum.DeployableTurretVisuals.Weapon:
           BulletEnergyTurretDisabler: { state: stun }
           BulletEnergyTurretLaser: { state: lethal }
-      enum.RepairableTurretVisuals.Broken:
+      enum.DeployableTurretVisuals.Broken:
         base:
           True: { state: destroyed }
           False: { state: base }
@@ -95,12 +95,7 @@
       fireCost: 100
   - type: TurretTargetSettings
     exemptAccessLevels:
-    - Captain
-    - HeadOfSecurity
     - Security
-    - Armory
-    - Brig
-    - Detective
     - Borg
     - BasicSilicon
     
@@ -113,7 +108,6 @@
   - type: Repairable
     doAfterDelay: 10
     allowSelfRepair: false
-  - type: RepairableTurret
   - type: Destructible
     thresholds:
     - trigger:

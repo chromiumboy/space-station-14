@@ -38,8 +38,8 @@ public sealed partial class DeployableTurretSystem : SharedDeployableTurretSyste
         SubscribeLocalEvent<DeployableTurretComponent, AmmoShotEvent>(OnAmmoShot);
         SubscribeLocalEvent<DeployableTurretComponent, ChargeChangedEvent>(OnChargeChanged);
         SubscribeLocalEvent<DeployableTurretComponent, PowerChangedEvent>(OnPowerChanged);
-        SubscribeLocalEvent<DeployableTurretComponent, BreakageEventArgs>(OnBroken, after: [typeof(RepairableTurretSystem)]);
-        SubscribeLocalEvent<DeployableTurretComponent, RepairedEvent>(OnRepaired, after: [typeof(RepairableTurretSystem)]);
+        SubscribeLocalEvent<DeployableTurretComponent, BreakageEventArgs>(OnBroken);
+        SubscribeLocalEvent<DeployableTurretComponent, RepairedEvent>(OnRepaired);
         SubscribeLocalEvent<DeployableTurretComponent, DeviceNetworkPacketEvent>(OnPacketReceived);
         SubscribeLocalEvent<DeployableTurretComponent, BeforeBroadcastAttemptEvent>(OnBeforeBroadcast);
     }
@@ -70,6 +70,9 @@ public sealed partial class DeployableTurretSystem : SharedDeployableTurretSyste
         ent.Comp.Broken = true;
         Dirty(ent);
 
+        if (TryComp<AppearanceComponent>(ent, out var appearance))
+            _appearance.SetData(ent, DeployableTurretVisuals.Broken, true, appearance);
+
         SetState(ent, false);
     }
 
@@ -77,6 +80,9 @@ public sealed partial class DeployableTurretSystem : SharedDeployableTurretSyste
     {
         ent.Comp.Broken = false;
         Dirty(ent);
+
+        if (TryComp<AppearanceComponent>(ent, out var appearance))
+            _appearance.SetData(ent, DeployableTurretVisuals.Broken, false, appearance);
     }
 
     private void OnPacketReceived(Entity<DeployableTurretComponent> ent, ref DeviceNetworkPacketEvent args)
@@ -84,6 +90,7 @@ public sealed partial class DeployableTurretSystem : SharedDeployableTurretSyste
         if (!args.Data.TryGetValue(DeviceNetworkConstants.Command, out string? command))
             return;
 
+        // Received a command to change armament state
         if (command == DeployableTurretControllerSystem.CmdSetArmamemtState &&
             args.Data.TryGetValue(command, out int? armamentState))
         {
@@ -94,6 +101,7 @@ public sealed partial class DeployableTurretSystem : SharedDeployableTurretSyste
             return;
         }
 
+        // Received a command to change access exemptions
         if (command == DeployableTurretControllerSystem.CmdSetAccessExemptions &&
             args.Data.TryGetValue(command, out HashSet<ProtoId<AccessLevelPrototype>>? accessExemptions) &&
             TryComp<TurretTargetSettingsComponent>(ent, out var turretTargetSettings))
@@ -102,6 +110,7 @@ public sealed partial class DeployableTurretSystem : SharedDeployableTurretSyste
             return;
         }
 
+        // Received a command to update the device network
         if (command == DeviceNetworkConstants.CmdUpdatedState)
         {
             SendStateUpdateToDeviceNetwork(ent);
@@ -116,6 +125,7 @@ public sealed partial class DeployableTurretSystem : SharedDeployableTurretSyste
 
         var recipientDeviceNetworks = new HashSet<DeviceNetworkComponent>();
 
+        // Only broadcast to connected devices
         foreach (var recipient in deviceNetwork.DeviceLists)
         {
             if (!TryComp<DeviceNetworkComponent>(recipient, out var recipientDeviceNetwork))
@@ -188,7 +198,7 @@ public sealed partial class DeployableTurretSystem : SharedDeployableTurretSyste
         while (query.MoveNext(out var uid, out var deployableTurret))
         {
             // Check if the turret state has changed since the last update,
-            // and if so, inform the device network
+            // and if it has, inform the device network
             var ent = new Entity<DeployableTurretComponent>(uid, deployableTurret);
             var newState = GetTurretState(ent);
 

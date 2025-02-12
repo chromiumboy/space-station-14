@@ -19,12 +19,16 @@ public sealed class MonotoneCheckBox : CheckBox
     {
         base.DrawModeChanged();
 
-        if (TextureRect != null)
-        {
-            if (Pressed)
-                TextureRect.AddStyleClass(StyleClassCheckBoxChecked);
-            else
-                TextureRect.RemoveStyleClass(StyleClassCheckBoxChecked);
-        }
+        if (TextureRect == null)
+            return;
+
+        // Update appearance
+        if (Pressed)
+            TextureRect.AddStyleClass(StyleClassCheckBoxChecked);
+        else
+            TextureRect.RemoveStyleClass(StyleClassCheckBoxChecked);
+
+        // Appearance modulations
+        Modulate = Disabled ? Color.Gray : Color.White;
     }
 }

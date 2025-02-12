@@ -56,11 +56,9 @@ public sealed class MonotoneButton : Button
         if (_resourceCache == null)
             return;
 
-        var isPressed = (DrawMode == DrawModeEnum.Pressed);
-
         // Recolor label
         if (Label != null)
-            Label.ModulateSelfOverride = isPressed ? BackgroundColor : null;
+            Label.ModulateSelfOverride = Pressed ? BackgroundColor : null;
 
         // Get button texture
         var buttonTexture = _buttons[(int)Shape];
@@ -72,10 +70,13 @@ public sealed class MonotoneButton : Button
         buttonbase.SetPadding(StyleBox.Margin.All, 1);
         buttonbase.SetContentMarginOverride(StyleBox.Margin.Vertical, 2);
         buttonbase.SetContentMarginOverride(StyleBox.Margin.Horizontal, 14);
-        buttonbase.Texture = _resourceCache.GetTexture(isPressed ? buttonFilledTexture : buttonTexture);
+        buttonbase.Texture = _resourceCache.GetTexture(Pressed ? buttonFilledTexture : buttonTexture);
 
         // We don't want generic button styles being applied, only this one
         this.StyleBoxOverride = buttonbase;
+
+        // Appearance modulations
+        Modulate = Disabled ? Color.Gray : Color.White;
     }
 
     protected override void DrawModeChanged()

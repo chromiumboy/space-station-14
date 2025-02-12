@@ -10,9 +10,10 @@
   - type: MachineBoard
     prototype: WeaponEnergyTurretStation
     tagRequirements:
-      Taser:
+      TurretCompatibleWeapon:
         amount: 1
-        defaultPrototype: WeaponDisabler
+        defaultPrototype: WeaponLaserCannon
+        examineName: construction-insert-info-examine-name-laser-cannon 
       ProximitySensor:
         amount: 1
         defaultPrototype: ProximitySensor
@@ -20,7 +21,8 @@
       PowerCell:
         amount: 1
         defaultPrototype: PowerCellMedium
-          
+        examineName: construction-insert-info-examine-name-power-cell 
+        
 - type: entity
   id: WeaponEnergyTurretAIMachineCircuitboard
   parent: WeaponEnergyTurretStationMachineCircuitboard

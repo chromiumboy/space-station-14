@@ -15,8 +15,8 @@ namespace Content.Shared.Weapons.Ranged.Systems;
 public sealed class BatteryWeaponFireModesSystem : EntitySystem
 {
     [Dependency] private readonly IPrototypeManager _prototypeManager = default!;
-    [Dependency] private readonly AccessReaderSystem _accessReaderSystem = default!;
     [Dependency] private readonly SharedPopupSystem _popupSystem = default!;
+    [Dependency] private readonly AccessReaderSystem _accessReaderSystem = default!;
     [Dependency] private readonly SharedAppearanceSystem _appearanceSystem = default!;
     [Dependency] private readonly SharedHandsSystem _handsSystem = default!;
 

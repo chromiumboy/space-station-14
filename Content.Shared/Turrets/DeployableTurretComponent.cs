@@ -32,13 +32,13 @@ public sealed partial class DeployableTurretComponent : Component
     public bool Powered = false;
 
     /// <summary>
-    /// The summarized current state of the turret. Used to inform the device network of the turret's status. 
+    /// The current state of the turret. Used to inform the device network. 
     /// </summary>
     [DataField, AutoNetworkedField]
     public DeployableTurretState CurrentState = DeployableTurretState.Retracted;
 
     /// <summary>
-    /// The summarized visual state of the turret. Used on the client-side. 
+    /// The visual state of the turret. Used on the client-side. 
     /// </summary>
     [DataField]
     public DeployableTurretState VisualState = DeployableTurretState.Retracted;
@@ -64,7 +64,7 @@ public sealed partial class DeployableTurretComponent : Component
     #region: Sound data
 
     /// <summary>
-    /// Sound to play when the denied access to the turret.
+    /// Sound to play when denied access to the turret.
     /// </summary>
     [DataField]
     public SoundSpecifier AccessDeniedSound = new SoundPathSpecifier("/Audio/Machines/custom_deny.ogg");
@@ -157,6 +157,7 @@ public enum DeployableTurretVisuals : byte
 {
     Turret,
     Weapon,
+    Broken,
 }
 
 [Serializable, NetSerializable]

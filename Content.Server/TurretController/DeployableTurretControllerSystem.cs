@@ -17,7 +17,6 @@ public sealed partial class DeployableTurretControllerSystem : SharedDeployableT
 {
     [Dependency] private readonly UserInterfaceSystem _userInterfaceSystem = default!;
     [Dependency] private readonly DeviceNetworkSystem _deviceNetwork = default!;
-    [Dependency] private readonly IGameTiming _timing = default!;
 
     public const string CmdSetArmamemtState = "set_armament_state";
     public const string CmdSetAccessExemptions = "set_access_exemption";
@@ -26,8 +25,14 @@ public sealed partial class DeployableTurretControllerSystem : SharedDeployableT
     {
         base.Initialize();
 
+        SubscribeLocalEvent<DeployableTurretControllerComponent, BoundUIOpenedEvent>(OnBUIOpened);
         SubscribeLocalEvent<DeployableTurretControllerComponent, DeviceListUpdateEvent>(OnDeviceListUpdate);
         SubscribeLocalEvent<DeployableTurretControllerComponent, DeviceNetworkPacketEvent>(OnPacketReceived);
+    }
+
+    private void OnBUIOpened(Entity<DeployableTurretControllerComponent> ent, ref BoundUIOpenedEvent args)
+    {
+        UpdateUIState(ent);
     }
 
     private void OnDeviceListUpdate(Entity<DeployableTurretControllerComponent> ent, ref DeviceListUpdateEvent args)
@@ -135,24 +140,5 @@ public sealed partial class DeployableTurretControllerSystem : SharedDeployableT
         }
 
         return "turret-controls-window-turret-error";
-    }
-
-    private TimeSpan _nextUpdate = TimeSpan.Zero;
-
-    public override void Update(float frameTime)
-    {
-        base.Update(frameTime);
-
-        if (_timing.CurTime > _nextUpdate)
-        {
-            _nextUpdate = _timing.CurTime + TimeSpan.FromSeconds(0.25f);
-
-            var query = AllEntityQuery<DeployableTurretControllerComponent>();
-
-            while (query.MoveNext(out var ent, out var controller))
-            {
-                UpdateUIState((ent, controller));
-            }
-        }
     }
 }

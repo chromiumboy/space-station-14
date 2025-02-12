@@ -183,10 +183,13 @@ namespace Content.Client.Stylesheets
             var notoSansBold20 = resCache.NotoStack(variation: "Bold", size: 20);
             var notoSansMono = resCache.GetFont("/EngineFonts/NotoSans/NotoSansMono-Regular.ttf", size: 12);
 
-            var robotoMono10 = resCache.GetFont("/Fonts/RobotoMono/RobotoMono.ttf", size: 10);
-            var robotoMono11 = resCache.GetFont("/Fonts/RobotoMono/RobotoMono.ttf", size: 11);
-            var robotoMono12 = resCache.GetFont("/Fonts/RobotoMono/RobotoMono.ttf", size: 12);
-            var robotoMono14 = resCache.GetFont("/Fonts/RobotoMono/RobotoMono.ttf", size: 14);
+            var robotoMono11 = resCache.GetFont("/Fonts/RobotoMono/RobotoMono-Regular.ttf", size: 11);
+            var robotoMono12 = resCache.GetFont("/Fonts/RobotoMono/RobotoMono-Regular.ttf", size: 12);
+            var robotoMono14 = resCache.GetFont("/Fonts/RobotoMono/RobotoMono-Regular.ttf", size: 14);
+
+            var robotoMonoBold11 = resCache.GetFont("/Fonts/RobotoMono/RobotoMono-Bold.ttf", size: 11);
+            var robotoMonoBold12 = resCache.GetFont("/Fonts/RobotoMono/RobotoMono-Bold.ttf", size: 12);
+            var robotoMonoBold14 = resCache.GetFont("/Fonts/RobotoMono/RobotoMono-Bold.ttf", size: 14);
 
             var windowHeaderTex = resCache.GetTexture("/Textures/Interface/Nano/window_header.png");
             var windowHeader = new StyleBoxTexture
@@ -1164,17 +1167,17 @@ namespace Content.Client.Stylesheets
                 // Console text
                 new StyleRule(new SelectorElement(typeof(Label), new[] {StyleClassConsoleText}, null, null), new[]
                 {
-                    new StyleProperty(Label.StylePropertyFont, robotoMono11)
+                    new StyleProperty(Label.StylePropertyFont, robotoMonoBold11)
                 }),
 
                 new StyleRule(new SelectorElement(typeof(Label), new[] {StyleClassConsoleSubHeading}, null, null), new[]
                 {
-                    new StyleProperty(Label.StylePropertyFont, robotoMono12)
+                    new StyleProperty(Label.StylePropertyFont, robotoMonoBold12)
                 }),
 
                 new StyleRule(new SelectorElement(typeof(Label), new[] {StyleClassConsoleHeading}, null, null), new[]
                 {
-                    new StyleProperty(Label.StylePropertyFont, robotoMono14)
+                    new StyleProperty(Label.StylePropertyFont, robotoMonoBold14)
                 }),
 
                 // Big Button
