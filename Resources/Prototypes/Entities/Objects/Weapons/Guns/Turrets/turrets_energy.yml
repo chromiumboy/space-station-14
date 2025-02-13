@@ -114,12 +114,23 @@
         !type:DamageTrigger
         damage: 300
       behaviors:
-        - !type:DoActsBehavior
-          acts: [ "Breakage" ]
-        - !type:PlaySoundBehavior
-          sound:
-            collection: MetalGlassBreak
-            
+      - !type:PlaySoundBehavior
+        sound:
+          collection: MetalBreak
+      - !type:DoActsBehavior
+        acts: [ "Breakage" ]
+    - trigger:
+        !type:DamageTrigger
+        damage: 600
+      behaviors:
+      - !type:PlaySoundBehavior
+        sound:
+          collection: MetalBreak
+      - !type:ChangeConstructionNodeBehavior
+        node: machineFrame
+      - !type:DoActsBehavior
+        acts: ["Destruction"]
+      
   # Device network
   - type: DeviceNetwork
     deviceNetId: Wired
