@@ -23,9 +23,10 @@ public sealed class MonotoneButton : Button
 
     private MonotoneButtonShape _shape = MonotoneButtonShape.Closed;
 
-    // Hollow buttons
-    // Since the texture isn't uniform, we can'no't use AtlasTexture to select
-    // a subregion of the texture as is done for other buttons. 
+    // Unfilled buttons
+    // Since the texture isn't uniform, we can't use AtlasTexture to select
+    // a subregion of the texture to make buttons of different shapes.
+    // So we need a texture for every button shape
     private string[] _buttons =
         ["/Textures/Interface/Nano/Monotone/monotone_button.svg.96dpi.png",
         "/Textures/Interface/Nano/Monotone/monotone_button_open_left.svg.96dpi.png",
@@ -33,7 +34,7 @@ public sealed class MonotoneButton : Button
         "/Textures/Interface/Nano/Monotone/monotone_button_open_both.svg.96dpi.png"];
 
     // Filled buttons
-    // This will be treat these the same as the hollow buttons to ensure consistency
+    // Let's just treat these the same as the unfilled buttons to ensure consistency
     private string[] _buttonsFilled =
         ["/Textures/Interface/Nano/Monotone/monotone_button_filled.svg.96dpi.png",
         "/Textures/Interface/Nano/Monotone/monotone_button_open_left_filled.svg.96dpi.png",
@@ -48,7 +49,22 @@ public sealed class MonotoneButton : Button
 
         _resourceCache = IoCManager.Resolve<IResourceCache>();
 
+        Initialize();
         UpdateAppearance();
+    }
+
+    private void Initialize()
+    {
+        // Apply button texture
+        var buttonbase = new StyleBoxTexture();
+        buttonbase.SetPatchMargin(StyleBox.Margin.All, 11);
+        buttonbase.SetPadding(StyleBox.Margin.All, 1);
+        buttonbase.SetContentMarginOverride(StyleBox.Margin.Vertical, 2);
+        buttonbase.SetContentMarginOverride(StyleBox.Margin.Horizontal, 14);
+        buttonbase.Texture = _resourceCache.GetTexture(_buttons[(int)Shape]);
+
+        // We don't want any generic button styles being applied
+        this.StyleBoxOverride = buttonbase;
     }
 
     private void UpdateAppearance()
@@ -61,19 +77,11 @@ public sealed class MonotoneButton : Button
             Label.ModulateSelfOverride = Pressed ? BackgroundColor : null;
 
         // Get button texture
-        var buttonTexture = _buttons[(int)Shape];
-        var buttonFilledTexture = _buttonsFilled[(int)Shape];
+        var buttonTexture = Pressed ? _buttonsFilled[(int)Shape] : _buttons[(int)Shape];
 
         // Apply button texture
-        var buttonbase = new StyleBoxTexture();
-        buttonbase.SetPatchMargin(StyleBox.Margin.All, 11);
-        buttonbase.SetPadding(StyleBox.Margin.All, 1);
-        buttonbase.SetContentMarginOverride(StyleBox.Margin.Vertical, 2);
-        buttonbase.SetContentMarginOverride(StyleBox.Margin.Horizontal, 14);
-        buttonbase.Texture = _resourceCache.GetTexture(Pressed ? buttonFilledTexture : buttonTexture);
-
-        // We don't want generic button styles being applied, only this one
-        this.StyleBoxOverride = buttonbase;
+        if (StyleBoxOverride is StyleBoxTexture { } styleBoxTexture)
+            styleBoxTexture.Texture = _resourceCache.GetTexture(buttonTexture);
 
         // Appearance modulations
         Modulate = Disabled ? Color.Gray : Color.White;
