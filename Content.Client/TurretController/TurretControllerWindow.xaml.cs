@@ -91,7 +91,7 @@ public sealed partial class TurretControllerWindow : BaseWindow
             RefreshAccessControls(turretTargetSettings.ExemptAccessLevels);
     }
 
-    private void OnArmamentButtonPressed(Button pressedButton, int index)
+    private void OnArmamentButtonPressed(MonotoneButton pressedButton, int index)
     {
         UpdateTheme(index);
         OnArmamentSettingChangedEvent?.Invoke(index);
@@ -270,13 +270,13 @@ public sealed partial class TurretControllerWindow : BaseWindow
             if (orderedAccessGroups.Count > 1)
             {
                 if (childIndex == 0)
-                    monotoneButton.Shape = MonotoneButtonShape.OpenLeft;
+                    monotoneButton.AddStyleClass(StyleBase.ButtonOpenLeft);
 
                 else if (orderedAccessGroups.Count > 1 && childIndex == (orderedAccessGroups.Count - 1))
-                    monotoneButton.Shape = MonotoneButtonShape.OpenRight;
+                    monotoneButton.AddStyleClass(StyleBase.ButtonOpenRight);
 
                 else
-                    monotoneButton.Shape = MonotoneButtonShape.OpenBoth;
+                    monotoneButton.AddStyleClass(StyleBase.ButtonOpenBoth);
             }
 
             // Add button events
@@ -289,7 +289,7 @@ public sealed partial class TurretControllerWindow : BaseWindow
         // Update the group access buttons
         for (int i = 0; i < orderedAccessGroups.Count; i++)
         {
-            if (AccessGroupList.GetChild(i) is not Button { } accessGroupButton)
+            if (AccessGroupList.GetChild(i) is not MonotoneButton { } accessGroupButton)
                 continue;
 
             var accessGroup = orderedAccessGroups[i];
