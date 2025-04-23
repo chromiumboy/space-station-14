@@ -1,11 +1,10 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using Content.Client.Popups;
 using Content.Shared.Construction;
 using Content.Shared.Construction.Prototypes;
-using Content.Shared.Construction.Steps;
 using Content.Shared.Examine;
 using Content.Shared.Input;
-using Content.Shared.Interaction;
 using Content.Shared.Wall;
 using JetBrains.Annotations;
 using Robust.Client.GameObjects;
@@ -24,13 +23,14 @@ namespace Content.Client.Construction
     [UsedImplicitly]
     public sealed class ConstructionSystem : SharedConstructionSystem
     {
+        [Dependency] private readonly IEntityManager _entityManager = default!;
         [Dependency] private readonly IPlayerManager _playerManager = default!;
         [Dependency] private readonly IPrototypeManager _prototypeManager = default!;
         [Dependency] private readonly ExamineSystemShared _examineSystem = default!;
         [Dependency] private readonly SharedTransformSystem _transformSystem = default!;
         [Dependency] private readonly PopupSystem _popupSystem = default!;
 
-        private readonly Dictionary<int, EntityUid> _ghosts = new();
+        private readonly Dictionary<(int, Direction), EntityUid> _ghosts = new();
         private readonly Dictionary<string, ConstructionGuide> _guideCache = new();
 
         public bool CraftingEnabled { get; private set; }
@@ -198,7 +198,7 @@ namespace Content.Client.Construction
                 return false;
             }
 
-            if (GhostPresent(loc))
+            if (GhostPresent(prototype, dir, loc))
                 return false;
 
             var predicate = GetPredicate(prototype.CanBuildInImpassable, _transformSystem.ToMapCoordinates(loc));
@@ -213,7 +213,7 @@ namespace Content.Client.Construction
             comp.Prototype = prototype;
             comp.GhostId = ghost.GetHashCode();
             EntityManager.GetComponent<TransformComponent>(ghost.Value).LocalRotation = dir.ToAngle();
-            _ghosts.Add(comp.GhostId, ghost.Value);
+            _ghosts.Add((comp.GhostId, dir), ghost.Value);
             var sprite = EntityManager.GetComponent<SpriteComponent>(ghost.Value);
             sprite.Color = new Color(48, 255, 48, 128);
 
@@ -256,14 +256,25 @@ namespace Content.Client.Construction
         }
 
         /// <summary>
-        /// Checks if any construction ghosts are present at the given position
+        /// Checks if a construction ghost of the same type and orientation are present at the given position
         /// </summary>
-        private bool GhostPresent(EntityCoordinates loc)
+        private bool GhostPresent(ConstructionPrototype prototype, Direction direction, EntityCoordinates loc)
         {
-            foreach (var ghost in _ghosts)
+            if (!prototype.CanRotate)
+                direction = Direction.South;
+
+            foreach (var ((ghostId, dir), uid) in _ghosts)
             {
-                if (EntityManager.GetComponent<TransformComponent>(ghost.Value).Coordinates.Equals(loc))
-                    return true;
+                if (dir != direction)
+                    continue;
+
+                if (!_entityManager.GetComponent<TransformComponent>(uid).Coordinates.Equals(loc))
+                    continue;
+
+                if (_entityManager.TryGetComponent<ConstructionGhostComponent>(uid, out var ghost) && ghost.Prototype != prototype)
+                    continue;
+
+                return true;
             }
 
             return false;
@@ -295,13 +306,18 @@ namespace Content.Client.Construction
         /// <summary>
         /// Removes a construction ghost entity with the given ID.
         /// </summary>
-        public void ClearGhost(int ghostId)
+        public void ClearGhost(int ghostToClear)
         {
-            if (!_ghosts.TryGetValue(ghostId, out var ghost))
-                return;
+            foreach (var (ghostId, dir) in _ghosts.Keys.ToList())
+            {
+                if (ghostId == ghostToClear)
+                {
+                    if (_ghosts.TryGetValue((ghostId, dir), out var ghost))
+                        EntityManager.QueueDeleteEntity(ghost);
 
-            EntityManager.QueueDeleteEntity(ghost);
-            _ghosts.Remove(ghostId);
+                    _ghosts.Remove((ghostId, dir));
+                }
+            }
         }
 
         /// <summary>
