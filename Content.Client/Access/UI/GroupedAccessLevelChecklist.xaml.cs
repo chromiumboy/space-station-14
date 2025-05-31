@@ -32,6 +32,7 @@ public sealed partial class GroupedAccessLevelChecklist : BoxContainer
     private int _accessGroupTabIndex = 0;
     private bool _canInteract = false;
     private List<AccessLevelPrototype> _accessLevelsForTab = new();
+    private CheckBox? _allCheckBox;
     private readonly List<AccessLevelEntry> _accessLevelEntries = new();
     private readonly Dictionary<AccessGroupPrototype, List<AccessLevelPrototype>> _groupedAccessLevels = new();
 
@@ -98,12 +99,14 @@ public sealed partial class GroupedAccessLevelChecklist : BoxContainer
     private bool TryRebuildAccessGroupControls()
     {
         AccessGroupList.DisposeAllChildren();
-        AccessLevelChecklist.DisposeAllChildren();
 
         // No access level prototypes were assigned to any of the access level groups.
         // Either the turret controller has no assigned access levels or their names were invalid.
         if (_groupedAccessLevels.Count == 0)
+        {
+            AccessLevelChecklist.DisposeAllChildren();
             return false;
+        }
 
         // Reorder the access groups alphabetically
         var orderedAccessGroups = _groupedAccessLevels.Keys.OrderBy(x => x.GetAccessGroupName()).ToList();
@@ -163,13 +166,17 @@ public sealed partial class GroupedAccessLevelChecklist : BoxContainer
     /// </summary>
     public void RebuildAccessLevelsControls()
     {
-        AccessLevelChecklist.DisposeAllChildren();
-        _accessLevelEntries.Clear();
-
         // No access level prototypes were assigned to any of the access level groups
         // Either turret controller has no assigned access levels, or their names were invalid
         if (_groupedAccessLevels.Count == 0)
+        {
+            _accessLevelEntries.Clear();
+            _allCheckBox = null;
+
+            AccessLevelChecklist.DisposeAllChildren();
+
             return;
+        }
 
         // Reorder the access groups alphabetically
         var orderedAccessGroups = _groupedAccessLevels.Keys.OrderBy(x => x.GetAccessGroupName()).ToList();
@@ -181,45 +188,71 @@ public sealed partial class GroupedAccessLevelChecklist : BoxContainer
 
         // Add an 'all' checkbox as the first child of the list if it has more than one access level
         // Toggling this checkbox on will mark all other boxes below it on/off
-        var allCheckBox = CreateAccessLevelCheckbox();
-        allCheckBox.Text = Loc.GetString("turret-controls-window-all-checkbox");
-
-        if (_labelStyleClass != null)
-            allCheckBox.Label.SetOnlyStyleClass(_labelStyleClass);
-
-        // Add the 'all' checkbox events
-        allCheckBox.OnPressed += args =>
+        if (_allCheckBox == null)
         {
-            SetCheckBoxPressedState(_accessLevelEntries, allCheckBox.Pressed);
+            _allCheckBox = CreateAccessLevelCheckbox();
+            _allCheckBox.Text = Loc.GetString("turret-controls-window-all-checkbox");
 
-            var accessLevels = new HashSet<ProtoId<AccessLevelPrototype>>();
+            if (_labelStyleClass != null)
+                _allCheckBox.Label.SetOnlyStyleClass(_labelStyleClass);
 
-            foreach (var accessLevel in _accessLevelsForTab)
+            _allCheckBox.OnPressed += args =>
             {
-                accessLevels.Add(accessLevel);
-            }
+                SetCheckBoxPressedState(_accessLevelEntries, _allCheckBox.Pressed);
 
-            OnAccessLevelsChangedEvent?.Invoke(accessLevels, allCheckBox.Pressed);
-        };
+                var accessLevels = new HashSet<ProtoId<AccessLevelPrototype>>();
 
-        AccessLevelChecklist.AddChild(allCheckBox);
+                foreach (var accessLevel in _accessLevelsForTab)
+                {
+                    accessLevels.Add(accessLevel);
+                }
 
-        // Hide the 'all' checkbox if the tab has only one access level
-        var allCheckBoxVisible = _accessLevelsForTab.Count > 1;
+                OnAccessLevelsChangedEvent?.Invoke(accessLevels, _allCheckBox.Pressed);
+            };
 
-        allCheckBox.Visible = allCheckBoxVisible;
-        allCheckBox.Disabled = !_canInteract;
+            _allCheckBox.Disabled = !_canInteract;
 
-        // Add any remaining missing access level buttons to the UI
-        foreach (var accessLevel in _accessLevelsForTab)
+            AccessLevelChecklist.AddChild(_allCheckBox);
+        }
+
+        // Update the status of the 'all' checkbox
+        _allCheckBox.Visible = _accessLevelsForTab.Count > 1;
+        _allCheckBox.Disabled = !_canInteract;
+
+        // Add any missing access level checkboxes to the UI
+        while (_accessLevelEntries.Count < _accessLevelsForTab.Count)
         {
-            // Create the entry
-            var accessLevelEntry = new AccessLevelEntry(_isMonotone);
+            var accessLevelEntry = new AccessLevelEntry(CreateAccessLevelCheckbox());
+
+            accessLevelEntry.CheckBox.OnPressed += args =>
+            {
+                // If the checkbox and its siblings are checked, check the 'all' checkbox too
+                _allCheckBox.Pressed = AreAllCheckBoxesPressed(_accessLevelEntries.Select(x => x.CheckBox));
+
+                OnAccessLevelsChangedEvent?.Invoke([accessLevelEntry.AccessLevel], accessLevelEntry.CheckBox.Pressed);
+            };
+
+            _accessLevelEntries.Add(accessLevelEntry);
+            AccessLevelChecklist.AddChild(accessLevelEntry);
+        }
+
+        // Hide any unnecessary access level checkboxes
+        for (int i = 1; i < 1 + _accessLevelEntries.Count - _accessLevelsForTab.Count; i++)
+        {
+            _accessLevelEntries[_accessLevelEntries.Count - i].Visible = false;
+        }
+
+        // Update the access level checkboxes
+        for (int i = 0; i < _accessLevelsForTab.Count; i++)
+        {
+            var accessLevel = _accessLevelsForTab[i];
+            var accessLevelEntry = _accessLevelEntries[i];
 
             accessLevelEntry.AccessLevel = accessLevel;
             accessLevelEntry.CheckBox.Text = accessLevel.GetAccessLevelName();
             accessLevelEntry.CheckBox.Pressed = _activeAccessLevels.Contains(accessLevel);
             accessLevelEntry.CheckBox.Disabled = !_canInteract;
+            accessLevelEntry.Visible = true;
 
             if (_labelStyleClass != null)
                 accessLevelEntry.CheckBox.Label.SetOnlyStyleClass(_labelStyleClass);
@@ -234,24 +267,12 @@ public sealed partial class GroupedAccessLevelChecklist : BoxContainer
             };
 
             accessLevelEntry.UpdateCheckBoxLink(lines);
-            accessLevelEntry.CheckBoxLink.Visible = allCheckBoxVisible;
+            accessLevelEntry.CheckBoxLink.Visible = _allCheckBox.Visible;
             accessLevelEntry.CheckBoxLink.Modulate = !_canInteract ? Color.Gray : Color.White;
-
-            // Add checkbox events
-            accessLevelEntry.CheckBox.OnPressed += args =>
-            {
-                // If the checkbox and its siblings are checked, check the 'all' checkbox too
-                allCheckBox.Pressed = AreAllCheckBoxesPressed(_accessLevelEntries.Select(x => x.CheckBox));
-
-                OnAccessLevelsChangedEvent?.Invoke([accessLevelEntry.AccessLevel], accessLevelEntry.CheckBox.Pressed);
-            };
-
-            AccessLevelChecklist.AddChild(accessLevelEntry);
-            _accessLevelEntries.Add(accessLevelEntry);
         }
 
         // Press the 'all' checkbox if all others are pressed
-        allCheckBox.Pressed = AreAllCheckBoxesPressed(_accessLevelEntries.Select(x => x.CheckBox));
+        _allCheckBox.Pressed = AreAllCheckBoxesPressed(_accessLevelEntries.Where(x => x.Visible).Select(x => x.CheckBox));
     }
 
     private bool AreAllCheckBoxesPressed(IEnumerable<CheckBox> checkBoxes)
@@ -272,7 +293,6 @@ public sealed partial class GroupedAccessLevelChecklist : BoxContainer
             accessLevelEntry.CheckBox.Pressed = pressed;
         }
     }
-
 
     /// <summary>
     /// Provides the UI with a list of access groups using which list of tabs should be populated.
@@ -383,9 +403,10 @@ public sealed partial class GroupedAccessLevelChecklist : BoxContainer
         public readonly CheckBox CheckBox;
         public readonly LineRenderer CheckBoxLink;
 
-        public AccessLevelEntry(bool monotone)
+        public AccessLevelEntry(CheckBox checkBox)
         {
             HorizontalExpand = true;
+            ReservesSpace = false;
 
             CheckBoxLink = new LineRenderer
             {
@@ -397,10 +418,7 @@ public sealed partial class GroupedAccessLevelChecklist : BoxContainer
 
             AddChild(CheckBoxLink);
 
-            CheckBox = monotone ? new MonotoneCheckBox() : new CheckBox();
-            CheckBox.ToggleMode = true;
-            CheckBox.Margin = new Thickness(0f, 0f, 0f, 3f);
-
+            CheckBox = checkBox;
             AddChild(CheckBox);
         }
 
