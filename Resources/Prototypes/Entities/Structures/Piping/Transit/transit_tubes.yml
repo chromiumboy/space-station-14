@@ -55,6 +55,10 @@
   - type: CollideOnAnchor
   - type: DisposalTube
     clangSound: "/Audio/Effects/toss.ogg"
+  - type: ApcPowerReceiver
+    load: 5
+  - type: ExtensionCableReceiver
+  - type: TileEmissionRequiresPower
   - type: TileEmission
     color: White
     range: -0.25
@@ -123,6 +127,10 @@
       shader: unshaded
   - type: GenericVisualizer
     visuals:
+      enum.PowerDeviceVisuals.Powered:
+        glass:
+          False: { shader: shaded }
+          True: { shader: unshaded }
       enum.AnchorVisuals.Anchored:
         tube:
           False: { state: straight_u }
@@ -152,6 +160,10 @@
       shader: unshaded
   - type: GenericVisualizer
     visuals:
+      enum.PowerDeviceVisuals.Powered:
+        glass:
+          False: { shader: shaded }
+          True: { shader: unshaded }
       enum.AnchorVisuals.Anchored:
         tube:
           False: { state: diagonal_u }
@@ -190,6 +202,10 @@
       shader: unshaded
   - type: GenericVisualizer
     visuals:
+      enum.PowerDeviceVisuals.Powered:
+        glass:
+          False: { shader: shaded }
+          True: { shader: unshaded }
       enum.AnchorVisuals.Anchored:
         tube:
           False: { state: junct_u }
@@ -229,6 +245,10 @@
       shader: unshaded
   - type: GenericVisualizer
     visuals:
+      enum.PowerDeviceVisuals.Powered:
+        glass:
+          False: { shader: shaded }
+          True: { shader: unshaded }
       enum.AnchorVisuals.Anchored:
         tube:
           False: { state: junct_f_u }
@@ -272,6 +292,10 @@
     - South
   - type: GenericVisualizer
     visuals:
+      enum.PowerDeviceVisuals.Powered:
+        glass:
+          False: { shader: shaded }
+          True: { shader: unshaded }
       enum.AnchorVisuals.Anchored:
         tube:
           False: { state: bend_u }
@@ -307,6 +331,10 @@
     - South
   - type: GenericVisualizer
     visuals:
+      enum.PowerDeviceVisuals.Powered:
+        glass:
+          False: { shader: shaded }
+          True: { shader: unshaded }
       enum.AnchorVisuals.Anchored:
         tube:
           False: { state: bend_f_u }
@@ -353,6 +381,10 @@
         enum.DisposalUnitVisualLayers.OverlayFull:
           True: { visible: true }
           False: { visible: false }
+      enum.PowerDeviceVisuals.Powered:
+        glass:
+          False: { shader: shaded }
+          True: { shader: unshaded }
       enum.AnchorVisuals.Anchored:
         tube:
           False: { state: station_uni_u }
@@ -407,6 +439,7 @@
   - type: DisposalEntry
     holderPrototypeId: TransitHolder
   - type: DisposalTube 
+  - type: TileEmissionRequiresPower
   - type: TileEmission
     color: White
     range: -0.25

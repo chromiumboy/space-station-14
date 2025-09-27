@@ -77,6 +77,9 @@ public sealed class TileEmissionOverlay : Overlay
 
                 foreach (var ent in _entities)
                 {
+                    if (!ent.Comp.Enabled)
+                        continue;
+
                     var xform = _xformQuery.Comp(ent);
 
                     var tile = _mapSystem.LocalToTile(grid.Owner, grid, xform.Coordinates);
