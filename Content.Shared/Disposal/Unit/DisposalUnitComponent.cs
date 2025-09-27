@@ -59,6 +59,19 @@ public sealed partial class DisposalUnitComponent : Component
     public SoundSpecifier? InsertSound = new SoundPathSpecifier("/Audio/Effects/trashbag1.ogg");
 
     /// <summary>
+    /// The next time that the insertion sound is allowed to be played.
+    /// Used to reduce audio spam when dumping multiple items into the unit.
+    /// </summary>
+    [DataField, AutoNetworkedField, AutoPausedField]
+    public TimeSpan NextAllowedInsertSound = TimeSpan.Zero;
+
+    /// <summary>
+    /// Delay in seconds before the insertion audio can be played again.
+    /// </summary>
+    [DataField]
+    public TimeSpan InsertSoundDelay = TimeSpan.FromSeconds(0.1);
+
+    /// <summary>
     /// State for this disposals unit.
     /// </summary>
     [DataField, AutoNetworkedField]
@@ -153,7 +166,7 @@ public sealed partial class DisposalUnitComponent : Component
     /// The max number of entities that can be inserted in the unit before it needs to be flushed.
     /// </summary>
     [DataField]
-    public int MaxCapacity = 10;
+    public int MaxCapacity = 30;
 }
 
 /// <summary>
