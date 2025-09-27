@@ -72,7 +72,7 @@
     sprite: Structures/Piping/transit_tubes.rsi
     layers:
     - map: [ "pod" ]
-      state: occupied_pod
+      state: pod_occupied
       shader: unshaded
   - type: DisposalHolder
     traversalTime: 0.2
@@ -337,6 +337,10 @@
     drawdepth: Overdoors
     sprite: Structures/Piping/transit_tubes.rsi
     layers:
+    - map: [ "enum.DisposalUnitVisualLayers.OverlayFull" ]
+      state: pod_parked
+      shader: unshaded
+      visible: false
     - map: [ "tube" ]
       state: station_uni
     - map: [ "glass" ]  
@@ -345,6 +349,10 @@
   - type: Appearance
   - type: GenericVisualizer
     visuals:
+      enum.DisposalUnitVisuals.IsFull:
+        enum.DisposalUnitVisualLayers.OverlayFull:
+          True: { visible: true }
+          False: { visible: false }
       enum.AnchorVisuals.Anchored:
         tube:
           False: { state: station_uni_u }
@@ -391,10 +399,10 @@
     disablePressure: true
     flushDelay: 0
     flushSound: 
-    insertSound: 
+    insertSound:
   - type: DisposalEntry
     holderPrototypeId: TransitHolder
-  - type: DisposalTube 
+  - type: DisposalTube
   - type: TileEmission
     color: White
     range: -0.25

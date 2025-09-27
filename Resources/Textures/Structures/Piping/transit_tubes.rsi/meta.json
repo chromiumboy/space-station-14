@@ -92,12 +92,16 @@
             "directions": 4
         },
         {
-            "name": "empty_pod",
+            "name": "pod_empty",
             "directions": 8
         },
         {
-            "name": "occupied_pod",
+            "name": "pod_occupied",
             "directions": 8
+        },
+        {
+            "name": "pod_parked",
+            "directions": 4
         }
     ]
 }
