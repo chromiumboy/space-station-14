@@ -399,10 +399,14 @@
     disablePressure: true
     flushDelay: 0
     flushSound: 
-    insertSound:
+    insertSound: 
+    maxCapacity: 1
+    whitelist:
+      components:
+      - Body
   - type: DisposalEntry
     holderPrototypeId: TransitHolder
-  - type: DisposalTube
+  - type: DisposalTube 
   - type: TileEmission
     color: White
     range: -0.25
