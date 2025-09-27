@@ -78,30 +78,6 @@
         {
             "name": "junct_f_u",
             "directions": 4
-        },
-        {
-            "name": "station_uni",
-            "directions": 4
-        },
-        {
-            "name": "station_uni_glass",
-            "directions": 4
-        },
-        {
-            "name": "station_uni_u",
-            "directions": 4
-        },
-        {
-            "name": "pod_empty",
-            "directions": 8
-        },
-        {
-            "name": "pod_occupied",
-            "directions": 8
-        },
-        {
-            "name": "pod_parked",
-            "directions": 4
         }
     ]
 }

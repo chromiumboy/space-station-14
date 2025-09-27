@@ -73,7 +73,7 @@
   - type: Sprite
     overrideContainerOcclusion: true
     drawdepth: BlastDoors
-    sprite: Structures/Piping/transit_tubes.rsi
+    sprite: Structures/Piping/Transit/transit_pods.rsi
     layers:
     - map: [ "pod" ]
       state: pod_occupied
@@ -102,7 +102,7 @@
   components:
   - type: Sprite
     drawdepth: Overdoors
-    sprite: Structures/Piping/transit_tubes.rsi
+    sprite: Structures/Piping/Transit/transit_tubes.rsi
     layers:
     - map: [ "tube" ]
       state: straight
@@ -118,7 +118,7 @@
   components:
   - type: Sprite
     drawdepth: Overdoors
-    sprite: Structures/Piping/transit_tubes.rsi
+    sprite: Structures/Piping/Transit/transit_tubes.rsi
     layers:
     - map: [ "tube" ]
       state: straight
@@ -151,7 +151,7 @@
   components:
   - type: Sprite
     drawdepth: Overdoors
-    sprite: Structures/Piping/transit_tubes.rsi
+    sprite: Structures/Piping/Transit/transit_tubes.rsi
     layers:
     - map: [ "tube" ]
       state: diagonal
@@ -193,7 +193,7 @@
   components:
   - type: Sprite
     drawdepth: Overdoors
-    sprite: Structures/Piping/transit_tubes.rsi
+    sprite: Structures/Piping/Transit/transit_tubes.rsi
     layers:
     - map: [ "tube" ]
       state: junct
@@ -236,7 +236,7 @@
   components:
   - type: Sprite
     drawdepth: Overdoors
-    sprite: Structures/Piping/transit_tubes.rsi
+    sprite: Structures/Piping/Transit/transit_tubes.rsi
     layers:
     - map: [ "tube" ]
       state: junct_f
@@ -279,7 +279,7 @@
   components:
   - type: Sprite
     drawdepth: Overdoors
-    sprite: Structures/Piping/transit_tubes.rsi
+    sprite: Structures/Piping/Transit/transit_tubes.rsi
     layers:
     - map: [ "tube" ]
       state: bend
@@ -318,7 +318,7 @@
   components:
   - type: Sprite
     drawdepth: Overdoors
-    sprite: Structures/Piping/transit_tubes.rsi
+    sprite: Structures/Piping/Transit/transit_tubes.rsi
     layers:
     - map: [ "tube" ]
       state: bend_f
@@ -363,16 +363,17 @@
   components:
   - type: Sprite
     drawdepth: Overdoors
-    sprite: Structures/Piping/transit_tubes.rsi
+    sprite: Structures/Piping/Transit/transit_stations.rsi
     layers:
     - map: [ "enum.DisposalUnitVisualLayers.OverlayFull" ]
+      sprite: Structures/Piping/Transit/transit_pods.rsi
       state: pod_parked
       shader: unshaded
       visible: false
     - map: [ "tube" ]
-      state: station_uni
+      state: terminus
     - map: [ "glass" ]  
-      state: station_uni_glass
+      state: terminus_glass
       shader: unshaded
   - type: Appearance
   - type: GenericVisualizer
@@ -387,8 +388,8 @@
           True: { shader: unshaded }
       enum.AnchorVisuals.Anchored:
         tube:
-          False: { state: station_uni_u }
-          True: { state: station_uni }
+          False: { state: terminus_u }
+          True: { state: terminus }
         glass:
           False: { visible: false }
           True: { visible: true }  
