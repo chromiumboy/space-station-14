@@ -61,7 +61,7 @@
   - type: TileEmissionRequiresPower
   - type: TileEmission
     color: White
-    range: -0.25
+    range: 0
   - type: StaticPrice
     price: 30
 
@@ -124,13 +124,12 @@
       state: straight
     - map: [ "glass" ]
       state: straight_glass
-      shader: unshaded
   - type: GenericVisualizer
     visuals:
       enum.PowerDeviceVisuals.Powered:
         glass:
           False: { shader: shaded }
-          True: { shader: unshaded }
+          True: { shader: shaded }
       enum.AnchorVisuals.Anchored:
         tube:
           False: { state: straight_u }
