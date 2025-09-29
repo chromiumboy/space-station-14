@@ -69,7 +69,7 @@ public abstract class SharedDisposalUnitSystem : EntitySystem
         SubscribeLocalEvent<DisposalUnitComponent, CanDropTargetEvent>(OnCanDragDropOn);
         SubscribeLocalEvent<DisposalUnitComponent, GetVerbsEvent<InteractionVerb>>(AddInsertVerb);
         SubscribeLocalEvent<DisposalUnitComponent, GetVerbsEvent<AlternativeVerb>>(AddDisposalAltVerbs);
-        SubscribeLocalEvent<DisposalUnitComponent, GetVerbsEvent<Verb>>(AddClimbInsideVerb);
+        SubscribeLocalEvent<DisposalUnitComponent, GetVerbsEvent<Verb>>(AddEnterOrExitVerb);
 
         SubscribeLocalEvent<DisposalUnitComponent, DisposalDoAfterEvent>(OnDoAfter);
 
@@ -95,7 +95,7 @@ public abstract class SharedDisposalUnitSystem : EntitySystem
 
     private void OnDestruction(Entity<DisposalUnitComponent> ent, ref DestructionEventArgs args)
     {
-        TryEjectContents(ent);
+        EjectContents(ent);
     }
 
     private void OnExploded(Entity<DisposalUnitComponent> ent, ref BeforeExplodeEvent args)
@@ -127,7 +127,7 @@ public abstract class SharedDisposalUnitSystem : EntitySystem
             // Verb to eject the contents
             AlternativeVerb ejectVerb = new()
             {
-                Act = () => TryEjectContents(ent),
+                Act = () => EjectContents(ent),
                 Category = VerbCategory.Eject,
                 Text = Loc.GetString("disposal-eject-verb-get-data-text")
             };
@@ -203,10 +203,11 @@ public abstract class SharedDisposalUnitSystem : EntitySystem
             currentTime < ent.Comp.LastExitAttempt + ent.Comp.ExitAttemptDelay)
             return;
 
-        Dirty(ent);
-        ent.Comp.LastExitAttempt = currentTime;
         Remove(ent, args.Entity);
+        ent.Comp.LastExitAttempt = currentTime;
+
         UpdateUI(ent);
+        Dirty(ent);
     }
 
     private void OnActivate(Entity<DisposalUnitComponent> ent, ref ActivateInWorldEvent args)
@@ -248,13 +249,13 @@ public abstract class SharedDisposalUnitSystem : EntitySystem
         if (!ent.Comp.Running)
             return;
 
-        UpdateUI(ent);
         UpdateVisualState(ent);
 
         if (!args.Powered)
         {
             ent.Comp.NextFlush = null;
             Dirty(ent);
+
             return;
         }
 
@@ -273,7 +274,7 @@ public abstract class SharedDisposalUnitSystem : EntitySystem
         UpdateVisualState(ent);
 
         if (!args.Anchored)
-            TryEjectContents(ent);
+            EjectContents(ent);
     }
 
     private void OnDragDropOn(Entity<DisposalUnitComponent> ent, ref DragDropTargetEvent args)
@@ -330,15 +331,12 @@ public abstract class SharedDisposalUnitSystem : EntitySystem
         if (!_containers.Remove(toRemove, ent.Comp.Container))
             return;
 
-        if (ent.Comp.Container.ContainedEntities.Count == 0)
+        // If not manually engaged then reset the flushing entirely.
+        if (ent.Comp.Container.ContainedEntities.Count == 0 &&
+            !ent.Comp.Engaged)
         {
-            // If not manually engaged then reset the flushing entirely.
-            if (!ent.Comp.Engaged)
-            {
-                ent.Comp.NextFlush = null;
-                Dirty(ent);
-                UpdateUI(ent);
-            }
+            ent.Comp.NextFlush = null;
+            Dirty(ent);
         }
 
         _climb.Climb(toRemove, toRemove, ent, silent: true);
@@ -551,7 +549,9 @@ public abstract class SharedDisposalUnitSystem : EntitySystem
             return;
 
         ent.Comp.State = state;
+
         UpdateVisualState(ent);
+        UpdateUI(ent);
         Dirty(ent);
 
         if (state == DisposalsPressureState.Ready)
@@ -575,7 +575,8 @@ public abstract class SharedDisposalUnitSystem : EntitySystem
     }
 
     /// <summary>
-    /// Work out if we can stop updating this disposals component i.e. full pressure and nothing colliding.
+    /// Work out if we can stop updating this disposals component
+    /// (i.e. full pressure and nothing colliding).
     /// </summary>
     private void Update(Entity<DisposalUnitComponent> ent, MetaDataComponent metadata)
     {
@@ -588,12 +589,11 @@ public abstract class SharedDisposalUnitSystem : EntitySystem
             return;
         }
 
-        if (ent.Comp.NextFlush != null)
+        // Check if we need to flush
+        if (ent.Comp.NextFlush != null &&
+            ent.Comp.NextFlush.Value < _timing.CurTime)
         {
-            if (ent.Comp.NextFlush.Value < _timing.CurTime)
-            {
-                TryFlush(ent);
-            }
+            TryFlush(ent);
         }
 
         UpdateState(ent, state);
@@ -637,8 +637,11 @@ public abstract class SharedDisposalUnitSystem : EntitySystem
         if (entry == null || entryComp == null || tubeComp == null)
         {
             ent.Comp.Engaged = false;
+
+            UpdateVisualState(ent);
             UpdateUI(ent);
             Dirty(ent);
+
             return false;
         }
 
@@ -653,10 +656,9 @@ public abstract class SharedDisposalUnitSystem : EntitySystem
         ent.Comp.Engaged = false;
         ent.Comp.NextFlush = null;
 
-        Dirty(ent);
-
         UpdateVisualState(ent);
         UpdateUI(ent);
+        Dirty(ent);
 
         return true;
     }
@@ -669,9 +671,10 @@ public abstract class SharedDisposalUnitSystem : EntitySystem
     public void ManualEngage(Entity<DisposalUnitComponent> ent, MetaDataComponent? metadata = null)
     {
         ent.Comp.Engaged = true;
+
         UpdateVisualState(ent);
-        Dirty(ent);
         UpdateUI(ent);
+        Dirty(ent);
 
         if (!CanFlush(ent))
             return;
@@ -698,26 +701,19 @@ public abstract class SharedDisposalUnitSystem : EntitySystem
         }
 
         UpdateVisualState(ent);
-        Dirty(ent);
         UpdateUI(ent);
+        Dirty(ent);
     }
 
     /// <summary>
     /// Remove all entities currently in a disposal unit.
     /// </summary>
     /// <param name="ent">The disposal unit.</param>
-    public void TryEjectContents(Entity<DisposalUnitComponent> ent)
+    public void EjectContents(Entity<DisposalUnitComponent> ent)
     {
         foreach (var toRemove in ent.Comp.Container.ContainedEntities.ToArray())
         {
             Remove(ent, toRemove);
-        }
-
-        if (!ent.Comp.Engaged)
-        {
-            ent.Comp.NextFlush = null;
-            Dirty(ent);
-            UpdateUI(ent);
         }
     }
 
@@ -739,7 +735,6 @@ public abstract class SharedDisposalUnitSystem : EntitySystem
 
         ent.Comp.NextFlush = flushTime;
         Dirty(ent);
-        UpdateUI(ent);
     }
 
     private void OnUiButtonPressed(Entity<DisposalUnitComponent> ent, ref DisposalUnitUiButtonPressedMessage args)
@@ -752,7 +747,7 @@ public abstract class SharedDisposalUnitSystem : EntitySystem
         switch (args.Button)
         {
             case DisposalUnitUiButton.Eject:
-                TryEjectContents(ent);
+                EjectContents(ent);
                 _adminLog.Add(LogType.Action, LogImpact.Low, $"{ToPrettyString(player):player} hit eject button on {ToPrettyString(ent)}");
                 break;
             case DisposalUnitUiButton.Engage:
@@ -785,34 +780,41 @@ public abstract class SharedDisposalUnitSystem : EntitySystem
         }
     }
 
-    private void AddClimbInsideVerb(Entity<DisposalUnitComponent> ent, ref GetVerbsEvent<Verb> args)
+    private void AddEnterOrExitVerb(Entity<DisposalUnitComponent> ent, ref GetVerbsEvent<Verb> args)
     {
         // This is not an interaction, activation, or alternative verb type because unfortunately most users are
         // unwilling to accept that this is where they belong and don't want to accidentally climb inside.
         if (!args.CanAccess ||
             !args.CanInteract ||
-            ent.Comp.Container.ContainedEntities.Contains(args.User) ||
             !_actionBlockerSystem.CanMove(args.User))
         {
             return;
         }
 
-        if (!_containers.CanInsert(args.User, ent.Comp.Container))
-            return;
-
         var verbData = args;
-
-        // Add verb to climb inside of the unit,
-        Verb verb = new()
+        var verb = new Verb()
         {
-            Act = () => TryInsert(ent, verbData.User, verbData.User),
-            DoContactInteraction = true,
-            Text = Loc.GetString("disposal-self-insert-verb-get-data-text")
+            DoContactInteraction = true
         };
-        // TODO VERB ICON
-        // TODO VERB CATEGORY
-        // create a verb category for "enter"?
-        // See also, medical scanner. Also maybe add verbs for entering lockers/body bags?
+
+        if (!ent.Comp.Container.ContainedEntities.Contains(args.User))
+        {
+            if (!_containers.CanInsert(args.User, ent.Comp.Container))
+                return;
+
+            // Verb for climbing in
+            verb.Act = () => TryInsert(ent, verbData.User, verbData.User);
+            verb.Text = Loc.GetString("verb-common-enter");
+            verb.Icon = new SpriteSpecifier.Texture(new("/Textures/Interface/VerbIcons/close.svg.192dpi.png"));
+        }
+        else
+        {
+            // Verb for climbing out
+            verb.Act = () => Remove(ent, verbData.User);
+            verb.Text = Loc.GetString("verb-common-exit");
+            verb.Icon = new SpriteSpecifier.Texture(new("/Textures/Interface/VerbIcons/open.svg.192dpi.png"));
+        }
+
         args.Verbs.Add(verb);
     }
 
