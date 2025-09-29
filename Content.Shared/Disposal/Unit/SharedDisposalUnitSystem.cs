@@ -537,6 +537,7 @@ public abstract class SharedDisposalUnitSystem : EntitySystem
             BreakOnDamage = true,
             BreakOnMove = true,
             NeedHand = false,
+            AttemptFrequency = AttemptFrequency.StartAndEnd,
         };
 
         _doAfterSystem.TryStartDoAfter(doAfterArgs);

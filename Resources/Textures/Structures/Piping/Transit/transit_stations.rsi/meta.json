@@ -8,12 +8,80 @@
     "copyright": "Taken from tgstation at https://github.com/tgstation/tgstation/commit/31528c855ebba6d3d0afe2701f645d3a6702df8c. Modified by chromiumboy",
     "states": [
         {
-            "name": "terminus",
+            "name": "terminus_open",
             "directions": 4
         },
         {
-            "name": "terminus_glass",
+            "name": "terminus_closed",
             "directions": 4
+        },
+        {
+            "name": "terminus_opening",
+            "directions": 4,
+            "delays": [
+                [
+                    0.1,
+                    0.1,
+                    0.1,
+                    0.1,
+                    0.1
+                ],
+                [
+                    0.1,
+                    0.1,
+                    0.1,
+                    0.1,
+                    0.1
+                ],
+                [
+                    0.1,
+                    0.1,
+                    0.1,
+                    0.1,
+                    0.1
+                ],
+                [
+                    0.1,
+                    0.1,
+                    0.1,
+                    0.1,
+                    0.1
+                ]
+            ]
+        },
+        {
+            "name": "terminus_closing",
+            "directions": 4,
+            "delays": [
+                [
+                    0.1,
+                    0.1,
+                    0.1,
+                    0.1,
+                    0.1
+                ],
+                [
+                    0.1,
+                    0.1,
+                    0.1,
+                    0.1,
+                    0.1
+                ],
+                [
+                    0.1,
+                    0.1,
+                    0.1,
+                    0.1,
+                    0.1
+                ],
+                [
+                    0.1,
+                    0.1,
+                    0.1,
+                    0.1,
+                    0.1
+                ]
+            ]
         },
         {
             "name": "terminus_u",

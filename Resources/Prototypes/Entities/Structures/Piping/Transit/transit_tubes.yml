@@ -369,29 +369,20 @@
       state: pod_parked
       shader: unshaded
       visible: false
-    - map: [ "tube" ]
-      state: terminus
-    - map: [ "glass" ]  
-      state: terminus_glass
-      shader: unshaded
+    - map: [ "enum.TransitTubeStationVisuals.Base" ]
+      state: terminus_closed
   - type: Appearance
+  - type: AnimationPlayer
   - type: GenericVisualizer
     visuals:
       enum.DisposalUnitVisuals.IsFull:
         enum.DisposalUnitVisualLayers.OverlayFull:
           True: { visible: true }
           False: { visible: false }
-      enum.PowerDeviceVisuals.Powered:
-        glass:
-          False: { shader: shaded }
-          True: { shader: unshaded }
       enum.AnchorVisuals.Anchored:
-        tube:
+        enum.TransitTubeStationVisuals.Base:
           False: { state: terminus_u }
-          True: { state: terminus }
-        glass:
-          False: { visible: false }
-          True: { visible: true }  
+          True: { state: terminus_closed }
   - type: Physics
     bodyType: Static
     canCollide: false
@@ -426,13 +417,14 @@
     price: 70
   - type: PowerSwitch
   - type: DisposalUnit
-    automaticEngageTime: 0.5
-    manualFlushTime: 0.5
+    automaticEngageTime: 1
+    manualFlushTime: 1
     disablePressure: true
     flushDelay: 0
     flushSound: 
     insertSound: 
     maxCapacity: 1
+    entryDelay: 1
     whitelist:
       components:
       - Body
@@ -442,7 +434,8 @@
   - type: TileEmissionRequiresPower
   - type: TileEmission
     color: White
-    range: -0.25
+    range: 0
+  - type: TransitTubeStation
 
 - type: entity
   id: TransitTubeStation
