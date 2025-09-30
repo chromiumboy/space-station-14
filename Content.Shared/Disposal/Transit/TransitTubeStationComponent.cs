@@ -12,19 +12,19 @@ public sealed partial class TransitTubeStationComponent : Component
     /// Sound to play when the station opens.
     /// </summary>
     [DataField]
-    public SoundSpecifier OpeningSound = new SoundPathSpecifier("/Audio/Machines/blastdoor.ogg");
+    public SoundSpecifier OpeningSound = new SoundPathSpecifier("/Audio/Machines/windoor_open.ogg");
 
     /// <summary>
     /// Sound to play when the station closes.
     /// </summary>
     [DataField]
-    public SoundSpecifier ClosingSound = new SoundPathSpecifier("/Audio/Machines/blastdoor.ogg");
+    public SoundSpecifier ClosingSound = new SoundPathSpecifier("/Audio/Machines/windoor_open.ogg");
 
     /// <summary>
     /// The current state of the station.
     /// </summary>
     [DataField, AutoNetworkedField]
-    public TransitTubeStationState CurentState = TransitTubeStationState.Closed;
+    public TransitTubeStationState CurrentState = TransitTubeStationState.Closed;
 
     /// <summary>
     /// The current visual state of the station.
@@ -92,6 +92,12 @@ public enum TransitTubeStationState
 
 [Serializable, NetSerializable]
 public enum TransitTubeStationVisuals
+{
+    Key
+}
+
+[Serializable, NetSerializable]
+public enum TransitTubeStationVisualLayers
 {
     Base
 }

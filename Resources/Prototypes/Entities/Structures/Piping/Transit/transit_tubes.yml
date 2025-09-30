@@ -369,7 +369,7 @@
       state: pod_parked
       shader: unshaded
       visible: false
-    - map: [ "enum.TransitTubeStationVisuals.Base" ]
+    - map: [ "enum.TransitTubeStationVisualLayers.Base" ]
       state: terminus_closed
   - type: Appearance
   - type: AnimationPlayer
@@ -380,7 +380,7 @@
           True: { visible: true }
           False: { visible: false }
       enum.AnchorVisuals.Anchored:
-        enum.TransitTubeStationVisuals.Base:
+        enum.TransitTubeStationVisualLayers.Base:
           False: { state: terminus_u }
           True: { state: terminus_closed }
   - type: Physics
