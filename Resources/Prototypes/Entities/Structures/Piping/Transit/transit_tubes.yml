@@ -72,7 +72,7 @@
   components:
   - type: Sprite
     overrideContainerOcclusion: true
-    drawdepth: BlastDoors
+    drawdepth: TransitPods
     sprite: Structures/Piping/Transit/transit_pods.rsi
     layers:
     - map: [ "pod" ]
@@ -101,13 +101,13 @@
   description: A BBT (big broken tube).
   components:
   - type: Sprite
-    drawdepth: Overdoors
+    drawdepth: TransitTubes
     sprite: Structures/Piping/Transit/transit_tubes.rsi
     layers:
     - map: [ "tube" ]
       state: straight
   - type: Construction
-    graph: DisposalPipe
+    graph: TransitTube
     node: broken
 
 - type: entity
@@ -117,7 +117,7 @@
   description: A huge tube segment used for constructing transit systems.
   components:
   - type: Sprite
-    drawdepth: Overdoors
+    drawdepth: TransitTubes
     sprite: Structures/Piping/Transit/transit_tubes.rsi
     layers:
     - map: [ "tube" ]
@@ -141,6 +141,9 @@
     exits:
     - South
     - North
+  - type: Construction
+    graph: TransitTube
+    node: straight
 
 - type: entity
   id: TransitTubeDiagonal
@@ -149,7 +152,7 @@
   description: A huge tube segment used for constructing transit systems.
   components:
   - type: Sprite
-    drawdepth: Overdoors
+    drawdepth: TransitTubes
     sprite: Structures/Piping/Transit/transit_tubes.rsi
     layers:
     - map: [ "tube" ]
@@ -183,6 +186,9 @@
     exits:
     - SouthWest
     - NorthEast
+  - type: Construction
+    graph: TransitTube
+    node: diagonal
 
 - type: entity
   id: TransitTubeJunction
@@ -191,7 +197,7 @@
   description: A three-way junction. The arrow indicates where commuters preferentially exit.
   components:
   - type: Sprite
-    drawdepth: Overdoors
+    drawdepth: TransitTubes
     sprite: Structures/Piping/Transit/transit_tubes.rsi
     layers:
     - map: [ "tube" ]
@@ -226,6 +232,9 @@
     maxDeltaAngle: 45
   - type: Flippable
     mirrorEntity: TransitTubeJunctionFlipped
+  - type: Construction
+    graph: TransitTube
+    node: junction
 
 - type: entity
   id: TransitTubeJunctionFlipped
@@ -234,7 +243,7 @@
   suffix: flipped
   components:
   - type: Sprite
-    drawdepth: Overdoors
+    drawdepth: TransitTubes
     sprite: Structures/Piping/Transit/transit_tubes.rsi
     layers:
     - map: [ "tube" ]
@@ -269,6 +278,9 @@
     minDeltaAngle: 45
   - type: Flippable
     mirrorEntity: TransitTubeJunction
+  - type: Construction
+    graph: TransitTube
+    node: junctionFlipped
 
 - type: entity
   id: TransitTubeBend
@@ -277,7 +289,7 @@
   description: A transit tube bent at a 135 degree angle.
   components:
   - type: Sprite
-    drawdepth: Overdoors
+    drawdepth: TransitTubes
     sprite: Structures/Piping/Transit/transit_tubes.rsi
     layers:
     - map: [ "tube" ]
@@ -308,6 +320,9 @@
         shape:
           !type:PhysShapeAabb
           bounds: "-0.25,-0.5,0.5,0.5"
+  - type: Construction
+    graph: TransitTube
+    node: bend
 
 - type: entity
   id: TransitTubeBendFlipped
@@ -316,7 +331,7 @@
   suffix: flipped
   components:
   - type: Sprite
-    drawdepth: Overdoors
+    drawdepth: TransitTubes
     sprite: Structures/Piping/Transit/transit_tubes.rsi
     layers:
     - map: [ "tube" ]
@@ -349,6 +364,9 @@
         shape:
           !type:PhysShapeAabb
           bounds: "-0.5,-0.5,0.25,0.5"
+  - type: Construction
+    graph: TransitTube
+    node: bendFlipped
 
 - type: entity
   abstract: true
@@ -361,7 +379,7 @@
     - Disposal
   components:
   - type: Sprite
-    drawdepth: Overdoors
+    drawdepth: TransitTubes
     sprite: Structures/Piping/Transit/transit_stations.rsi
     layers:
     - map: [ "enum.DisposalUnitVisualLayers.OverlayFull" ]

@@ -227,6 +227,76 @@
   placementMode: SnapgridCenter
   canBuildInImpassable: false
 
+# TRANSIT TUBES
+#- type: construction
+#  id: TransitTubeStation
+#  graph: DisposalMachine
+#  startNode: start
+#  targetNode: disposal_unit
+#  category: construction-category-utilities
+#  placementMode: SnapgridCenter
+#  canBuildInImpassable: false
+
+- type: construction
+  id: TransitTube
+  graph: TransitTube
+  startNode: start
+  targetNode: straight
+  category: construction-category-utilities
+  placementMode: SnapgridCenter
+  canBuildInImpassable: false
+
+- type: construction
+  id: TransitTubeDiagonal
+  graph: TransitTube
+  startNode: start
+  targetNode: diagonal
+  category: construction-category-utilities
+  placementMode: SnapgridCenter
+  canBuildInImpassable: false
+
+- type: construction
+  id: TransitTubeJunction
+  graph: TransitTube
+  startNode: start
+  targetNode: junction
+  category: construction-category-utilities
+  placementMode: SnapgridCenter
+  canBuildInImpassable: false
+  mirror: TransitTubeJunctionFlipped
+  
+- type: construction
+  hide: true
+  id: TransitTubeJunctionFlipped
+  graph: TransitTube
+  startNode: start
+  targetNode: junctionFlipped
+  category: construction-category-utilities
+  placementMode: SnapgridCenter
+  canBuildInImpassable: false
+  mirror: TransitTubeJunction
+
+- type: construction
+  id: TransitTubeBend
+  graph: TransitTube
+  startNode: start
+  targetNode: bend
+  category: construction-category-utilities
+  placementMode: SnapgridCenter
+  canBuildInImpassable: false
+  mirror: TransitTubeBendFlipped
+
+- type: construction
+  hide: true
+  id: TransitTubeBendFlipped
+  graph: TransitTube
+  startNode: start
+  targetNode: bendFlipped
+  category: construction-category-utilities
+  placementMode: SnapgridCenter
+  canBuildInImpassable: false
+  mirror: TransitTubeBend
+
 # ATMOS
 - type: construction
   id: AirAlarmFixture
