@@ -80,6 +80,7 @@
       shader: unshaded
   - type: DisposalHolder
     traversalSpeed: 5
+    despawnEffect: EffectTransitPodDisappear
   - type: ContainerContainer
     containers:
       DisposalHolderComponent: !type:Container
@@ -435,6 +436,7 @@
     price: 70
   - type: PowerSwitch
   - type: DisposalUnit
+    holderPrototypeId: TransitHolder
     automaticEngageTime: 1
     manualFlushTime: 1
     disablePressure: true
@@ -447,7 +449,6 @@
       components:
       - Body
   - type: DisposalEntry
-    holderPrototypeId: TransitHolder
   - type: DisposalTube 
   - type: TileEmissionRequiresPower
   - type: TileEmission

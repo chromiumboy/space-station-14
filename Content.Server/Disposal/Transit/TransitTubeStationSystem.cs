@@ -9,6 +9,7 @@ namespace Content.Server.Disposal.Transit;
 public sealed partial class TransitTubeStationSystem : SharedTransitTubeStationSystem
 {
     [Dependency] private readonly SharedAppearanceSystem _appearance = default!;
+    [Dependency] private readonly SharedDisposalUnitSystem _disposalUnit = default!;
 
     // TODO: Move this to shared once the issues with animation flickering is resolved.
 
@@ -53,7 +54,7 @@ public sealed partial class TransitTubeStationSystem : SharedTransitTubeStationS
         ent.Comp.CurrentPodEffect = null;
 
         if (TryComp<DisposalUnitComponent>(ent, out var disposalUnit) &&
-            disposalUnit.Container.Count == 0)
+            _disposalUnit.GetContainedEntityCount((ent, disposalUnit)) == 0)
         {
             var effect = Spawn(ent.Comp.PodVanishEffect, Transform(ent).Coordinates);
             Transform(effect).LocalRotation = Transform(ent).LocalRotation;
