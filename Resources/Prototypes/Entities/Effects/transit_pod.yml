@@ -1,0 +1,30 @@
+﻿- type: entity
+  id: EffectTransitPodBase
+  abstract: true
+  categories: [ HideSpawnMenu ]
+  components:
+  - type: Transform
+    anchored: True
+  - type: Sprite
+    drawdepth: TransitPods
+    sprite: Effects/transit_pods.rsi
+    state: pod_appear_effect
+    loop: false
+  - type: Tag
+    tags:
+    - HideContextMenu
+  
+- type: entity
+  parent: EffectTransitPodBase
+  id: EffectTransitPodAppear
+  categories: [ HideSpawnMenu ]
+    
+- type: entity
+  parent: EffectTransitPodBase
+  id: EffectTransitPodDisappear
+  categories: [ HideSpawnMenu ]
+  components:
+  - type: Sprite
+    state: pod_disappear_effect
+  - type: TimedDespawn
+    lifetime: 0.6

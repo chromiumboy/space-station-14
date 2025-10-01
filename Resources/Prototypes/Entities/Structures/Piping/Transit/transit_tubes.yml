@@ -79,7 +79,7 @@
       state: pod_occupied
       shader: unshaded
   - type: DisposalHolder
-    traversalTime: 0.2
+    traversalSpeed: 5
   - type: ContainerContainer
     containers:
       DisposalHolderComponent: !type:Container

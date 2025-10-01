@@ -1,5 +1,6 @@
 using Content.Shared.Disposal.Components;
 using Content.Shared.Disposal.Transit;
+using Content.Shared.Disposal.Unit;
 using Content.Shared.DoAfter;
 
 namespace Content.Server.Disposal.Transit;
@@ -16,7 +17,7 @@ public sealed partial class TransitTubeStationSystem : SharedTransitTubeStationS
         base.Initialize();
 
         SubscribeLocalEvent<TransitTubeStationComponent, DoAfterAttemptEvent<DisposalDoAfterEvent>>(OnStartInsert);
-        SubscribeLocalEvent<TransitTubeStationComponent, DisposalDoAfterEvent>(OnInsert);
+        SubscribeLocalEvent<TransitTubeStationComponent, DisposalDoAfterEvent>(OnInsert, after: [typeof(SharedDisposalUnitSystem)]);
     }
 
     private void OnStartInsert(Entity<TransitTubeStationComponent> ent, ref DoAfterAttemptEvent<DisposalDoAfterEvent> args)
@@ -28,6 +29,14 @@ public sealed partial class TransitTubeStationSystem : SharedTransitTubeStationS
         Dirty(ent);
 
         _appearance.SetData(ent, TransitTubeStationVisuals.Key, TransitTubeStationState.Open);
+
+        if (ent.Comp.CurrentPodEffect == null)
+        {
+            var effect = Spawn(ent.Comp.PodCreationEffect, Transform(ent).Coordinates);
+            Transform(effect).LocalRotation = Transform(ent).LocalRotation;
+
+            ent.Comp.CurrentPodEffect = effect;
+        }
     }
 
     private void OnInsert(Entity<TransitTubeStationComponent> ent, ref DisposalDoAfterEvent args)
@@ -39,5 +48,15 @@ public sealed partial class TransitTubeStationSystem : SharedTransitTubeStationS
         Dirty(ent);
 
         _appearance.SetData(ent, TransitTubeStationVisuals.Key, TransitTubeStationState.Closed);
+
+        QueueDel(ent.Comp.CurrentPodEffect);
+        ent.Comp.CurrentPodEffect = null;
+
+        if (TryComp<DisposalUnitComponent>(ent, out var disposalUnit) &&
+            disposalUnit.Container.Count == 0)
+        {
+            var effect = Spawn(ent.Comp.PodVanishEffect, Transform(ent).Coordinates);
+            Transform(effect).LocalRotation = Transform(ent).LocalRotation;
+        }
     }
 }

@@ -1,5 +1,6 @@
 using Robust.Shared.Audio;
 using Robust.Shared.GameStates;
+using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization;
 
 namespace Content.Shared.Disposal.Transit;
@@ -79,6 +80,24 @@ public sealed partial class TransitTubeStationComponent : Component
     /// </summary>
     [ViewVariables(VVAccess.ReadWrite)]
     public object ClosingAnimation = default!;
+
+    /// <summary>
+    /// Effect played when a transit pod is going to be created.
+    /// </summary>
+    [DataField]
+    public EntProtoId PodCreationEffect = "EffectTransitPodAppear";
+
+    /// <summary>
+    /// Effect played when a transit pod is destroyed.
+    /// </summary>
+    [DataField]
+    public EntProtoId PodVanishEffect = "EffectTransitPodDisappear";
+
+    /// <summary>
+    /// The effect currently being played on the station.
+    /// </summary>
+    [DataField]
+    public EntityUid? CurrentPodEffect;
 }
 
 [Serializable, NetSerializable]
