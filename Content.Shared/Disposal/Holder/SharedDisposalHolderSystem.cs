@@ -60,9 +60,9 @@ public abstract partial class SharedDisposalHolderSystem : EntitySystem
         SubscribeLocalEvent<GetVisMaskEvent>(OnGetVisibility);
     }
 
-    private void OnComponentStartup(EntityUid uid, DisposalHolderComponent holder, ComponentStartup args)
+    private void OnComponentStartup(Entity<DisposalHolderComponent> ent, ref ComponentStartup args)
     {
-        holder.Container = _containerSystem.EnsureContainer<Container>(uid, nameof(DisposalHolderComponent));
+        ent.Comp.Container = _containerSystem.EnsureContainer<Container>(ent, nameof(DisposalHolderComponent));
     }
 
     private void OnActorTransition(Entity<ActorComponent> ent, ref DisposalSystemTransitionEvent args)
@@ -164,7 +164,7 @@ public abstract partial class SharedDisposalHolderSystem : EntitySystem
             if (heldXform.ParentUid != ent.Owner)
                 continue;
 
-            if (disposalUnit != null)
+            if (disposalUnit != null && disposalUnit.Container != null)
             {
                 _containerSystem.Insert((held, heldXform, meta), disposalUnit.Container);
             }
@@ -189,6 +189,13 @@ public abstract partial class SharedDisposalHolderSystem : EntitySystem
         }
 
         ExpelAtmos(ent);
+
+        if (ent.Comp.DespawnEffect != null)
+        {
+            var effect = Spawn(ent.Comp.DespawnEffect, xform.Coordinates);
+            Transform(effect).LocalRotation = xform.LocalRotation;
+        }
+
         PredictedDel(ent.Owner);
     }
 
@@ -351,12 +358,18 @@ public abstract partial class SharedDisposalHolderSystem : EntitySystem
 
     public override void Update(float frameTime)
     {
-        var query = EntityQueryEnumerator<DisposalHolderComponent>();
-        while (query.MoveNext(out var uid, out var holder))
+        var query = EntityQueryEnumerator<DisposalHolderComponent, TransformComponent>();
+        while (query.MoveNext(out var uid, out var holder, out var xform))
         {
-            // Remove any disposal holders that are empty
+            // Remove any disposal holders that were somehow emptied
             if (holder.Container?.Count == 0)
             {
+                if (holder.DespawnEffect != null)
+                {
+                    var effect = Spawn(holder.DespawnEffect, xform.Coordinates);
+                    Transform(effect).LocalRotation = xform.LocalRotation;
+                }
+
                 PredictedQueueDel(uid);
                 continue;
             }

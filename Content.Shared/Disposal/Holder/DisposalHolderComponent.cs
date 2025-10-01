@@ -4,9 +4,13 @@ using Content.Shared.Disposal.Tube;
 using Content.Shared.FixedPoint;
 using Robust.Shared.Containers;
 using Robust.Shared.GameStates;
+using Robust.Shared.Prototypes;
 
 namespace Content.Shared.Disposal.Unit;
 
+/// <summary>
+/// Holder for entities being transported through the disposals system.
+/// </summary>
 [RegisterComponent, NetworkedComponent, AutoGenerateComponentState]
 [Access(new[] { typeof(SharedDisposalTubeSystem), typeof(SharedDisposalHolderSystem) })]
 public sealed partial class DisposalHolderComponent : Component, IGasMixtureHolder
@@ -115,4 +119,10 @@ public sealed partial class DisposalHolderComponent : Component, IGasMixtureHold
     /// </summary>
     [DataField]
     public FixedPoint2 MaxAllowedDamage = 50;
+
+    /// <summary>
+    /// Effect that gets played when the disposal holder is to be deleted.
+    /// </summary>
+    [DataField]
+    public EntProtoId? DespawnEffect;
 }

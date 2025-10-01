@@ -1,10 +1,11 @@
 using Content.Shared.Atmos;
-using Robust.Shared.Audio;
+using Content.Shared.DoAfter;
 using Content.Shared.Whitelist;
+using Robust.Shared.Audio;
 using Robust.Shared.Containers;
 using Robust.Shared.GameStates;
+using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization;
-using Content.Shared.DoAfter;
 
 namespace Content.Shared.Disposal.Components;
 
@@ -14,8 +15,6 @@ namespace Content.Shared.Disposal.Components;
 [RegisterComponent, NetworkedComponent, AutoGenerateComponentState(true), AutoGenerateComponentPause]
 public sealed partial class DisposalUnitComponent : Component
 {
-    public const string ContainerId = "disposals";
-
     /// <summary>
     /// Air contained in the disposal unit.
     /// </summary>
@@ -148,7 +147,8 @@ public sealed partial class DisposalUnitComponent : Component
     /// <summary>
     /// Container of entities inside this disposal unit.
     /// </summary>
-    [ViewVariables] public Container Container = default!;
+    [DataField]
+    public Container? Container;
 
     /// <summary>
     /// Was the disposals unit engaged for a manual flush.
@@ -167,6 +167,13 @@ public sealed partial class DisposalUnitComponent : Component
     /// </summary>
     [DataField]
     public int MaxCapacity = 30;
+
+    /// <summary>
+    /// Proto ID of the holder spawned to contain entities that
+    /// are inserted into the disposals system.
+    /// </summary>
+    [DataField]
+    public EntProtoId HolderPrototypeId = "DisposalHolder";
 }
 
 /// <summary>

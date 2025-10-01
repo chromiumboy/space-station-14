@@ -5,7 +5,9 @@ using Content.Shared.Disposal.Unit;
 using Content.Shared.Popups;
 using Robust.Shared.Containers;
 using Robust.Shared.Map.Components;
+using Robust.Shared.Network;
 using Robust.Shared.Random;
+using Robust.Shared.Timing;
 using System.Linq;
 
 namespace Content.Shared.Disposal.Tube;
@@ -19,9 +21,12 @@ public abstract partial class SharedDisposalTubeSystem : EntitySystem
     [Dependency] private readonly IRobustRandom _random = default!;
     [Dependency] private readonly SharedPopupSystem _popups = default!;
     [Dependency] private readonly SharedDisposalHolderSystem _disposalHolder = default!;
+    [Dependency] private readonly SharedDisposalUnitSystem _disposalUnit = default!;
     [Dependency] private readonly SharedContainerSystem _containerSystem = default!;
     [Dependency] private readonly SharedTransformSystem _transform = default!;
     [Dependency] private readonly SharedMapSystem _map = default!;
+    [Dependency] private readonly IGameTiming _timing = default!;
+    [Dependency] private readonly INetManager _net = default!;
 
     public override void Initialize()
     {
@@ -178,13 +183,16 @@ public abstract partial class SharedDisposalTubeSystem : EntitySystem
     /// <param name="unit">The disposals unit.</param>
     /// <param name="tags">Tags to add to the disposed contents.</param>
     /// <returns>True if the insertion was successful.</returns>
-    public bool TryInsert(Entity<DisposalEntryComponent, DisposalTubeComponent> ent, Entity<DisposalUnitComponent> unit, IEnumerable<string>? tags = default)
+    public bool TryInsert(Entity<DisposalTubeComponent> ent, Entity<DisposalUnitComponent> unit, IEnumerable<string>? tags = default)
     {
-        if (unit.Comp.Container.Count == 0)
+        if (_disposalUnit.GetContainedEntityCount(unit) == 0)
+            return false;
+
+        if (_net.IsClient && !_timing.IsFirstTimePredicted)
             return false;
 
         var xform = Transform(ent);
-        var holder = Spawn(ent.Comp1.HolderPrototypeId, _transform.GetMapCoordinates(ent, xform: xform));
+        var holder = Spawn(unit.Comp.HolderPrototypeId, _transform.GetMapCoordinates(ent, xform: xform));
         var holderComponent = Comp<DisposalHolderComponent>(holder);
         var holderEnt = new Entity<DisposalHolderComponent>(holder, holderComponent);
 
@@ -192,7 +200,7 @@ public abstract partial class SharedDisposalTubeSystem : EntitySystem
 
         if (holderComponent.Container != null)
         {
-            foreach (var entity in unit.Comp.Container.ContainedEntities.ToArray())
+            foreach (var entity in _disposalUnit.GetContainedEntities(unit))
             {
                 _containerSystem.Insert(entity, holderComponent.Container);
             }
@@ -206,7 +214,7 @@ public abstract partial class SharedDisposalTubeSystem : EntitySystem
             Dirty(holderEnt);
         }
 
-        return _disposalHolder.TryEnterTube(holderEnt, (ent, ent.Comp2));
+        return _disposalHolder.TryEnterTube(holderEnt, ent);
     }
 
     /// <summary>
