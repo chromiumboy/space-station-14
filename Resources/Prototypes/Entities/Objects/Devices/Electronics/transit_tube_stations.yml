@@ -1,0 +1,14 @@
+- type: entity
+  parent: BaseElectronics
+  id: TransitTubeStationElectronics 
+  name: transit tube station electronics
+  description: An electronics board used in a transit tube terminus.
+  components:
+  - type: Sprite
+    sprite: Objects/Misc/module.rsi
+    state: mcontroller
+  - type: Tag
+    tags:
+    - TransitTubeStationElectronics
+  - type: StaticPrice
+    price: 55

@@ -26,6 +26,11 @@
   id: MailingUnitElectronics
   result: MailingUnitElectronics
 
+- type: latheRecipe
+  parent: [ BaseElectronicsRecipe, BaseCircuitryRecipeCategory ]
+  id: TransitTubeStationElectronics
+  result: TransitTubeStationElectronics
+  
 # Airtight
 - type: latheRecipe
   parent: [ BaseCheapElectronicsRecipe, BaseCircuitryRecipeCategory ]

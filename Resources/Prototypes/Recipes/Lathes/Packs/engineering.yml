@@ -38,6 +38,7 @@
   - StationMapElectronics
   - FireAlarmElectronics
   - MailingUnitElectronics
+  - TransitTubeStationElectronics
   - SignalTimerElectronics
   - APCElectronics
   - SMESMachineCircuitboard
