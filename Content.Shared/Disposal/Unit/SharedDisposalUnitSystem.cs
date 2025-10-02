@@ -426,6 +426,9 @@ public abstract class SharedDisposalUnitSystem : EntitySystem
         if (args.Cancelled)
             return;
 
+        if (args.Container != ent.Comp.Container)
+            return;
+
         if (GetContainedEntityCount(ent) >= ent.Comp.MaxCapacity)
         {
             // TODO: If ContainerIsInsertingAttemptEvent ever ends up having the user

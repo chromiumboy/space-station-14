@@ -58,10 +58,10 @@
   - type: ApcPowerReceiver
     load: 5
   - type: ExtensionCableReceiver
-  - type: TileEmissionRequiresPower
+  #- type: TileEmissionRequiresPower
   - type: TileEmission
     color: White
-    range: 0
+    range: -0.2
   - type: StaticPrice
     price: 30
 
@@ -125,12 +125,13 @@
       state: straight
     - map: [ "glass" ]
       state: straight_glass
+      shader: unshaded
   - type: GenericVisualizer
     visuals:
-      enum.PowerDeviceVisuals.Powered:
-        glass:
-          False: { shader: shaded }
-          True: { shader: shaded }
+      #enum.PowerDeviceVisuals.Powered:
+      #  glass:
+      #    False: { shader: shaded }
+      #    True: { shader: unshaded }
       enum.AnchorVisuals.Anchored:
         tube:
           False: { state: straight_u }
@@ -160,13 +161,8 @@
       state: diagonal
     - map: [ "glass" ]
       state: diagonal_glass
-      shader: unshaded
   - type: GenericVisualizer
     visuals:
-      enum.PowerDeviceVisuals.Powered:
-        glass:
-          False: { shader: shaded }
-          True: { shader: unshaded }
       enum.AnchorVisuals.Anchored:
         tube:
           False: { state: diagonal_u }
@@ -205,13 +201,8 @@
       state: junct
     - map: [ "glass" ]
       state: junct_glass      
-      shader: unshaded
   - type: GenericVisualizer
     visuals:
-      enum.PowerDeviceVisuals.Powered:
-        glass:
-          False: { shader: shaded }
-          True: { shader: unshaded }
       enum.AnchorVisuals.Anchored:
         tube:
           False: { state: junct_u }
@@ -251,13 +242,8 @@
       state: junct_f
     - map: [ "glass" ]
       state: junct_f_glass
-      shader: unshaded
   - type: GenericVisualizer
     visuals:
-      enum.PowerDeviceVisuals.Powered:
-        glass:
-          False: { shader: shaded }
-          True: { shader: unshaded }
       enum.AnchorVisuals.Anchored:
         tube:
           False: { state: junct_f_u }
@@ -297,17 +283,12 @@
       state: bend
     - map: [ "glass" ]
       state: bend_glass   
-      shader: unshaded      
   - type: DisposalTube
     exits:
     - NorthEast
     - South
   - type: GenericVisualizer
     visuals:
-      enum.PowerDeviceVisuals.Powered:
-        glass:
-          False: { shader: shaded }
-          True: { shader: unshaded }
       enum.AnchorVisuals.Anchored:
         tube:
           False: { state: bend_u }
@@ -339,17 +320,12 @@
       state: bend_f
     - map: [ "glass" ]
       state: bend_f_glass
-      shader: unshaded
   - type: DisposalTube
     exits:
     - NorthWest
     - South
   - type: GenericVisualizer
     visuals:
-      enum.PowerDeviceVisuals.Powered:
-        glass:
-          False: { shader: shaded }
-          True: { shader: unshaded }
       enum.AnchorVisuals.Anchored:
         tube:
           False: { state: bend_f_u }
@@ -387,7 +363,7 @@
       sprite: Structures/Piping/Transit/transit_pods.rsi
       state: pod_parked
       shader: unshaded
-      visible: false
+      visible: true
     - map: [ "enum.TransitTubeStationVisualLayers.Base" ]
       state: terminus_closed
   - type: Appearance
@@ -450,13 +426,101 @@
       - Body
   - type: DisposalEntry
   - type: DisposalTube 
-  - type: TileEmissionRequiresPower
+  #- type: TileEmissionRequiresPower
   - type: TileEmission
-    color: White
+    color: DarkGray
     range: 0
   - type: TransitTubeStation
+  - type: Construction
+    graph: TransitTubeStations
+    node: station
+  - type: ContainerContainer
+    containers:
+      board: !type:Container
+  - type: ContainerFill
+    containers:
+      board:
+      - TransitTubeStationElectronics
 
 - type: entity
   id: TransitTubeStation
   parent: TransitTubeStationBase
   name: transit tube station
+
+- type: entity
+  id: TransitTubeStationTerminus
+  parent: TransitTubeStationBase
+  name: transit tube terminus
+  components:
+  - type: Construction
+    graph: TransitTubeStations
+    node: terminus
+
+# The transit tube station assemblies
+- type: entity
+  parent: BaseStructure
+  id: TransitTubeStationFrame
+  name: transit tube station
+  description: An unfinished transit tube station.
+  components:
+  - type: Anchorable
+  - type: Rotatable
+  - type: Sprite
+    drawdepth: TransitTubes
+    sprite: Structures/Piping/Transit/transit_stations.rsi
+    layers:
+    - map: [ "enum.ConstructionVisuals.Layer" ]
+      state: station_frame
+  - type: InteractionOutline
+  - type: Fixtures
+    fixtures:
+      fix1:
+        shape:
+          !type:PhysShapeAabb
+          bounds: "-0.5,-0.5,0.5,0.5"
+        mask:
+        - MachineMask
+        layer:
+        - MachineLayer
+        density: 200
+  - type: Destructible
+    thresholds:
+    - trigger:
+        !type:DamageTrigger
+        damage: 200
+      behaviors:
+      - !type:DoActsBehavior
+        acts: [ "Destruction" ]
+    - trigger:
+        !type:DamageTrigger
+        damage: 100
+      behaviors:
+      - !type:DoActsBehavior
+        acts: ["Destruction"]
+      - !type:PlaySoundBehavior
+        sound:
+          collection: MetalBreak
+          params:
+            volume: -6
+      - !type:SpawnEntitiesBehavior
+        spawn:
+          SheetSteel1:
+            min: 1
+            max: 1
+  - type: Construction
+    graph: TransitTubeStations
+    node: frame
+
+- type: entity
+  parent: TransitTubeStationFrame
+  id: TransitTubeTerminusFrame
+  name: transit tube terminus
+  description: An unfinished transit tube terminus.
+  components:
+  - type: Sprite
+    layers:
+    - map: [ "enum.ConstructionVisuals.Layer" ]
+      state: terminus_frame
+  - type: Construction
+    graph: TransitTubeStations
+    node: frameTerminus

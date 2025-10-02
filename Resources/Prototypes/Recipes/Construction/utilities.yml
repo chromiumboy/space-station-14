@@ -228,14 +228,23 @@
   canBuildInImpassable: false
 
 # TRANSIT TUBES
-#- type: construction
-#  id: TransitTubeStation
-#  graph: DisposalMachine
-#  startNode: start
-#  targetNode: disposal_unit
-#  category: construction-category-utilities
-#  placementMode: SnapgridCenter
-#  canBuildInImpassable: false
+- type: construction
+  id: TransitTubeStation
+  graph: TransitTubeStations
+  startNode: start
+  targetNode: station
+  category: construction-category-utilities
+  placementMode: SnapgridCenter
+  canBuildInImpassable: false
+
+- type: construction
+  id: TransitTubeStationTerminus
+  graph: TransitTubeStations
+  startNode: start
+  targetNode: terminus
+  category: construction-category-utilities
+  placementMode: SnapgridCenter
+  canBuildInImpassable: false
 
 - type: construction
   id: TransitTube
