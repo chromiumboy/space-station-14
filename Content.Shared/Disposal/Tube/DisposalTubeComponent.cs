@@ -14,19 +14,19 @@ namespace Content.Shared.Disposal.Tube;
 public sealed partial class DisposalTubeComponent : Component
 {
     /// <summary>
-    /// Sound played when entities passing through this pipe change direction.
+    /// Sound played if entities passing through this tube change direction.
     /// </summary>
     [DataField]
     public SoundSpecifier ClangSound = new SoundPathSpecifier("/Audio/Effects/clang.ogg", AudioParams.Default.WithVolume(-5f));
 
     /// <summary>
-    /// Container of entities that are currently inside this tube.
+    /// Container holding the entities that are currently inside this tube.
     /// </summary>
     [DataField]
     public DisposalHolderComponent? Contents;
 
     /// <summary>
-    /// Damage dealt to containing entities on every turn.
+    /// Damage dealt to containing entities if they make a turn in this tube.
     /// </summary>
     [DataField]
     public DamageSpecifier DamageOnTurn = new()
