@@ -9,6 +9,7 @@ public enum NodeGroupID : byte
     AMEngine,
     Pipe,
     WireNet,
+    TransitTube,
 
     /// <summary>
     /// Group used by the TEG.

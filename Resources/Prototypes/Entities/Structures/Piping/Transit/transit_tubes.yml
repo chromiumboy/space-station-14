@@ -55,6 +55,7 @@
   - type: CollideOnAnchor
   - type: DisposalTube
     clangSound: "/Audio/Effects/toss.ogg"
+  - type: TransitTube
   - type: ApcPowerReceiver
     load: 5
   - type: ExtensionCableReceiver
@@ -146,6 +147,14 @@
   - type: Construction
     graph: TransitTube
     node: straight
+  - type: NodeContainer
+    nodes:
+      tube:
+        !type:TransitTubeNode
+        nodeGroupID: TransitTube
+        directions: 
+        - South
+        - North 
 
 - type: entity
   id: TransitTubeDiagonal
@@ -186,6 +195,14 @@
   - type: Construction
     graph: TransitTube
     node: diagonal
+  - type: NodeContainer
+    nodes:
+      tube:
+        !type:TransitTubeNode
+        nodeGroupID: TransitTube
+        directions: 
+        - SouthWest
+        - NorthEast 
 
 - type: entity
   id: TransitTubeJunction
@@ -227,6 +244,15 @@
   - type: Construction
     graph: TransitTube
     node: junction
+  - type: NodeContainer
+    nodes:
+      tube:
+        !type:TransitTubeNode
+        nodeGroupID: TransitTube
+        directions: 
+        - NorthWest
+        - NorthEast 
+        - South
 
 - type: entity
   id: TransitTubeJunctionFlipped
@@ -268,6 +294,15 @@
   - type: Construction
     graph: TransitTube
     node: junctionFlipped
+  - type: NodeContainer
+    nodes:
+      tube:
+        !type:TransitTubeNode
+        nodeGroupID: TransitTube
+        directions: 
+        - NorthEast
+        - NorthWest 
+        - South
 
 - type: entity
   id: TransitTubeBend
@@ -305,6 +340,14 @@
   - type: Construction
     graph: TransitTube
     node: bend
+  - type: NodeContainer
+    nodes:
+      tube:
+        !type:TransitTubeNode
+        nodeGroupID: TransitTube
+        directions: 
+        - NorthEast
+        - South
 
 - type: entity
   id: TransitTubeBendFlipped
@@ -344,6 +387,14 @@
   - type: Construction
     graph: TransitTube
     node: bendFlipped
+  - type: NodeContainer
+    nodes:
+      tube:
+        !type:TransitTubeNode
+        nodeGroupID: TransitTube
+        directions: 
+        - NorthWest
+        - South
 
 - type: entity
   abstract: true
@@ -425,7 +476,11 @@
       components:
       - Body
   - type: DisposalEntry
-  - type: DisposalTube 
+  - type: DisposalTube
+    exits:
+    - South
+    - North
+  - type: TransitTube
   #- type: TileEmissionRequiresPower
   - type: TileEmission
     color: DarkGray
@@ -441,6 +496,14 @@
     containers:
       board:
       - TransitTubeStationElectronics
+  - type: NodeContainer
+    nodes:
+      tube:
+        !type:TransitTubeNode
+        nodeGroupID: TransitTube
+        directions:
+        - South
+        - North
 
 - type: entity
   id: TransitTubeStation
@@ -455,6 +518,16 @@
   - type: Construction
     graph: TransitTubeStations
     node: terminus
+  - type: DisposalTube
+    exits:
+    - South
+  - type: NodeContainer
+    nodes:
+      tube:
+        !type:TransitTubeNode
+        nodeGroupID: TransitTube
+        directions:
+        - South
 
 # The transit tube station assemblies
 - type: entity
