@@ -214,7 +214,7 @@ public abstract partial class SharedConduitSystem : EntitySystem
         // while hidden under subfloors.
         AddPVSOverride(holderEnt.Value);
 
-        foreach (var entity in container.ContainedEntities)
+        foreach (var entity in container.ContainedEntities.ToArray())
         {
             _containerSystem.Insert(entity, holderComponent.Container);
         }
