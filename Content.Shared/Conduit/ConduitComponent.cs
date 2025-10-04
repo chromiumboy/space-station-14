@@ -55,7 +55,7 @@ public sealed partial class ConduitComponent : Component
     /// Sets the type of conduit. Only conduits of the same type connect to each other.
     /// </summary>
     [DataField]
-    public ConduitType DisposalTubeType = ConduitType.Disposals;
+    public ConduitType ConduitType = ConduitType.Disposals;
 }
 
 /// <summary>

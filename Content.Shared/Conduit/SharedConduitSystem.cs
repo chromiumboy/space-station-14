@@ -128,7 +128,7 @@ public abstract partial class SharedConduitSystem : EntitySystem
         var position = xform.Coordinates;
         foreach (var entity in _map.GetInDir(xform.GridUid.Value, grid, position, nextDirection))
         {
-            if (!TryComp(entity, out ConduitComponent? tube) || tube.DisposalTubeType != ent.Comp.DisposalTubeType)
+            if (!TryComp(entity, out ConduitComponent? tube) || tube.ConduitType != ent.Comp.ConduitType)
                 continue;
 
             if (!CanConnect((entity, tube), oppositeDirection))
