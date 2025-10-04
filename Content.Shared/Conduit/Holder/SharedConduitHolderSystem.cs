@@ -12,6 +12,7 @@ using Robust.Shared.Map.Components;
 using Robust.Shared.Network;
 using Robust.Shared.Physics.Systems;
 using Robust.Shared.Player;
+using Robust.Shared.Timing;
 using System.Text.RegularExpressions;
 
 namespace Content.Shared.Conduit.Holder;
@@ -35,6 +36,7 @@ public abstract partial class SharedConduitHolderSystem : EntitySystem
     [Dependency] private readonly SharedEyeSystem _eye = default!;
     [Dependency] private readonly SharedStunSystem _stun = default!;
     [Dependency] private readonly TileSystem _tile = default!;
+    [Dependency] private readonly IGameTiming _timing = default!;
 
     private EntityQuery<DisposalUnitComponent> _disposalUnitQuery;
     private EntityQuery<MetaDataComponent> _metaQuery;
@@ -62,6 +64,7 @@ public abstract partial class SharedConduitHolderSystem : EntitySystem
     private void OnComponentStartup(Entity<ConduitHolderComponent> ent, ref ComponentStartup args)
     {
         ent.Comp.Container = _containerSystem.EnsureContainer<Container>(ent, nameof(ConduitHolderComponent));
+        ent.Comp.EndTime = _timing.CurTime + ent.Comp.LifeTime;
     }
 
     private void OnActorTransition(Entity<ActorComponent> ent, ref DisposalSystemTransitionEvent args)
@@ -83,11 +86,10 @@ public abstract partial class SharedConduitHolderSystem : EntitySystem
     }
 
     /// <summary>
-    /// Ejects all entities inside a conduit holder from
-    /// the disposals system.
+    /// Ejects all entities inside a conduit holder from the system.
     /// </summary>
     /// <param name="ent">The conduit holder.</param>
-    public void ExitDisposals(Entity<ConduitHolderComponent> ent)
+    public void Exit(Entity<ConduitHolderComponent> ent)
     {
         if (Terminating(ent))
             return;
@@ -222,7 +224,7 @@ public abstract partial class SharedConduitHolderSystem : EntitySystem
         // If the next direction to move is invalid, exit immediately
         if (ev.Next == Direction.Invalid)
         {
-            ExitDisposals(ent);
+            Exit(ent);
             return false;
         }
 
@@ -242,6 +244,8 @@ public abstract partial class SharedConduitHolderSystem : EntitySystem
             ent.Comp.CurrentDirection != ev.Next &&
             ent.Comp.AccumulatedDamage < ent.Comp.MaxAllowedDamage)
         {
+            ent.Comp.DirectionChangeCount++;
+
             var damage = tube.Comp.DamageOnTurn;
 
             foreach (var held in ent.Comp.Container.ContainedEntities)
@@ -255,6 +259,10 @@ public abstract partial class SharedConduitHolderSystem : EntitySystem
             }
 
             ent.Comp.AccumulatedDamage += damage.GetTotal();
+
+            // Check if the holder can escape the current pipe
+            if (TryEscaping(ent, tube))
+                return false;
         }
 
         // Update trajectory
@@ -264,20 +272,6 @@ public abstract partial class SharedConduitHolderSystem : EntitySystem
 
         // Update rotation
         xform.LocalRotation = ent.Comp.CurrentDirection.ToAngle();
-
-        // Check how many times the holder has visited the current pipe
-        var visits = 1;
-
-        if (ent.Comp.TubeVisits.TryGetValue(tube, out visits))
-        {
-            visits += 1;
-        }
-
-        ent.Comp.TubeVisits[tube] = visits;
-
-        // Check if the holder can escape the current pipe
-        if (TryEscaping(ent, tube))
-            return false;
 
         Dirty(ent);
         return true;
@@ -388,7 +382,7 @@ public abstract partial class SharedConduitHolderSystem : EntitySystem
 
         if (!Exists(current) || !Exists(next))
         {
-            ExitDisposals(ent);
+            Exit(ent);
             return;
         }
 
