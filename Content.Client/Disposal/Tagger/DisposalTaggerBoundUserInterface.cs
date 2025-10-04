@@ -1,4 +1,4 @@
-using Content.Shared.Disposal.Components;
+using Content.Shared.Conduit.Tagger;
 using JetBrains.Annotations;
 using Robust.Client.UserInterface;
 
@@ -13,6 +13,8 @@ namespace Content.Client.Disposal.Tagger
         [ViewVariables]
         private DisposalTaggerWindow? _window;
 
+        private const int MaxTagLength = 30;
+
         public DisposalTaggerBoundUserInterface(EntityUid owner, Enum uiKey) : base(owner, uiKey)
         {
         }
@@ -23,13 +25,13 @@ namespace Content.Client.Disposal.Tagger
 
             _window = this.CreateWindow<DisposalTaggerWindow>();
 
-            _window.Confirm.OnPressed += _ => ButtonPressed(DisposalTaggerUiAction.Ok, _window.TagInput.Text);
-            _window.TagInput.OnTextEntered += args => ButtonPressed(DisposalTaggerUiAction.Ok, args.Text);
+            _window.Confirm.OnPressed += _ => ButtonPressed(ConduitTaggerUiAction.Ok, _window.TagInput.Text);
+            _window.TagInput.OnTextEntered += args => ButtonPressed(ConduitTaggerUiAction.Ok, args.Text);
         }
 
-        private void ButtonPressed(DisposalTaggerUiAction action, string tag)
+        private void ButtonPressed(ConduitTaggerUiAction action, string tag)
         {
-            SendMessage(new DisposalTaggerUiActionMessage(action, tag, 30));
+            SendMessage(new ConduitTaggerUiActionMessage(action, tag, MaxTagLength));
             Close();
         }
 
@@ -37,10 +39,8 @@ namespace Content.Client.Disposal.Tagger
         {
             base.UpdateState(state);
 
-            if (state is not DisposalTaggerUserInterfaceState cast)
-            {
+            if (state is not ConduitTaggerUserInterfaceState cast)
                 return;
-            }
 
             _window?.UpdateState(cast);
         }

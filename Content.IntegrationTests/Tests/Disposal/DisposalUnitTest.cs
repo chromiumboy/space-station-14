@@ -3,6 +3,7 @@ using System.Linq;
 using System.Numerics;
 using Content.Server.Power.Components;
 using Content.Server.Power.EntitySystems;
+using Content.Shared.Conduit.Holder;
 using Content.Shared.Disposal.Components;
 using Content.Shared.Disposal.Tube;
 using Content.Shared.Disposal.Unit;
@@ -12,7 +13,7 @@ using Robust.Shared.Reflection;
 namespace Content.IntegrationTests.Tests.Disposal
 {
     [TestFixture]
-    [TestOf(typeof(DisposalHolderComponent))]
+    [TestOf(typeof(ConduitHolderComponent))]
     [TestOf(typeof(DisposalEntryComponent))]
     [TestOf(typeof(DisposalUnitComponent))]
     public sealed class DisposalUnitTest

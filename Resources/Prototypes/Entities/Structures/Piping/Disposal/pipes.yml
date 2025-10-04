@@ -57,8 +57,8 @@
   - type: Rotatable
   - type: Pullable
   - type: CollideOnAnchor
-  - type: DisposalTube
-    disposalTubeType: Disposals
+  - type: Conduit
+    conduitType: Disposals
   - type: StaticPrice
     price: 30
 
@@ -67,7 +67,7 @@
   categories: [ HideSpawnMenu ]
   name: disposal holder
   components:
-  - type: DisposalHolder
+  - type: ConduitHolder
     traversalSpeed: 10
     exitDistanceMultiplier: 2
     exitSpeedMultiplier: 2
@@ -77,7 +77,7 @@
       ents: []
   - type: ContainerContainer
     containers:
-      DisposalHolderComponent: !type:Container
+      ConduitHolderComponent: !type:Container
   - type: Physics
     bodyType: Kinematic
   - type: Fixtures
@@ -113,7 +113,7 @@
     layers:
     - map: [ "pipe" ]
       state: conpipe-s
-  - type: DisposalTube
+  - type: Conduit
     exits:
     - South
     - North
@@ -137,11 +137,11 @@
     layers:
     - map: [ "pipe" ]
       state: conpipe-tagger
-  - type: DisposalTube
+  - type: Conduit
     exits:
     - South
     - North
-  - type: DisposalTagger
+  - type: ConduitTagger
   - type: GenericVisualizer
     visuals:
       enum.AnchorVisuals.Anchored:
@@ -168,11 +168,11 @@
     layers:
     - map: [ "pipe" ]
       state: conpipe-signaller
-  - type: DisposalTube
+  - type: Conduit
     exits:
     - South
     - North
-  - type: DisposalSignaller
+  - type: ConduitSignaller
   - type: DeviceNetwork
     deviceNetId: Wireless
     receiveFrequencyId: BasicDevice
@@ -201,7 +201,7 @@
     layers:
     - map: [ "pipe" ]
       state: conpipe-t
-  - type: DisposalTube
+  - type: Conduit
   - type: DisposalEntry
   - type: GenericVisualizer
     visuals:
@@ -231,12 +231,12 @@
     layers:
     - map: [ "pipe" ]
       state: conpipe-j1s
-  - type: DisposalTube
+  - type: Conduit
     exits:
     - West
     - South
     - North
-  - type: DisposalRouter
+  - type: ConduitRouter
   - type: GenericVisualizer
     visuals:
       enum.AnchorVisuals.Anchored:
@@ -273,7 +273,7 @@
     layers:
     - map: [ "pipe" ]
       state: conpipe-j2s
-  - type: DisposalTube
+  - type: Conduit
     exits:
     - East
     - South
@@ -308,7 +308,7 @@
     - map: [ "pipe" ]
       state: conpipe-j1
     visible: true
-  - type: DisposalTube
+  - type: Conduit
     exits:
     - South
     - West
@@ -343,7 +343,7 @@
     layers:
     - map: [ "pipe" ]
       state: conpipe-j2
-  - type: DisposalTube
+  - type: Conduit
     exits:
     - South
     - East
@@ -378,7 +378,7 @@
     layers:
     - map: [ "pipe" ]
       state: conpipe-y
-  - type: DisposalTube
+  - type: Conduit
     exits:
     - South
     - West
@@ -412,7 +412,7 @@
     - map: [ "pipe" ]
       state: conpipe-x
     visible: true
-  - type: DisposalTube
+  - type: Conduit
     exits:
     - South
     - East
@@ -446,7 +446,7 @@
     layers:
     - map: [ "pipe" ]
       state: conpipe-c
-  - type: DisposalTube
+  - type: Conduit
     exits:
     - South
     - West
@@ -478,12 +478,12 @@
     layers:
     - map: [ "pipe" ]
       state: signal-router-free
-  - type: DisposalTube
+  - type: Conduit
     exits:
     - West
     - South
     - North
-  - type: DisposalSignalRouter
+  - type: ConduitSignalRouter
   - type: DeviceLinkSink
     ports:
     - On
@@ -515,7 +515,7 @@
     layers:
     - map: [ "pipe" ]
       state: signal-router-flipped-free
-  - type: DisposalTube
+  - type: Conduit
     exits:
     - East
     - South
