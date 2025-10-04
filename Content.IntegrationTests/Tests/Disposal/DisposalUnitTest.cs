@@ -129,7 +129,7 @@ namespace Content.IntegrationTests.Tests.Disposal
   id: DisposalTrunkDummy
   components:
   - type: DisposalEntry
-  - type: DisposalTube
+  - type: Conduit
   - type: Transform
     anchored: true
 ";
