@@ -31,7 +31,7 @@ public abstract partial class SharedTrainVehicleSystem : EntitySystem
     [Dependency] private readonly SharedStunSystem _stun = default!;
     [Dependency] private readonly TileSystem _tile = default!;
     [Dependency] private readonly SharedTrainStationSystem _trainStation = default!;
-    [Dependency] private readonly TrainTrackSystem _trainTrack = default!;
+    [Dependency] private readonly SharedTrainTrackSystem _trainTrack = default!;
 
     private EntityQuery<TrainStationComponent> _stationQuery;
     private EntityQuery<MetaDataComponent> _metaQuery;
@@ -243,7 +243,7 @@ public abstract partial class SharedTrainVehicleSystem : EntitySystem
         // Update trajectory
         ent.Comp.CurrentDirection = ev.Next;
         ent.Comp.CurrentTube = tube;
-        ent.Comp.NextTube = _trainTrack.NextTubeFor(tube, ent.Comp.CurrentDirection);
+        ent.Comp.NextTube = _trainTrack.NextTrack(tube, ent.Comp.CurrentDirection);
 
         // Update rotation
         xform.LocalRotation = ent.Comp.CurrentDirection.ToAngle();

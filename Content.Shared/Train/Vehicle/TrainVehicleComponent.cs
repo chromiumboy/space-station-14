@@ -10,7 +10,7 @@ namespace Content.Shared.Train.Vehicle;
 /// Data for entities that are train vehicles.
 /// </summary>
 [RegisterComponent, NetworkedComponent, AutoGenerateComponentState]
-[Access(new[] { typeof(SharedTrainVehicleSystem), typeof(TrainTrackSystem) })]
+[Access(new[] { typeof(SharedTrainVehicleSystem), typeof(SharedTrainTrackSystem) })]
 public sealed partial class TrainVehicleComponent : Component, IGasMixtureHolder
 {
     /// <summary>
@@ -56,9 +56,15 @@ public sealed partial class TrainVehicleComponent : Component, IGasMixtureHolder
     public Direction CurrentDirection { get; set; } = Direction.Invalid;
 
     /// <summary>
+    /// Sets whether the vehicle is airthight or not.
+    /// </summary>
+    [DataField]
+    public bool Airtight = false;
+
+    /// <summary>
     /// The atmosphere onboard the vehicle.
     /// </summary>
-    [DataField, AutoNetworkedField]
+    [DataField]
     public GasMixture Air { get; set; } = new(70);
 
     /// <summary>
@@ -68,8 +74,8 @@ public sealed partial class TrainVehicleComponent : Component, IGasMixtureHolder
     public int DirectionChangeCount;
 
     /// <summary>
-    /// After <see cref="DirectionChangeCount"/> exceeds this value,
-    /// the vehicle chance of derailing the each time it changes direction
+    /// After <see cref="DirectionChangeCount"/> exceeds this value, the
+    /// vehicle has a chance of derailing the each time it changes direction
     /// (as set by <see cref="DerailmentChance"/>).
     /// </summary>
     [DataField]
@@ -97,9 +103,18 @@ public sealed partial class TrainVehicleComponent : Component, IGasMixtureHolder
 /// <summary>
 /// Event raised when determining which direction a train vehicle should move next.
 /// </summary>
-/// <param name="Holder">The vehicle.</param>
+/// <param name="Vehicle">The vehicle.</param>
+/// <param name="Direction">The direction the vehicle is heading.</param>
 [ByRefEvent]
 public record struct GetTrainVehicleNextDirectionEvent(Entity<TrainVehicleComponent> Vehicle)
 {
-    public Direction Next;
+    /// <summary>
+    /// Array of potential directions the vehicle could move in.
+    /// </summary>
+    public Direction[] Possibilities = { Direction.Invalid };
+
+    /// <summary>
+    /// The direction that has been selected.
+    /// </summary>
+    public Direction Next = Direction.Invalid;
 }

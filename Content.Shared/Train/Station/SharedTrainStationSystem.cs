@@ -30,10 +30,13 @@ using Content.Shared.Whitelist;
 using Robust.Shared.Audio.Systems;
 using Robust.Shared.Containers;
 using Robust.Shared.Map.Components;
+using Robust.Shared.Physics;
 using Robust.Shared.Physics.Events;
 using Robust.Shared.Physics.Systems;
+using Robust.Shared.Prototypes;
 using Robust.Shared.Timing;
 using Robust.Shared.Utility;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace Content.Shared.Train.Station;
@@ -60,7 +63,7 @@ public abstract class SharedTrainStationSystem : EntitySystem
     [Dependency] private readonly SharedUserInterfaceSystem _ui = default!;
     [Dependency] private readonly SharedMapSystem _map = default!;
     [Dependency] private readonly SharedTrainVehicleSystem _trainVehicle = default!;
-    [Dependency] private readonly TrainTrackSystem _trainTrack = default!;
+    [Dependency] private readonly SharedTrainTrackSystem _trainTrack = default!;
 
     public override void Initialize()
     {
@@ -694,6 +697,46 @@ public abstract class SharedTrainStationSystem : EntitySystem
         {
             Remove(ent, toRemove);
         }
+    }
+
+    /// <summary>
+    /// Tries to insert a collection of entities into the disposals system.
+    /// </summary>
+    /// <param name="ent">The entry point into disposals.</param>
+    /// <param name="toInsert">The entities to insert.</param>
+    /// <param name="holderProtoId">The proto ID for the disposal holder.</param>
+    /// <param name="holderEnt">The spawned disposals holder.</param>
+    /// <param name="tags">Tags to add to the disposed contents.</param>
+    /// <returns>True if the insertion was successful.</returns>
+    public bool TryInsert
+        (Entity<TrainTrackComponent> ent,
+        EntityUid[] toInsert,
+        EntProtoId holderProtoId,
+        [NotNullWhen(true)] out Entity<TrainVehicleComponent>? holderEnt,
+        IEnumerable<string>? tags = null)
+    {
+        holderEnt = null;
+
+        if (toInsert.Length == 0)
+            return false;
+
+        if (_net.IsClient && !_timing.IsFirstTimePredicted)
+            return false;
+
+        var xform = Transform(ent);
+        var holder = Spawn(holderProtoId, _transform.GetMapCoordinates(ent, xform: xform));
+        var holderComponent = Comp<TrainVehicleComponent>(holder);
+        holderEnt = new Entity<TrainVehicleComponent>(holder, holderComponent);
+
+        if (holderEnt?.Comp.Container == null)
+            return false;
+
+        foreach (var entity in toInsert)
+        {
+            _containerSystem.Insert(entity, holderEnt.Value.Comp.Container);
+        }
+
+        return _trainVehicle.TryEnterTrack(holderEnt.Value, ent);
     }
 
     /// <summary>
