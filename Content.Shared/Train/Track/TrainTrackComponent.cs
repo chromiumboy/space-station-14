@@ -11,17 +11,32 @@ namespace Content.Shared.Train.Track;
 /// entities (e.g., trams, transit pods) to certain directions while passing along them.
 /// </summary>
 [RegisterComponent, NetworkedComponent]
-[Access(typeof(TrainTrackSystem))]
+[Access(typeof(SharedTrainTrackSystem))]
 public sealed partial class TrainTrackComponent : Component
 {
     /// <summary>
-    /// Array of directions that entities passing this track can currently move along.
+    /// Directions that vehicles passing this track can currently move along.
+    /// The dictionary is indexed by the entry direction, and the value is
+    /// the possible directions that vehicles can exit. If there are more
+    /// than one possible exits, one will be selected at random.
     /// </summary>
     /// <remarks>
     /// Requires a <see cref="NodeContainerComponent"/> to populate.
     /// </remarks>
     [DataField]
-    public Direction[] Directions = { Direction.Invalid };
+    public Dictionary<Direction, Direction[]> Directions = new();
+
+    /// <summary>
+    /// Other pieces of track that are connected to this one.
+    /// The dirctionary is indexed by the relative directions
+    /// these other pieces of track are located.
+    /// </summary>
+    /// <remarks>
+    /// Requires a <see cref="NodeContainerComponent"/> to populate.
+    /// </remarks>
+    [DataField]
+    public Dictionary<Direction, EntityUid> AdjacentTrack = new();
+
 
     /// <summary>
     /// Determines the type of train track

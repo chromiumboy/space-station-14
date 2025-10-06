@@ -1,4 +1,5 @@
 using Content.Shared.NodeContainer;
+using Content.Shared.Train.Track;
 using Robust.Shared.Map.Components;
 using Robust.Shared.Utility;
 using System.Diagnostics.CodeAnalysis;
@@ -7,7 +8,7 @@ using System.Linq;
 namespace Content.Server.NodeContainer.Nodes;
 
 /// <summary>
-/// Establishes connections between disposal tubes.
+/// Establishes connections between train tracks (<see cref="TrainTrackComponent"/>).
 /// </summary>
 [DataDefinition]
 public sealed partial class TrainTrackNode : Node
@@ -15,28 +16,35 @@ public sealed partial class TrainTrackNode : Node
     private SharedMapSystem _map;
 
     /// <summary>
-    /// Directions in which this node can connect to adjacent ones.
+    /// Directions in which this node can connect. The dictionary is indexed by the
+    /// entry direction, and the value is the possible exits from that direction.
     /// </summary>
     [DataField("directions", required: true)]
-    public Direction[] OriginalDirections = { Direction.South };
+    public Dictionary<Direction, Direction[]> OriginalDirections { get; private set; }
 
     /// <summary>
-    /// Directions that this node can connect after accounting for the rotation of the entity.
+    /// The directions in <see cref="Directions"/> adjusted for entity rotation.
     /// </summary>
+    /// <remarks>
+    /// Used to populate <see cref="TrainTrackComponent.Directions"/>.
+    /// </remarks>
     [ViewVariables]
-    public Direction[] CurrentDirections { get; private set; }
+    public Dictionary<Direction, Direction[]> CurrentDirections { get; private set; }
 
     /// <summary>
-    /// Directions opposite to those of <see cref="CurrentDirections"/>.
+    /// The directions opposite to those of <see cref="CurrentDirections"/>.
     /// </summary>
     [ViewVariables]
-    public Direction[] OppositeDirections { get; private set; }
+    public Dictionary<Direction, Direction[]> OppositeDirections { get; private set; }
 
     /// <summary>
-    /// Set of nodes that are currently connected to this one.
+    /// The set of adjacent node owners that are currently connected to this one.
     /// </summary>
+    /// <remarks>
+    /// Used to populate <see cref="TrainTrackComponent.AdjacentTrack"/>.
+    /// </remarks>
     [ViewVariables]
-    public HashSet<TrainTrackNode> AdjacentNodes { get; private set; } = new();
+    public Dictionary<Direction, EntityUid> AdjacentTrack { get; private set; } = new();
 
     public override void Initialize(EntityUid owner, IEntityManager entityManager)
     {
@@ -70,12 +78,12 @@ public sealed partial class TrainTrackNode : Node
         MapGridComponent? grid,
         IEntityManager entMan)
     {
-        AdjacentNodes.Clear();
+        AdjacentTrack.Clear();
 
         if (!xform.Anchored || xform.GridUid == null || grid == null)
             yield break;
 
-        foreach (var direction in CurrentDirections)
+        foreach (var direction in OppositeDirections.Keys)
         {
             foreach (var entity in _map.GetInDir(xform.GridUid.Value, grid, xform.Coordinates, direction))
             {
@@ -86,7 +94,7 @@ public sealed partial class TrainTrackNode : Node
                 {
                     yield return node;
 
-                    AdjacentNodes.Add(node);
+                    AdjacentTrack.Add(direction, node.Owner);
 
                     break;
                 }
@@ -103,7 +111,7 @@ public sealed partial class TrainTrackNode : Node
             if (node is not TrainTrackNode disposalNode)
                 continue;
 
-            if (disposalNode.OppositeDirections.Contains(direction))
+            if (disposalNode.CurrentDirections.ContainsKey(direction))
             {
                 foundNode = disposalNode;
                 return true;
@@ -113,13 +121,29 @@ public sealed partial class TrainTrackNode : Node
         return false;
     }
 
-    private Direction[] GetRotatedDirections(Direction[] directions, TransformComponent xform)
+    private Dictionary<Direction, Direction[]> GetRotatedDirections(Dictionary<Direction, Direction[]> directions, TransformComponent xform)
     {
-        return directions.Select(x => (x.ToAngle() + xform.LocalRotation).GetDir()).ToArray();
+        var rotated = new Dictionary<Direction, Direction[]>(directions.Count);
+
+        foreach (var kvp in directions)
+        {
+            rotated.Add
+                ((kvp.Key.ToAngle() + xform.LocalRotation).GetDir(),
+                kvp.Value.Select(x => (x.ToAngle() + xform.LocalRotation).GetDir()).ToArray());
+        }
+
+        return rotated;
     }
 
-    private Direction[] GetOppositeDirections(Direction[] directions, TransformComponent xform)
+    private Dictionary<Direction, Direction[]> GetOppositeDirections(Dictionary<Direction, Direction[]> directions, TransformComponent xform)
     {
-        return directions.Select(x => x.GetOpposite()).ToArray();
+        var opposite = new Dictionary<Direction, Direction[]>(directions.Count);
+
+        foreach (var kvp in directions)
+        {
+            opposite.Add(kvp.Key.GetOpposite(), kvp.Value.Select(x => x.GetOpposite()).ToArray());
+        }
+
+        return opposite;
     }
 }
