@@ -1,5 +1,5 @@
 using Content.Shared.Atmos;
-using Content.Shared.FixedPoint;
+using Content.Shared.Damage;
 using Content.Shared.Train.Track;
 using Robust.Shared.Containers;
 using Robust.Shared.GameStates;
@@ -20,10 +20,31 @@ public sealed partial class TrainVehicleComponent : Component, IGasMixtureHolder
     public Container? Container;
 
     /// <summary>
-    /// Sets how fast the vehicle moves (~ tiles per second).
+    /// The station that this vehicle is currently stopped at.
+    /// </summary>
+    [DataField, AutoNetworkedField]
+    public EntityUid? CurrentStation;
+
+    /// <summary>
+    /// Sets the max speed at which the vehicle can move (~ tiles per second).
     /// </summary>
     [DataField]
     public float TraversalSpeed { get; set; } = 5f;
+
+    /// <summary>
+    /// Sets the vehicles current speed (~ tiles per second).
+    /// </summary>
+    /// <remarks>
+    /// Limited by <see cref="TraversalSpeed"/>.
+    /// </remarks>
+    [DataField, AutoNetworkedField]
+    public float CurrentSpeed { get; set; }
+
+    /// <summary>
+    /// Sets whether the vehicle will automatically move forward at max speed.
+    /// </summary>
+    [DataField]
+    public bool Automatic { get; set; }
 
     /// <summary>
     /// Multiplier for how fast the vehicle moves when derailed.
@@ -41,13 +62,13 @@ public sealed partial class TrainVehicleComponent : Component, IGasMixtureHolder
     /// The train track the vehicle is moving along.
     /// </summary>
     [DataField, AutoNetworkedField]
-    public EntityUid? CurrentTube { get; set; }
+    public EntityUid? CurrentTrack { get; set; }
 
     /// <summary>
     /// The train track the vehicle is moving towards.
     /// </summary>
     [DataField, AutoNetworkedField]
-    public EntityUid? NextTube { get; set; }
+    public EntityUid? NextTrack { get; set; }
 
     /// <summary>
     /// The current direction the vehicle is moving.
@@ -88,17 +109,49 @@ public sealed partial class TrainVehicleComponent : Component, IGasMixtureHolder
     public float DerailmentChance = 0.2f;
 
     /// <summary>
-    /// Sets how many seconds mobs will be stunned if their vehicle derails.
+    /// Sets whether the vehicle is currently derailed.
+    /// </summary>
+    [DataField, AutoNetworkedField]
+    public bool IsDerailed = false;
+
+    /// <summary>
+    /// Sets how many seconds mobs will be stunned if thrown from a derailed vehicle.
     /// </summary>
     [DataField]
     public TimeSpan DerailmentStunDuration = TimeSpan.FromSeconds(1.5f);
 
     /// <summary>
-    /// The amount of damage entities sustain if their vehicle derails.
+    /// The amount of damage entities sustain if thrown from a derailed vehicle.
     /// </summary>
     [DataField]
-    public FixedPoint2 DerailmentDamage = 0;
+    public DamageSpecifier DerailmentDamage = new()
+    {
+        DamageDict = new()
+        {
+            { "Blunt", 0.0 },
+        }
+    };
+
+    /// <summary>
+    /// Sets whether the vehicle should eject its contents on derailment.
+    /// </summary>
+    [DataField]
+    public bool EjectContentsOnDerailment = false;
 }
+
+/// <summary>
+/// Raised on train vehicles that are just about to derail.
+/// </summary>
+/// <param name="Vehicle">The vehicle.</param>
+[ByRefEvent]
+public record struct BeforeTrainVehicleDerailmentEvent();
+
+/// <summary>
+/// Raised on train vehicles that have been derailed.
+/// </summary>
+/// <param name="Vehicle">The vehicle.</param>
+[ByRefEvent]
+public record struct AfterTrainVehicleDerailmentEvent();
 
 /// <summary>
 /// Event raised when determining which direction a train vehicle should move next.

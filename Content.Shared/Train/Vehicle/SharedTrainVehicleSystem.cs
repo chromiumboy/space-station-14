@@ -1,13 +1,11 @@
 using Content.Shared.Atmos;
 using Content.Shared.Damage;
-using Content.Shared.Maps;
 using Content.Shared.Stunnable;
 using Content.Shared.Throwing;
 using Content.Shared.Train.Station;
 using Content.Shared.Train.Track;
 using Robust.Shared.Audio.Systems;
 using Robust.Shared.Containers;
-using Robust.Shared.Map.Components;
 using Robust.Shared.Network;
 using Robust.Shared.Physics.Systems;
 
@@ -23,17 +21,11 @@ public abstract partial class SharedTrainVehicleSystem : EntitySystem
     [Dependency] private readonly DamageableSystem _damageable = default!;
     [Dependency] private readonly SharedAudioSystem _audio = default!;
     [Dependency] private readonly SharedContainerSystem _containerSystem = default!;
-    [Dependency] private readonly SharedMapSystem _maps = default!;
     [Dependency] private readonly SharedPhysicsSystem _physicsSystem = default!;
     [Dependency] private readonly SharedTransformSystem _xformSystem = default!;
     [Dependency] private readonly INetManager _net = default!;
-    [Dependency] private readonly SharedEyeSystem _eye = default!;
     [Dependency] private readonly SharedStunSystem _stun = default!;
-    [Dependency] private readonly TileSystem _tile = default!;
-    [Dependency] private readonly SharedTrainStationSystem _trainStation = default!;
-    [Dependency] private readonly SharedTrainTrackSystem _trainTrack = default!;
 
-    private EntityQuery<TrainStationComponent> _stationQuery;
     private EntityQuery<MetaDataComponent> _metaQuery;
     private EntityQuery<TransformComponent> _xformQuery;
 
@@ -41,7 +33,6 @@ public abstract partial class SharedTrainVehicleSystem : EntitySystem
     {
         base.Initialize();
 
-        _stationQuery = GetEntityQuery<TrainStationComponent>();
         _metaQuery = GetEntityQuery<MetaDataComponent>();
         _xformQuery = GetEntityQuery<TransformComponent>();
 
@@ -54,7 +45,8 @@ public abstract partial class SharedTrainVehicleSystem : EntitySystem
     }
 
     /// <summary>
-    /// Ejects all entities from a vehicle.
+    /// Causes a train vehicle to derail, removing it from any track, and rendering it unable to move.
+    /// Entities aboard the vehicle may also be ejected.
     /// </summary>
     /// <param name="ent">The vehicle.</param>
     public void Derail(Entity<TrainVehicleComponent> ent)
@@ -62,201 +54,215 @@ public abstract partial class SharedTrainVehicleSystem : EntitySystem
         if (Terminating(ent))
             return;
 
-        Dirty(ent);
+        // Raise before derailment event
+        var beforeEv = new BeforeTrainVehicleDerailmentEvent();
+        RaiseLocalEvent(ent, ref beforeEv);
 
-        // Get the holder and grid transforms
-        var xform = _xformQuery.GetComponent(ent);
-        var gridUid = xform.GridUid;
-        _xformQuery.TryGetComponent(gridUid, out var gridXform);
-
-        // Determine the exit angle of the ejected entities
-        var exitDirection = ent.Comp.CurrentDirection;
-        Angle? exitAngle = exitDirection != Direction.Invalid ? exitDirection.ToAngle() : null;
-
-        // Check for a disposal unit to throw them into and then eject them from it.
-        // *This ejection also makes the target not collide with the unit.*
-        // *This is on purpose.*
-
-        EntityUid? disposalId = null;
-        TrainStationComponent? disposalUnit = null;
-
-        if (TryComp<MapGridComponent>(gridUid, out var grid))
+        // Eject contens
+        if (ent.Comp.EjectContentsOnDerailment)
         {
-            foreach (var contentUid in _maps.GetLocal(gridUid.Value, grid, xform.Coordinates))
+            // Get the vehicle and grid transforms
+            var xform = _xformQuery.GetComponent(ent);
+            var gridUid = xform.GridUid;
+
+            _xformQuery.TryGetComponent(gridUid, out var gridXform);
+
+            // Determine the exit angle of ejected entities
+            var exitDirection = ent.Comp.CurrentDirection;
+            Angle? exitAngle = exitDirection != Direction.Invalid ? exitDirection.ToAngle() : null;
+
+            // Update the exit angle to account for the grid's rotation
+            if (exitAngle != null && gridXform != null)
             {
-                if (_stationQuery.TryGetComponent(contentUid, out disposalUnit))
-                {
-                    disposalId = contentUid;
-                    break;
-                }
+                exitAngle += _xformSystem.GetWorldRotation(gridXform);
             }
 
-            // If no disposal unit was found, this exit will be a little messy
-            if (disposalUnit == null && _net.IsServer)
-            {
-                // Pry up the tile that the pipe was under
-                var tileRef = _maps.GetTileRef((gridUid.Value, grid), xform.Coordinates);
-                _tile.PryTile(tileRef);
+            // We're purposely iterating over all the holder's children
+            // because the holder might have something teleported into it,
+            // outside the usual container insertion logic.
 
-                // Also pry up the tile infront of the pipe
+            var children = xform.ChildEnumerator;
+            while (children.MoveNext(out var held))
+            {
+                DetachEntity(held);
+
+                // Remove the entity
+                if (ent.Comp.Container != null && ent.Comp.Container.Contains(held))
+                {
+                    var meta = _metaQuery.GetComponent(held);
+                    _containerSystem.Remove((held, null, meta), ent.Comp.Container, force: true);
+                }
+
+                // Knockdown the entity
+                if (ent.Comp.DerailmentStunDuration.TotalSeconds > 0)
+                {
+                    _stun.TryKnockdown(held, ent.Comp.DerailmentStunDuration, force: true);
+                }
+
+                // Damage the entity
+                if (ent.Comp.DerailmentDamage.GetTotal() > 0)
+                {
+                    _damageable.TryChangeDamage(held, ent.Comp.DerailmentDamage);
+                }
+
+                // Throw the entity
                 if (exitAngle != null)
                 {
-                    tileRef = _maps.GetTileRef((gridUid.Value, grid), xform.Coordinates.Offset(exitAngle.Value.ToWorldVec()));
-                    _tile.PryTile(tileRef);
+                    _throwing.TryThrow(held,
+                        exitAngle.Value.ToWorldVec() * ent.Comp.ExitDistanceMultiplier,
+                        ent.Comp.CurrentSpeed * ent.Comp.DerailmentSpeedMultiplier);
                 }
             }
         }
 
-        // Update the exit angle here to account for the grid's rotation
-        if (exitAngle != null && gridXform != null)
-        {
-            exitAngle += _xformSystem.GetWorldRotation(gridXform);
-        }
+        // Remove the vehicle from the track
+        ent.Comp.IsDerailed = true;
+        ent.Comp.CurrentStation = null;
+        ent.Comp.CurrentTrack = null;
+        ent.Comp.NextTrack = null;
+        ent.Comp.CurrentDirection = Direction.Invalid;
+        ent.Comp.CurrentSpeed = 0;
+        Dirty(ent);
 
-        // We're purposely iterating over all the holder's children
-        // because the holder might have something teleported into it,
-        // outside the usual container insertion logic.
-        var children = xform.ChildEnumerator;
-        while (children.MoveNext(out var held))
-        {
-            DetachEntity(held);
-
-            var meta = _metaQuery.GetComponent(held);
-
-            if (ent.Comp.Container != null && ent.Comp.Container.Contains(held))
-            {
-                _containerSystem.Remove((held, null, meta), ent.Comp.Container, reparent: false, force: true);
-            }
-
-            var heldXform = _xformQuery.GetComponent(held);
-
-            if (heldXform.ParentUid != ent.Owner)
-                continue;
-
-            // Knockdown the entity
-            _stun.TryKnockdown(held, ent.Comp.DerailmentStunDuration, force: true);
-
-            // Try to damage the entity
-
-            // Throw the entity out of the pipe
-            _xformSystem.AttachToGridOrMap(held, heldXform);
-
-            if (exitAngle != null)
-            {
-                _throwing.TryThrow(held, exitAngle.Value.ToWorldVec() * ent.Comp.ExitDistanceMultiplier, ent.Comp.TraversalSpeed * ent.Comp.DerailmentSpeedMultiplier);
-            }
-        }
-
-        if (disposalId != null && disposalUnit != null)
-        {
-            _trainStation.EjectContents((disposalId.Value, disposalUnit));
-        }
-
+        // Expel contained atmosphere
         ExpelAtmos(ent);
 
-        // Add check for whether vehicle should delete itself
-
-        PredictedDel(ent.Owner);
-
-        // Raise derailment event
+        // Raise after derailment event
+        var afterEv = new AfterTrainVehicleDerailmentEvent();
+        RaiseLocalEvent(ent, ref afterEv);
     }
 
+    /// <summary>
+    /// Have a train vehicle try to enter a train station, transferring all
+    /// contained entities into it.
+    /// </summary>
+    /// <param name="ent">The vehicle.</param>
+    /// <param name="station">The station</param>
+    /// <returns>True if the contents of the vehicle was transferred.</returns>
     public bool TryEnterStation(Entity<TrainVehicleComponent> ent, Entity<TrainStationComponent> station)
     {
         if (station.Comp.Container == null)
             return false;
 
-        // We're purposely iterating over all the holder's children
-        // because the holder might have something teleported into it,
-        // outside the usual container insertion logic.
+        // Move all children into the station
         var xform = _xformQuery.GetComponent(ent);
         var children = xform.ChildEnumerator;
 
         while (children.MoveNext(out var held))
         {
-            DetachEntity(held);
+            var xformHeld = _xformQuery.GetComponent(held);
+            var metaHeld = _metaQuery.GetComponent(held);
 
-            var meta = _metaQuery.GetComponent(held);
-
-            if (ent.Comp.Container != null && ent.Comp.Container.Contains(held))
+            if (_containerSystem.Insert((held, xformHeld, metaHeld), station.Comp.Container))
             {
-                _containerSystem.Remove((held, null, meta), ent.Comp.Container, reparent: false, force: true);
+                DetachEntity(held);
             }
-
-            var heldXform = _xformQuery.GetComponent(held);
-            _containerSystem.Insert((held, heldXform, meta), station.Comp.Container);
         }
+
+        ent.Comp.CurrentSpeed = 0;
+        ent.Comp.CurrentTrack = ent.Comp.NextTrack;
+        ent.Comp.CurrentStation = station;
+        Dirty(ent);
 
         return true;
     }
 
-    /// <summary>
-    /// Attempts to assigns a disposal holder to a new disposal tube, updating the trajectory of the holder.
-    /// </summary>
-    /// <param name="ent">The disposal holder.</param>
-    /// <param name="tube">The tube the holder is attempting to enter.</param>
-    /// <returns>True if the holder can enter the tube.</returns>
-    /// <remarks>
-    /// This function will call ExitDisposals on any failure that does not make an ExitDisposals impossible.
-    /// </remarks>
-    public bool TryEnterTrack(Entity<TrainVehicleComponent> ent, Entity<TrainTrackComponent> tube)
+    public void DepartStation(Entity<TrainVehicleComponent> ent)
     {
-        if (ent.Comp.CurrentTube == tube)
+        ent.Comp.CurrentStation = null;
+
+        if (ent.Comp.Automatic)
+        {
+            SetSpeed(ent, ent.Comp.TraversalSpeed);
+        }
+
+        Dirty(ent);
+
+        if (TryComp<TrainTrackComponent>(ent.Comp.NextTrack, out var track))
+        {
+            TryEnterTrack(ent, (ent.Comp.NextTrack.Value, track), true);
+            return;
+        }
+
+        Derail(ent);
+    }
+
+    /// <summary>
+    /// Attempts to assigns a train vehicle to a new train track, updating its trajectory.
+    /// </summary>
+    /// <param name="ent">The vehicle.</param>
+    /// <param name="track">The track the vehicle is attempting to enter.</param>
+    /// <param name="ignoreStations">If true the vehicle will not attempt to
+    /// enter any stations on this piece of track.</param>
+    /// <returns>True if the vehicle can enter the track.</returns>
+    /// <remarks>
+    /// This function will call <see cref="Derail"/> on any failure.
+    /// </remarks>
+    public bool TryEnterTrack(Entity<TrainVehicleComponent> ent, Entity<TrainTrackComponent> track, bool ignoreStations = false)
+    {
+        if (ent.Comp.CurrentTrack == track)
             return false;
 
-        var ev = new GetTrainVehicleNextDirectionEvent(ent);
-        RaiseLocalEvent(tube, ref ev);
+        // If the next section of track is a station, try to enter it
+        if (!ignoreStations && TryComp<TrainStationComponent>(track, out var station))
+        {
+            return TryEnterStation(ent, (track, station));
+        }
 
-        // If the next direction to move is invalid, exit immediately
+        // Get the next direction to move
+        var ev = new GetTrainVehicleNextDirectionEvent(ent);
+        RaiseLocalEvent(track, ref ev);
+
+        // If the next direction to move is invalid, derail immediately
         if (ev.Next == Direction.Invalid)
         {
             Derail(ent);
             return false;
         }
 
-        // Ensure all contained entities are attached to the holder
-        if (ent.Comp.Container != null)
-        {
-            foreach (var held in ent.Comp.Container.ContainedEntities)
-            {
-                AttachEntity(ent, held);
-            }
-        }
-
         var xform = Transform(ent);
 
-        // Attempt to damage entities when changing direction
+        // Check if we are changing direction
         if (ent.Comp.CurrentDirection != ev.Next)
         {
             ent.Comp.DirectionChangeCount++;
 
             if (_net.IsServer)
             {
-                _audio.PlayPvs(tube.Comp.ChangeDirectionsSound, xform.Coordinates);
+                _audio.PlayPvs(track.Comp.ChangeDirectionsSound, xform.Coordinates);
             }
 
             // Check if the holder can escape the current pipe
-            if (TryDerailing(ent, tube))
+            if (TryDerailing(ent, track))
                 return false;
         }
 
         // Update trajectory
         ent.Comp.CurrentDirection = ev.Next;
-        ent.Comp.CurrentTube = tube;
-        ent.Comp.NextTube = _trainTrack.NextTrack(tube, ent.Comp.CurrentDirection);
+        ent.Comp.CurrentTrack = track;
+        ent.Comp.CurrentStation = null;
 
-        // Update rotation
-        xform.LocalRotation = ent.Comp.CurrentDirection.ToAngle();
+        var adjacentTrack = track.Comp.AdjacentTrack;
+
+        if (adjacentTrack.TryGetValue(ent.Comp.CurrentDirection, out var nextTrack))
+        {
+            ent.Comp.NextTrack = nextTrack;
+        }
+        else
+        {
+            Derail(ent);
+            return false;
+        }
 
         Dirty(ent);
         return true;
     }
 
     /// <summary>
-    /// Links an entity with a disposal holder.
+    /// Adds an entity to a train vehicle.
     /// </summary>
-    /// <param name="ent">The disposal holder.</param>
-    /// <param name="uid">The entity being linked.</param>
+    /// <param name="ent">The vehicle.</param>
+    /// <param name="uid">The entity being added.</param>
     public void AttachEntity(Entity<TrainVehicleComponent> ent, EntityUid uid)
     {
         var comp = EnsureComp<AboardTrainComponent>(uid);
@@ -269,12 +275,23 @@ public abstract partial class SharedTrainVehicleSystem : EntitySystem
     }
 
     /// <summary>
-    /// Unlinks an entity from its disposal holder.
+    /// Removes an entity from the train vehicle it is on.
     /// </summary>
-    /// <param name="uid">The entity being unlinked.</param>
+    /// <param name="uid">The entity being removed.</param>
     public void DetachEntity(EntityUid uid)
     {
         RemComp<AboardTrainComponent>(uid);
+    }
+
+    /// <summary>
+    /// Sets the current speed of a train vehicle.
+    /// </summary>
+    /// <param name="ent">The vehicle</param>
+    /// <param name="speed">The new speed.</param>
+    public void SetSpeed(Entity<TrainVehicleComponent> ent, float speed)
+    {
+        ent.Comp.CurrentSpeed = Math.Clamp(speed, 0, ent.Comp.TraversalSpeed);
+        Dirty(ent);
     }
 
     public override void Update(float frameTime)
@@ -282,35 +299,49 @@ public abstract partial class SharedTrainVehicleSystem : EntitySystem
         var query = EntityQueryEnumerator<TrainVehicleComponent, TransformComponent>();
         while (query.MoveNext(out var uid, out var holder, out var xform))
         {
-            UpdateDisposalHolder((uid, holder));
+            UpdateTrainVehicle((uid, holder));
         }
     }
 
     /// <summary>
-    /// Runs an update on the trajectory of a disposal holder.
+    /// Runs an update on the trajectory of a train vehicle.
     /// </summary>
-    /// <param name="ent">The disposal holder.</param>
-    private void UpdateDisposalHolder(Entity<TrainVehicleComponent> ent)
+    /// <param name="ent">The vehicle.</param>
+    private void UpdateTrainVehicle(Entity<TrainVehicleComponent> ent)
     {
-        var currentTube = ent.Comp.CurrentTube;
-        var nextTube = ent.Comp.NextTube;
+        if (ent.Comp.IsDerailed)
+            return;
 
-        if (!Exists(currentTube) || !Exists(nextTube))
+        // If the track/grid is removed, derail the vehicle
+        var current = ent.Comp.CurrentTrack;
+        var next = ent.Comp.NextTrack;
+
+        if (!Exists(current) || !Exists(next))
         {
             Derail(ent);
             return;
         }
 
-        var gridUid = _xformQuery.GetComponent(currentTube.Value).GridUid;
+        var gridUid = _xformQuery.GetComponent(current.Value).GridUid;
 
         if (gridUid == null)
+        {
+            Derail(ent);
+            return;
+        }
+
+        if (ent.Comp.CurrentSpeed == 0)
             return;
 
-        // Apply a linear velocity to a disposal holder which
-        // will direct it toward the next tube on its route
+        // Update the entity's rotation
+        var xform = _xformQuery.GetComponent(ent);
+        xform.LocalRotation = ent.Comp.CurrentDirection.ToAngle();
+
+        // Apply a linear velocity to the vehicle, directing
+        // it toward the next piece of track on its route
         var gridRotation = _xformSystem.GetWorldRotation(gridUid.Value);
-        var origin = _xformQuery.GetComponent(currentTube.Value).Coordinates;
-        var destination = _xformQuery.GetComponent(nextTube.Value).Coordinates;
+        var origin = _xformQuery.GetComponent(current.Value).Coordinates;
+        var destination = _xformQuery.GetComponent(next.Value).Coordinates;
         var entCoords = _xformQuery.GetComponent(ent).Coordinates;
 
         // How far off are we from our destination?
@@ -320,10 +351,10 @@ public abstract partial class SharedTrainVehicleSystem : EntitySystem
         if (entDestDiff.Length() > 1e-6)
         {
             // Set velocity
-            var velocity = gridRotation.RotateVec(entDestDiff.Normalized() * ent.Comp.TraversalSpeed);
+            var velocity = gridRotation.RotateVec(entDestDiff.Normalized() * ent.Comp.CurrentSpeed);
             _physicsSystem.SetLinearVelocity(ent, velocity);
 
-            // Determine whether the disposal holder should update its route,
+            // Determine whether the vehicle should update its route,
             // based on its current position with respect to its target and origin
             var originDestDiff = destination.Position - origin.Position;
             var originEntDiff = entCoords.Position - origin.Position;
@@ -332,39 +363,39 @@ public abstract partial class SharedTrainVehicleSystem : EntitySystem
                 return;
         }
 
-        // Attempt to enter the next tube
-        if (TryComp<TrainTrackComponent>(nextTube, out var tube) &&
-            TryEnterTrack(ent, (nextTube.Value, tube)))
+        // Attempt to enter the next track
+        if (TryComp<TrainTrackComponent>(next, out var track) &&
+            TryEnterTrack(ent, (next.Value, track)))
         {
-            UpdateDisposalHolder(ent);
+            UpdateTrainVehicle(ent);
         }
     }
 
     /// <summary>
-    /// Expels the atmos of a disposal holder back into its surrounding environment.
+    /// Expels the atmos of a train vehicle back into its surrounding environment.
     /// </summary>
-    /// <param name="ent">The disposal holder.</param>
+    /// <param name="ent">The vehicle.</param>
     protected virtual void ExpelAtmos(Entity<TrainVehicleComponent> ent)
     {
         // Handled by the server
     }
 
     /// <summary>
-    /// Transfer the atmos of a disposal unit into the disposal holder it is launching.
+    /// Transfer the atmos of a station into the vehicle that is departing it.
     /// </summary>
-    /// <param name="ent">The disposal holder.</param>
-    /// <param name="unit">The disposal unit.</param>
+    /// <param name="ent">The vehicle.</param>
+    /// <param name="station">The station.</param>
     public virtual void TransferAtmos(Entity<TrainVehicleComponent> ent, Entity<TrainStationComponent> station)
     {
         // Handled by the server
     }
 
     /// <summary>
-    /// The disposal tube holder attempts to escape the disposals system.
+    /// A train vehicle is attempts to derail itself.
     /// </summary>
-    /// <param name="ent">The disposal holder.</param>
-    /// <param name="tube">The disposal tube the holder is attempting to escape.</param>
-    /// <returns> True if the disposal holder escaped the disposal tube.</returns>
+    /// <param name="ent">The vehicle.</param>
+    /// <param name="track">The track the vehicle is on.</param>
+    /// <returns>True if the vehicle derailed.</returns>
     protected virtual bool TryDerailing(Entity<TrainVehicleComponent> ent, Entity<TrainTrackComponent> track)
     {
         // Handled by the server
