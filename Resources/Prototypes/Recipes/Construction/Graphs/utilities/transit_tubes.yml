@@ -1,0 +1,153 @@
+- type: constructionGraph
+  id: TransitTube
+  start: start
+  graph:
+  - node: start
+    edges:
+    - to: straight
+      steps:
+      - material: ReinforcedGlass
+        amount: 2
+        doAfter: 1
+
+    - to: diagonal
+      steps:
+      - material: ReinforcedGlass
+        amount: 2
+        doAfter: 1
+
+    - to: junction
+      steps:
+      - material: ReinforcedGlass
+        amount: 2
+        doAfter: 1
+
+    - to: junctionFlipped
+      steps:
+      - material: ReinforcedGlass
+        amount: 2
+        doAfter: 1
+
+    - to: bend
+      steps:
+      - material: ReinforcedGlass
+        amount: 2
+        doAfter: 1
+
+    - to: bendFlipped
+      steps:
+      - material: ReinforcedGlass
+        amount: 2
+        doAfter: 1
+
+  - node: straight
+    entity: TransitTube
+    edges:
+    - to: start
+      conditions:
+      - !type:EntityAnchored
+        anchored: false
+      completed:
+      - !type:SpawnPrototype
+        prototype: SheetRGlass1
+        amount: 2
+      - !type:DeleteEntity
+      steps:
+      - tool: Screwing
+        doAfter: 1
+
+  - node: diagonal
+    entity: TransitTubeDiagonal
+    edges:
+    - to: start
+      conditions:
+      - !type:EntityAnchored
+        anchored: false
+      completed:
+      - !type:SpawnPrototype
+        prototype: SheetRGlass1
+        amount: 2
+      - !type:DeleteEntity
+      steps:
+      - tool: Screwing
+        doAfter: 1
+
+  - node: junction
+    entity: TransitTubeJunction
+    edges:
+    - to: start
+      conditions:
+      - !type:EntityAnchored
+        anchored: false
+      completed:
+      - !type:SpawnPrototype
+        prototype: SheetRGlass1
+        amount: 2
+      - !type:DeleteEntity
+      steps:
+      - tool: Screwing
+        doAfter: 1
+
+  - node: junctionFlipped
+    entity: TransitTubeJunctionFlipped
+    edges:
+    - to: start
+      conditions:
+      - !type:EntityAnchored
+        anchored: false
+      completed:
+      - !type:SpawnPrototype
+        prototype: SheetRGlass1
+        amount: 2
+      - !type:DeleteEntity
+      steps:
+      - tool: Screwing
+        doAfter: 1
+
+  - node: bend
+    entity: TransitTubeBend
+    edges:
+    - to: start
+      conditions:
+      - !type:EntityAnchored
+        anchored: false
+      completed:
+      - !type:SpawnPrototype
+        prototype: SheetRGlass1
+        amount: 2
+      - !type:DeleteEntity
+      steps:
+      - tool: Screwing
+        doAfter: 1
+
+  - node: bendFlipped
+    entity: TransitTubeBendFlipped
+    edges:
+    - to: start
+      conditions:
+      - !type:EntityAnchored
+        anchored: false
+      completed:
+      - !type:SpawnPrototype
+        prototype: SheetRGlass1
+        amount: 2
+      - !type:DeleteEntity
+      steps:
+      - tool: Screwing
+        doAfter: 1
+
+  - node: broken
+    entity: TransitTubeBroken
+    edges:
+    - to: start
+      conditions:
+      - !type:EntityAnchored
+        anchored: false
+      completed:
+      - !type:SpawnPrototype
+        prototype: SheetRGlass1
+        amount: 2
+      - !type:DeleteEntity
+      steps:
+      - tool: Screwing
+        doAfter: 1
