@@ -23,9 +23,9 @@ public sealed partial class TransitTubeSystem : EntitySystem
         if (!TryGetNode(ent, out var node))
             return;
 
-        var connectionsMissing = node.AdjacentTrack.Count < node.OriginalDirections.Length;
+        //var connectionsMissing = node.AdjacentTrack.Count < node.OriginalDirections.Length;
 
-        tileEmission.Color = connectionsMissing ? ent.Comp.WarningLightingColor : ent.Comp.NormalLightingColor;
+        //tileEmission.Color = connectionsMissing ? ent.Comp.WarningLightingColor : ent.Comp.NormalLightingColor;
         Dirty(ent, tileEmission);
     }
 

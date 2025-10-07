@@ -169,6 +169,15 @@ public abstract partial class SharedTrainVehicleSystem : EntitySystem
 
     public void DepartStation(Entity<TrainVehicleComponent> ent)
     {
+        if (ent.Comp.CurrentStation != null)
+        {
+            var evVehicle = new TrainVehicleDepartingStationEvent(ent.Comp.CurrentStation.Value);
+            RaiseLocalEvent(ent, ref evVehicle);
+
+            var evStation = new TrainStationHasVehicleDepartingEvent(ent);
+            RaiseLocalEvent(ent.Comp.CurrentStation.Value, ref evStation);
+        }
+
         ent.Comp.CurrentStation = null;
 
         if (ent.Comp.Automatic)

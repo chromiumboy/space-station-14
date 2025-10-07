@@ -139,6 +139,21 @@ public sealed partial class TrainVehicleComponent : Component, IGasMixtureHolder
     public bool EjectContentsOnDerailment = false;
 }
 
+
+/// <summary>
+/// Raised on train vehicles that are departing a station.
+/// </summary>
+/// <param name="DepartedStation">The departed station.</param>
+[ByRefEvent]
+public record struct TrainVehicleDepartingStationEvent(EntityUid DepartedStation);
+
+/// <summary>
+/// Raised on trains stations that have a departing vehicle.
+/// </summary>
+/// <param name="DepartingVehicle">The vehicle.</param>
+[ByRefEvent]
+public record struct TrainStationHasVehicleDepartingEvent(EntityUid DepartingVehicle);
+
 /// <summary>
 /// Raised on train vehicles that are just about to derail.
 /// </summary>
