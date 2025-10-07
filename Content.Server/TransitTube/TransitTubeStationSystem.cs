@@ -1,6 +1,5 @@
-using Content.Shared.Disposal.Components;
-using Content.Shared.Disposal.Unit;
 using Content.Shared.DoAfter;
+using Content.Shared.Train.Station;
 using Content.Shared.TransitTube;
 
 namespace Content.Server.TransitTube;
@@ -16,11 +15,11 @@ public sealed partial class TransitTubeStationSystem : SharedTransitTubeStationS
     {
         base.Initialize();
 
-        SubscribeLocalEvent<TransitTubeStationComponent, DoAfterAttemptEvent<DisposalDoAfterEvent>>(OnStartInsert);
-        SubscribeLocalEvent<TransitTubeStationComponent, DisposalDoAfterEvent>(OnInsert, after: [typeof(SharedDisposalUnitSystem)]);
+        SubscribeLocalEvent<TransitTubeStationComponent, DoAfterAttemptEvent<TrainStationDoAfterEvent>>(OnStartInsert);
+        SubscribeLocalEvent<TransitTubeStationComponent, TrainStationDoAfterEvent>(OnInsert, after: [typeof(SharedTrainStationSystem)]);
     }
 
-    private void OnStartInsert(Entity<TransitTubeStationComponent> ent, ref DoAfterAttemptEvent<DisposalDoAfterEvent> args)
+    private void OnStartInsert(Entity<TransitTubeStationComponent> ent, ref DoAfterAttemptEvent<TrainStationDoAfterEvent> args)
     {
         if (ent.Comp.CurrentState == TransitTubeStationState.Open)
             return;
@@ -30,16 +29,16 @@ public sealed partial class TransitTubeStationSystem : SharedTransitTubeStationS
 
         _appearance.SetData(ent, TransitTubeStationVisuals.Key, TransitTubeStationState.Open);
 
-        if (ent.Comp.CurrentPodEffect == null)
+        /*if (ent.Comp.CurrentPodEffect == null)
         {
             var effect = Spawn(ent.Comp.PodCreationEffect, Transform(ent).Coordinates);
             Transform(effect).LocalRotation = Transform(ent).LocalRotation;
 
             ent.Comp.CurrentPodEffect = effect;
-        }
+        }*/
     }
 
-    private void OnInsert(Entity<TransitTubeStationComponent> ent, ref DisposalDoAfterEvent args)
+    private void OnInsert(Entity<TransitTubeStationComponent> ent, ref TrainStationDoAfterEvent args)
     {
         if (ent.Comp.CurrentState == TransitTubeStationState.Closed)
             return;
@@ -49,8 +48,8 @@ public sealed partial class TransitTubeStationSystem : SharedTransitTubeStationS
 
         _appearance.SetData(ent, TransitTubeStationVisuals.Key, TransitTubeStationState.Closed);
 
-        QueueDel(ent.Comp.CurrentPodEffect);
-        ent.Comp.CurrentPodEffect = null;
+        //QueueDel(ent.Comp.CurrentPodEffect);
+        //ent.Comp.CurrentPodEffect = null;
 
         //if (TryComp<DisposalUnitComponent>(ent, out var disposalUnit) &&
         //    _disposalUnit.GetContainedEntityCount((ent, disposalUnit)) == 0)

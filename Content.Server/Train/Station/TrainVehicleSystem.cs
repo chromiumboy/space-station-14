@@ -75,7 +75,8 @@ public sealed partial class TrainVehicleSystem : SharedTrainVehicleSystem
     protected override bool TryDerailing(Entity<TrainVehicleComponent> ent, Entity<TrainTrackComponent> conduit)
     {
         // Check if the vehicle should have a chance to derail yet
-        if (ent.Comp.DirectionChangeCount < ent.Comp.DerailmentThreshold)
+        if (ent.Comp.DerailmentThreshold == null ||
+            ent.Comp.DirectionChangeCount < ent.Comp.DerailmentThreshold)
             return false;
 
         // Check if the vehicle derailed

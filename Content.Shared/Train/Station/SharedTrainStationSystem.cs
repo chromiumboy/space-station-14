@@ -389,9 +389,9 @@ public abstract class SharedTrainStationSystem : EntitySystem
         if (vehicle.Comp.Container == null)
             return false;
 
-        foreach (var entity in GetContainedEntities(ent))
+        foreach (var uid in GetContainedEntities(ent))
         {
-            _container.Insert(entity, vehicle.Comp.Container);
+            _trainVehicle.TryBoardingEntity(vehicle, uid);
         }
 
         if (vehicle.Comp.Airtight)

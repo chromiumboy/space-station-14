@@ -2,17 +2,15 @@ using Content.Shared.Atmos;
 using Content.Shared.DoAfter;
 using Content.Shared.Train.Vehicle;
 using Content.Shared.Whitelist;
-using Robust.Shared.Audio;
 using Robust.Shared.Containers;
 using Robust.Shared.GameStates;
-using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization;
 
 namespace Content.Shared.Train.Station;
 
 /// <summary>
-/// Stopping points for <see cref="TrainVehicleComponent"/>. They will automatically transfer
-/// any contained entities into a train when they depart the station.
+/// Stopping points for entities with <see cref="TrainVehicleComponent"/>. They will automatically
+/// transfer any entities they contain into vehicles that depart them.
 /// </summary>
 [RegisterComponent, NetworkedComponent, AutoGenerateComponentState(true), AutoGenerateComponentPause]
 public sealed partial class TrainStationComponent : Component
@@ -33,7 +31,7 @@ public sealed partial class TrainStationComponent : Component
     /// The max number of entities that can wait inside the station.
     /// </summary>
     [DataField]
-    public int MaxCapacity = 1;
+    public int MaxCapacity = 30;
 
     /// <summary>
     /// Blacklists (prevents) entities listed from being placed inside the station.

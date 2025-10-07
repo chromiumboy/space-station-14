@@ -1,5 +1,6 @@
 using Content.Shared.Atmos;
 using Content.Shared.Damage;
+using Content.Shared.Train.Station;
 using Content.Shared.Train.Track;
 using Robust.Shared.Containers;
 using Robust.Shared.GameStates;
@@ -9,7 +10,7 @@ namespace Content.Shared.Train.Vehicle;
 /// <summary>
 /// Data for entities that are train vehicles.
 /// </summary>
-[RegisterComponent, NetworkedComponent, AutoGenerateComponentState]
+[RegisterComponent, NetworkedComponent, AutoGenerateComponentState, AutoGenerateComponentPause]
 [Access(new[] { typeof(SharedTrainVehicleSystem), typeof(SharedTrainTrackSystem) })]
 public sealed partial class TrainVehicleComponent : Component, IGasMixtureHolder
 {
@@ -45,6 +46,19 @@ public sealed partial class TrainVehicleComponent : Component, IGasMixtureHolder
     /// </summary>
     [DataField]
     public bool Automatic { get; set; }
+
+    /// <summary>
+    /// Sets the number of seconds <see cref="Automatic"/> vehicles linger at
+    /// stations before they will depart.
+    /// </summary>
+    [DataField]
+    public TimeSpan AutomaticDelayAtStations { get; set; } = TimeSpan.FromSeconds(5);
+
+    /// <summary>
+    /// The time at which this vehicle will next depart.
+    /// </summary>
+    [DataField, AutoNetworkedField, AutoPausedField]
+    public TimeSpan AutomaticDepatureTime { get; set; }
 
     /// <summary>
     /// Multiplier for how fast the vehicle moves when derailed.
@@ -139,20 +153,33 @@ public sealed partial class TrainVehicleComponent : Component, IGasMixtureHolder
     public bool EjectContentsOnDerailment = false;
 }
 
-
 /// <summary>
 /// Raised on train vehicles that are departing a station.
 /// </summary>
 /// <param name="DepartedStation">The departed station.</param>
 [ByRefEvent]
-public record struct TrainVehicleDepartingStationEvent(EntityUid DepartedStation);
+public record struct TrainVehicleDepartingStationEvent(Entity<TrainStationComponent> DepartedStation);
 
 /// <summary>
-/// Raised on trains stations that have a departing vehicle.
+/// Raised on train stations that have a departing vehicle.
 /// </summary>
 /// <param name="DepartingVehicle">The vehicle.</param>
 [ByRefEvent]
-public record struct TrainStationHasVehicleDepartingEvent(EntityUid DepartingVehicle);
+public record struct TrainStationHasVehicleDepartingEvent(Entity<TrainVehicleComponent> DepartingVehicle);
+
+/// <summary>
+/// Raised on entities that have boarded a train.
+/// </summary>
+/// <param name="Vehicle">The boarded vehicle.</param>
+[ByRefEvent]
+public record struct EntityBoardedTrainVehicleEvent(Entity<TrainVehicleComponent> Vehicle);
+
+/// <summary>
+/// Raised on entities vehicles that detrained.
+/// </summary>
+/// <param name="Vehicle">The departed vehicle.</param>
+[ByRefEvent]
+public record struct EntityLeftTrainVehicleEvent(Entity<TrainVehicleComponent> Vehicle);
 
 /// <summary>
 /// Raised on train vehicles that are just about to derail.

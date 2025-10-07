@@ -84,20 +84,20 @@ public sealed partial class TransitTubeStationComponent : Component
     /// <summary>
     /// Effect played when a transit pod is going to be created.
     /// </summary>
-    [DataField]
-    public EntProtoId PodCreationEffect = "EffectTransitPodAppear";
+    //[DataField]
+    //public EntProtoId PodCreationEffect = "EffectTransitPodAppear";
 
     /// <summary>
     /// Effect played when a transit pod is destroyed.
     /// </summary>
-    [DataField]
-    public EntProtoId PodVanishEffect = "EffectTransitPodDisappear";
+    //[DataField]
+    //public EntProtoId PodVanishEffect = "EffectTransitPodDisappear";
 
     /// <summary>
     /// The effect currently being played on the station.
     /// </summary>
-    [DataField]
-    public EntityUid? CurrentPodEffect;
+    //[DataField]
+    //public EntityUid? CurrentPodEffect;
 }
 
 [Serializable, NetSerializable]

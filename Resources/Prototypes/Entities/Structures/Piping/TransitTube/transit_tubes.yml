@@ -53,9 +53,9 @@
   - type: Rotatable
   - type: Pullable
   - type: CollideOnAnchor
-  - type: DisposalTube
-    clangSound: "/Audio/Effects/toss.ogg"
   - type: TransitTube
+  - type: TrainTrack
+    trainTrackType: TransitTube
   - type: ApcPowerReceiver
     load: 5
   - type: ExtensionCableReceiver
@@ -68,25 +68,30 @@
 
 - type: entity
   id: TransitHolder
-  categories: [ HideSpawnMenu ]
-  name: transit holder
+  name: transit pod
+  placement:
+    mode: SnapgridCenter
+    snap:
+    - Disposal
   components:
   - type: Sprite
     overrideContainerOcclusion: true
-    drawdepth: TransitPods
+    drawdepth: Mobs
     sprite: Structures/Piping/Transit/transit_pods.rsi
     layers:
     - map: [ "pod" ]
       state: pod_occupied
       shader: unshaded
-  - type: DisposalHolder
-    traversalSpeed: 5
-    despawnEffect: EffectTransitPodDisappear
+  - type: TrainVehicle
+    automatic: true
+    airtight: true
+    ejectContentsOnDerailment: true
   - type: ContainerContainer
     containers:
-      DisposalHolderComponent: !type:Container
+      TrainVehicleComponent: !type:Container
   - type: Physics
-    bodyType: Kinematic
+    bodyType: KinematicController
+    linearDamping: 100
   - type: Fixtures
     fixtures:
       fix1:
@@ -103,7 +108,7 @@
   description: A BBT (big broken tube).
   components:
   - type: Sprite
-    drawdepth: TransitTubes
+    drawdepth: OverMobs
     sprite: Structures/Piping/Transit/transit_tubes.rsi
     layers:
     - map: [ "tube" ]
@@ -119,7 +124,7 @@
   description: A huge tube segment used for constructing transit systems.
   components:
   - type: Sprite
-    drawdepth: TransitTubes
+    drawdepth: OverMobs
     sprite: Structures/Piping/Transit/transit_tubes.rsi
     layers:
     - map: [ "tube" ]
@@ -140,21 +145,17 @@
         glass:
           False: { visible: false }
           True: { visible: true }
-  - type: DisposalTube
-    exits:
-    - South
-    - North
   - type: Construction
     graph: TransitTube
     node: straight
   - type: NodeContainer
     nodes:
       tube:
-        !type:TransitTubeNode
+        !type:TrainTrackNode
         nodeGroupID: TransitTube
         directions: 
-        - South
-        - North 
+          South: [ North ]
+          North: [ South ]
 
 - type: entity
   id: TransitTubeDiagonal
@@ -163,7 +164,7 @@
   description: A huge tube segment used for constructing transit systems.
   components:
   - type: Sprite
-    drawdepth: TransitTubes
+    drawdepth: OverMobs
     sprite: Structures/Piping/Transit/transit_tubes.rsi
     layers:
     - map: [ "tube" ]
@@ -188,21 +189,17 @@
             - 0.1667,0.5
             - 0.5,0.1667
             - -0.1667,-0.5
-  - type: DisposalTube
-    exits:
-    - SouthWest
-    - NorthEast
   - type: Construction
     graph: TransitTube
     node: diagonal
   - type: NodeContainer
     nodes:
       tube:
-        !type:TransitTubeNode
+        !type:TrainTrackNode
         nodeGroupID: TransitTube
         directions: 
-        - SouthWest
-        - NorthEast 
+          SouthWest: [ NorthEast ]
+          NorthEast: [ SouthWest ]
 
 - type: entity
   id: TransitTubeJunction
@@ -211,7 +208,7 @@
   description: A three-way junction. The arrow indicates where commuters preferentially exit.
   components:
   - type: Sprite
-    drawdepth: TransitTubes
+    drawdepth: OverMobs
     sprite: Structures/Piping/Transit/transit_tubes.rsi
     layers:
     - map: [ "tube" ]
@@ -233,11 +230,6 @@
         shape:
           !type:PhysShapeAabb
           bounds: "-0.5,-0.5,0.5,0.5"
-  - type: DisposalTube
-    exits:
-    - NorthWest
-    - NorthEast
-    - South
     maxDeltaAngle: 45
   - type: Flippable
     mirrorEntity: TransitTubeJunctionFlipped
@@ -247,12 +239,12 @@
   - type: NodeContainer
     nodes:
       tube:
-        !type:TransitTubeNode
+        !type:TrainTrackNode
         nodeGroupID: TransitTube
         directions: 
-        - NorthWest
-        - NorthEast 
-        - South
+          NorthWest: [ South ]
+          NorthEast: [ South ]
+          South: [ NorthWest ]
 
 - type: entity
   id: TransitTubeJunctionFlipped
@@ -261,7 +253,7 @@
   suffix: flipped
   components:
   - type: Sprite
-    drawdepth: TransitTubes
+    drawdepth: OverMobs
     sprite: Structures/Piping/Transit/transit_tubes.rsi
     layers:
     - map: [ "tube" ]
@@ -283,11 +275,6 @@
         shape:
           !type:PhysShapeAabb
           bounds: "-0.5,-0.5,0.5,0.5"
-  - type: DisposalTube
-    exits:
-    - NorthEast
-    - NorthWest
-    - South
     minDeltaAngle: 45
   - type: Flippable
     mirrorEntity: TransitTubeJunction
@@ -297,12 +284,12 @@
   - type: NodeContainer
     nodes:
       tube:
-        !type:TransitTubeNode
+        !type:TrainTrackNode
         nodeGroupID: TransitTube
         directions: 
-        - NorthEast
-        - NorthWest 
-        - South
+          NorthEast: [ South ]
+          NorthWest: [ South ]
+          South: [ NorthEast ]
 
 - type: entity
   id: TransitTubeBend
@@ -311,17 +298,13 @@
   description: A transit tube bent at a 135 degree angle.
   components:
   - type: Sprite
-    drawdepth: TransitTubes
+    drawdepth: OverMobs
     sprite: Structures/Piping/Transit/transit_tubes.rsi
     layers:
     - map: [ "tube" ]
       state: bend
     - map: [ "glass" ]
       state: bend_glass   
-  - type: DisposalTube
-    exits:
-    - NorthEast
-    - South
   - type: GenericVisualizer
     visuals:
       enum.AnchorVisuals.Anchored:
@@ -343,11 +326,11 @@
   - type: NodeContainer
     nodes:
       tube:
-        !type:TransitTubeNode
+        !type:TrainTrackNode
         nodeGroupID: TransitTube
         directions: 
-        - NorthEast
-        - South
+          NorthEast: [ South ]
+          South: [ NorthEast ]
 
 - type: entity
   id: TransitTubeBendFlipped
@@ -356,17 +339,13 @@
   suffix: flipped
   components:
   - type: Sprite
-    drawdepth: TransitTubes
+    drawdepth: OverMobs
     sprite: Structures/Piping/Transit/transit_tubes.rsi
     layers:
     - map: [ "tube" ]
       state: bend_f
     - map: [ "glass" ]
       state: bend_f_glass
-  - type: DisposalTube
-    exits:
-    - NorthWest
-    - South
   - type: GenericVisualizer
     visuals:
       enum.AnchorVisuals.Anchored:
@@ -390,11 +369,11 @@
   - type: NodeContainer
     nodes:
       tube:
-        !type:TransitTubeNode
+        !type:TrainTrackNode
         nodeGroupID: TransitTube
         directions: 
-        - NorthWest
-        - South
+          NorthWest: [ South ]
+          South: [ NorthWest ]
 
 - type: entity
   abstract: true
@@ -407,28 +386,28 @@
     - Disposal
   components:
   - type: Sprite
-    drawdepth: TransitTubes
+    drawdepth: OverMobs
     sprite: Structures/Piping/Transit/transit_stations.rsi
     layers:
-    - map: [ "enum.DisposalUnitVisualLayers.OverlayFull" ]
-      sprite: Structures/Piping/Transit/transit_pods.rsi
-      state: pod_parked
-      shader: unshaded
-      visible: true
-    - map: [ "enum.TransitTubeStationVisualLayers.Base" ]
+#    - map: [ "OverlayFull" ]
+#      sprite: Structures/Piping/Transit/transit_pods.rsi
+#      state: pod_parked
+#      shader: unshaded
+#      visible: true
+    - map: [ "Base" ]
       state: terminus_closed
   - type: Appearance
   - type: AnimationPlayer
-  - type: GenericVisualizer
-    visuals:
-      enum.DisposalUnitVisuals.IsFull:
-        enum.DisposalUnitVisualLayers.OverlayFull:
-          True: { visible: true }
-          False: { visible: false }
-      enum.AnchorVisuals.Anchored:
-        enum.TransitTubeStationVisualLayers.Base:
-          False: { state: terminus_u }
-          True: { state: terminus_closed }
+  #- type: GenericVisualizer
+  #  visuals:
+  #    enum.DisposalUnitVisuals.IsFull:
+  #      enum.DisposalUnitVisualLayers.OverlayFull:
+  #        True: { visible: true }
+  #        False: { visible: false }
+  #    enum.AnchorVisuals.Anchored:
+  #      enum.TransitTubeStationVisualLayers.Base:
+  #        False: { state: terminus_u }
+  #        True: { state: terminus_closed }
   - type: Physics
     bodyType: Static
     canCollide: false
@@ -462,24 +441,6 @@
   - type: StaticPrice
     price: 70
   - type: PowerSwitch
-  - type: DisposalUnit
-    holderPrototypeId: TransitHolder
-    automaticEngageTime: 1
-    manualFlushTime: 1
-    disablePressure: true
-    flushDelay: 0
-    flushSound: 
-    insertSound: 
-    maxCapacity: 1
-    entryDelay: 1
-    whitelist:
-      components:
-      - Body
-  - type: DisposalEntry
-  - type: DisposalTube
-    exits:
-    - South
-    - North
   - type: TransitTube
   #- type: TileEmissionRequiresPower
   - type: TileEmission
@@ -492,18 +453,24 @@
   - type: ContainerContainer
     containers:
       board: !type:Container
-  - type: ContainerFill
-    containers:
-      board:
-      - TransitTubeStationElectronics
+  #- type: ContainerFill
+  #  containers:
+  #    board:
+  #    - TransitTubeStationElectronics
   - type: NodeContainer
     nodes:
       tube:
-        !type:TransitTubeNode
+        !type:TrainTrackNode
         nodeGroupID: TransitTube
         directions:
-        - South
-        - North
+          South: [ North ]
+          North: [ South ]
+  - type: TrainTrack
+  - type: TrainStation
+    maxCapacity: 1
+    whitelist:
+      components:
+      - Body
 
 - type: entity
   id: TransitTubeStation
@@ -518,16 +485,13 @@
   - type: Construction
     graph: TransitTubeStations
     node: terminus
-  - type: DisposalTube
-    exits:
-    - South
   - type: NodeContainer
     nodes:
       tube:
-        !type:TransitTubeNode
+        !type:TrainTrackNode
         nodeGroupID: TransitTube
         directions:
-        - South
+          South: [ South ]
 
 # The transit tube station assemblies
 - type: entity
@@ -539,7 +503,7 @@
   - type: Anchorable
   - type: Rotatable
   - type: Sprite
-    drawdepth: TransitTubes
+    drawdepth: OverMobs
     sprite: Structures/Piping/Transit/transit_stations.rsi
     layers:
     - map: [ "enum.ConstructionVisuals.Layer" ]

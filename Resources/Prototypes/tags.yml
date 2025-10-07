@@ -1477,6 +1477,9 @@
   id: ToySidearm
 
 - type: Tag
+  id: TransitTubeStationElectronics
+
+- type: Tag
   id: Trash
 
 - type: Tag

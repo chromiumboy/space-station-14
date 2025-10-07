@@ -10,7 +10,7 @@ namespace Content.Shared.Train.Track;
 /// Attached to entities that restrict the movement of <see cref="TrainVehicleComponent">
 /// entities (e.g., trams, transit pods) to certain directions while passing along them.
 /// </summary>
-[RegisterComponent, NetworkedComponent]
+[RegisterComponent, NetworkedComponent, AutoGenerateComponentState]
 [Access(typeof(SharedTrainTrackSystem))]
 public sealed partial class TrainTrackComponent : Component
 {
@@ -23,7 +23,7 @@ public sealed partial class TrainTrackComponent : Component
     /// <remarks>
     /// Requires a <see cref="NodeContainerComponent"/> to populate.
     /// </remarks>
-    [DataField]
+    [DataField, AutoNetworkedField]
     public Dictionary<Direction, Direction[]> Directions = new();
 
     /// <summary>
@@ -34,9 +34,8 @@ public sealed partial class TrainTrackComponent : Component
     /// <remarks>
     /// Requires a <see cref="NodeContainerComponent"/> to populate.
     /// </remarks>
-    [DataField]
+    [DataField, AutoNetworkedField]
     public Dictionary<Direction, EntityUid> AdjacentTrack = new();
-
 
     /// <summary>
     /// Determines the type of train track
@@ -57,7 +56,9 @@ public sealed partial class TrainTrackComponent : Component
 /// <summary>
 /// The type of train track.
 /// </summary>
-/// <remarks>Only train tracks of same type may connect with each other.</remarks>
+/// <remarks>
+/// Only train tracks of same type may connect with each other.
+/// </remarks>
 [Serializable, NetSerializable]
 public enum TrainTrackType
 {

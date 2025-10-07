@@ -83,7 +83,7 @@ public sealed partial class TrainTrackNode : Node
         if (!xform.Anchored || xform.GridUid == null || grid == null)
             yield break;
 
-        foreach (var direction in OppositeDirections.Keys)
+        foreach (var direction in CurrentDirections.Keys)
         {
             foreach (var entity in _map.GetInDir(xform.GridUid.Value, grid, xform.Coordinates, direction))
             {
@@ -111,7 +111,7 @@ public sealed partial class TrainTrackNode : Node
             if (node is not TrainTrackNode disposalNode)
                 continue;
 
-            if (disposalNode.CurrentDirections.ContainsKey(direction))
+            if (disposalNode.OppositeDirections.ContainsKey(direction))
             {
                 foundNode = disposalNode;
                 return true;
