@@ -276,10 +276,10 @@ public abstract class SharedTrainStationSystem : EntitySystem
 
     private void OnDeparture(Entity<TrainStationComponent> ent, ref TrainStationHasVehicleDepartingEvent args)
     {
-        if (!TryComp<TrainVehicleComponent>(args.DepartingVehicle, out var vehicle))
+        if (!TryComp<TrainVehicleComponent>(args.Vehicle, out var vehicle) || !vehicle.Automatic)
             return;
 
-        TryTransfer(ent, (args.DepartingVehicle, vehicle));
+        TryTransfer(ent, (args.Vehicle, vehicle));
     }
 
     /// <summary>

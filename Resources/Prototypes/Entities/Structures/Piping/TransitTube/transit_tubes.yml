@@ -15,16 +15,17 @@
       all: "-0.5,-0.5,0.5,0.5"
   - type: InteractionOutline
   - type: Physics
-    bodyType: Static
-    canCollide: false
   - type: Fixtures
     fixtures:
       fix1:
         shape:
           !type:PhysShapeAabb
           bounds: "-0.25,-0.5,0.25,0.5"
+        density: 90
+        layer:
+        - MachineLayer
         mask:
-        - SubfloorMask
+        - MachineMask
   - type: Transform
     anchored: true
   - type: Anchorable
@@ -52,7 +53,6 @@
         node: broken
   - type: Rotatable
   - type: Pullable
-  - type: CollideOnAnchor
   - type: TransitTube
   - type: TrainTrack
     trainTrackType: TransitTube
@@ -74,6 +74,12 @@
     snap:
     - Disposal
   components:
+  - type: Clickable
+    bounds: 
+      all: "-0.5,-0.5,0.5,0.5"
+  - type: InteractionOutline
+  - type: Rotatable
+  - type: Pullable
   - type: Sprite
     overrideContainerOcclusion: true
     drawdepth: Mobs
@@ -90,14 +96,18 @@
     containers:
       TrainVehicleComponent: !type:Container
   - type: Physics
-    bodyType: KinematicController
-    linearDamping: 100
+    bodyType: Kinematic
+    linearDamping: 0.05
   - type: Fixtures
     fixtures:
       fix1:
         shape:
-          !type:PhysShapeCircle
-          radius: 0.25
+          !type:PhysShapeAabb
+          bounds: "-0.25,-0.5,0.25,0.5"
+        layer:
+        - MobLayer
+        mask:
+        - MobMask
 
 # Pipes
 

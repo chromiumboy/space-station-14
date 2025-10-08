@@ -34,6 +34,9 @@ public abstract partial class SharedTrainTrackSystem : EntitySystem
     /// <param name="args">The 'get next direction' event.</param>
     private void SelectNextDirection(Entity<TrainTrackComponent> ent, ref GetTrainVehicleNextDirectionEvent args)
     {
+        if (args.Vehicle.Comp.CurrentDirection == Direction.Invalid)
+            return;
+
         if (!ent.Comp.Directions.TryGetValue(args.Vehicle.Comp.CurrentDirection.GetOpposite(), out var exits))
             return;
 

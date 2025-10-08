@@ -154,18 +154,33 @@ public sealed partial class TrainVehicleComponent : Component, IGasMixtureHolder
 }
 
 /// <summary>
+/// Raised on train vehicles that are arriving at a station.
+/// </summary>
+/// <param name="DepartedStation">The station.</param>
+[ByRefEvent]
+public record struct TrainVehicleArrivingAtStationEvent(Entity<TrainStationComponent> Station);
+
+/// <summary>
+/// Raised on train stations that have an arriving vehicle.
+/// </summary>
+/// <param name="Vehicle">The vehicle.</param>
+[ByRefEvent]
+public record struct TrainStationHasVehicleArrivingEvent(Entity<TrainVehicleComponent> Vehicle);
+
+
+/// <summary>
 /// Raised on train vehicles that are departing a station.
 /// </summary>
-/// <param name="DepartedStation">The departed station.</param>
+/// <param name="Station">The station.</param>
 [ByRefEvent]
-public record struct TrainVehicleDepartingStationEvent(Entity<TrainStationComponent> DepartedStation);
+public record struct TrainVehicleDepartingStationEvent(Entity<TrainStationComponent> Station);
 
 /// <summary>
 /// Raised on train stations that have a departing vehicle.
 /// </summary>
-/// <param name="DepartingVehicle">The vehicle.</param>
+/// <param name="Vehicle">The vehicle.</param>
 [ByRefEvent]
-public record struct TrainStationHasVehicleDepartingEvent(Entity<TrainVehicleComponent> DepartingVehicle);
+public record struct TrainStationHasVehicleDepartingEvent(Entity<TrainVehicleComponent> Vehicle);
 
 /// <summary>
 /// Raised on entities that have boarded a train.
