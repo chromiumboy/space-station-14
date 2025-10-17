@@ -102,11 +102,6 @@ public abstract partial class SharedTrainVehicleSystem : EntitySystem
 
         TryEnterTrack(ent, track.Value);
 
-        if (ent.Comp.Automatic)
-        {
-            SetSpeed(ent, ent.Comp.TraversalSpeed);
-        }
-
         return true;
     }
 
@@ -222,36 +217,6 @@ public abstract partial class SharedTrainVehicleSystem : EntitySystem
         var evStation = new TrainStationHasVehicleArrivingEvent(ent);
         RaiseLocalEvent(station, ref evStation);
 
-        if (!ent.Comp.Automatic)
-            return true;
-
-        if (station.Comp.Container == null)
-            return false;
-
-        // Move all children into the station
-        if (station.Comp.Container != null)
-        {
-            var xform = _xformQuery.GetComponent(ent);
-            var children = xform.ChildEnumerator;
-
-            while (children.MoveNext(out var held))
-            {
-                var xformHeld = _xformQuery.GetComponent(held);
-                var metaHeld = _metaQuery.GetComponent(held);
-
-                if (_container.Insert((held, xformHeld, metaHeld), station.Comp.Container))
-                {
-                    DetrainEntity(held);
-                }
-            }
-        }
-
-        ent.Comp.AutomaticDepatureTime = _timing.CurTime + ent.Comp.AutomaticDelayAtStations;
-        ent.Comp.DirectionChangeCount = 0;
-        SetSpeed(ent, 0);
-
-        _xform.SetCoordinates(ent, Transform(station).Coordinates);
-
         return true;
     }
 
@@ -322,6 +287,12 @@ public abstract partial class SharedTrainVehicleSystem : EntitySystem
             // Check if the holder can escape the current pipe
             if (TryDerailing(ent, track))
                 return false;
+        }
+
+        // If at a station, depart it
+        if (IsAtStation(ent))
+        {
+            DepartStation(ent);
         }
 
         // Update trajectory
@@ -405,7 +376,7 @@ public abstract partial class SharedTrainVehicleSystem : EntitySystem
     /// <summary>
     /// Sets the current speed of a train vehicle.
     /// </summary>
-    /// <param name="ent">The vehicle</param>
+    /// <param name="ent">The vehicle.</param>
     /// <param name="speed">The new speed.</param>
     public void SetSpeed(Entity<TrainVehicleComponent> ent, float speed)
     {
@@ -431,15 +402,39 @@ public abstract partial class SharedTrainVehicleSystem : EntitySystem
         _physics.SetLinearVelocity(ent, velocity);
     }
 
+    /// <summary>
+    /// Sets a train's DirectionChangeCount to zero.
+    /// </summary>
+    /// <param name="ent">The vehicle.</param>
+    public void ResetDirectionChangeCounter(Entity<TrainVehicleComponent> ent)
+    {
+        ent.Comp.DirectionChangeCount = 0;
+        Dirty(ent);
+    }
+
+    /// <summary>
+    /// Returns whether a train vehicle is at a station. If a station entity is also supplied,
+    /// this function will return whether the train is at the specified station.
+    /// </summary>
+    /// <param name="ent">The vehicle.</param>
+    /// <param name="station">The station (optional).</param>
+    public bool IsAtStation(Entity<TrainVehicleComponent> ent, Entity<TrainStationComponent>? station = null)
+    {
+        if (station != null)
+            return ent.Comp.CurrentStation == station.Value.Owner;
+
+        return ent.Comp.CurrentStation != null;
+    }
+
     public override void Update(float frameTime)
     {
         var query = EntityQueryEnumerator<TrainVehicleComponent, MetaDataComponent>();
-        while (query.MoveNext(out var uid, out var holder, out var meta))
+        while (query.MoveNext(out var uid, out var trainVehicle, out var meta))
         {
             if (Paused(uid, meta))
                 return;
 
-            UpdateTrainVehicle((uid, holder));
+            UpdateTrainVehicle((uid, trainVehicle));
         }
     }
 
@@ -451,20 +446,6 @@ public abstract partial class SharedTrainVehicleSystem : EntitySystem
     {
         if (ent.Comp.IsDerailed)
             return;
-
-        // Check if currently at a station and whether we should depart it
-        if (ent.Comp.CurrentStation != null)
-        {
-            if (ent.Comp.Automatic && _timing.CurTime >= ent.Comp.AutomaticDepatureTime)
-            {
-                SetSpeed(ent, ent.Comp.TraversalSpeed);
-            }
-
-            if (ent.Comp.CurrentSpeed > 0)
-            {
-                DepartStation(ent);
-            }
-        }
 
         // If the track/grid was removed, derail the vehicle
         var current = ent.Comp.CurrentTrack;

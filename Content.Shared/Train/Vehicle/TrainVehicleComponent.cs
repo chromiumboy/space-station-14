@@ -10,7 +10,7 @@ namespace Content.Shared.Train.Vehicle;
 /// <summary>
 /// Data for entities that are train vehicles.
 /// </summary>
-[RegisterComponent, NetworkedComponent, AutoGenerateComponentState, AutoGenerateComponentPause]
+[RegisterComponent, NetworkedComponent, AutoGenerateComponentState]
 [Access(new[] { typeof(SharedTrainVehicleSystem), typeof(SharedTrainTrackSystem) })]
 public sealed partial class TrainVehicleComponent : Component, IGasMixtureHolder
 {
@@ -40,25 +40,6 @@ public sealed partial class TrainVehicleComponent : Component, IGasMixtureHolder
     /// </remarks>
     [DataField, AutoNetworkedField]
     public float CurrentSpeed { get; set; }
-
-    /// <summary>
-    /// Sets whether the vehicle will automatically move forward at max speed.
-    /// </summary>
-    [DataField]
-    public bool Automatic { get; set; }
-
-    /// <summary>
-    /// Sets the number of seconds <see cref="Automatic"/> vehicles linger at
-    /// stations before they will depart.
-    /// </summary>
-    [DataField]
-    public TimeSpan AutomaticDelayAtStations { get; set; } = TimeSpan.FromSeconds(5);
-
-    /// <summary>
-    /// The time at which this vehicle will next depart.
-    /// </summary>
-    [DataField, AutoNetworkedField, AutoPausedField]
-    public TimeSpan AutomaticDepatureTime { get; set; }
 
     /// <summary>
     /// Multiplier for how fast the vehicle moves when derailed.

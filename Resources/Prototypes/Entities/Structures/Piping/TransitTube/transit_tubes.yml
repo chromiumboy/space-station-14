@@ -89,9 +89,9 @@
       state: pod_occupied
       shader: unshaded
   - type: TrainVehicle
-    automatic: true
     airtight: true
     ejectContentsOnDerailment: true
+  - type: TrainAutomated
   - type: ContainerContainer
     containers:
       TrainVehicleComponent: !type:Container

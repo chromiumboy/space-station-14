@@ -60,7 +60,7 @@ public abstract class SharedTrainStationSystem : EntitySystem
         SubscribeLocalEvent<TrainStationComponent, DragDropTargetEvent>(OnDragDropOn);
         SubscribeLocalEvent<TrainStationComponent, ContainerRelayMovementEntityEvent>(OnMovement);
 
-        SubscribeLocalEvent<TrainStationComponent, TrainStationHasVehicleDepartingEvent>(OnDeparture);
+
     }
 
     protected virtual void OnInit(Entity<TrainStationComponent> ent, ref ComponentInit args)
@@ -274,13 +274,7 @@ public abstract class SharedTrainStationSystem : EntitySystem
         Dirty(ent);
     }
 
-    private void OnDeparture(Entity<TrainStationComponent> ent, ref TrainStationHasVehicleDepartingEvent args)
-    {
-        if (!TryComp<TrainVehicleComponent>(args.Vehicle, out var vehicle) || !vehicle.Automatic)
-            return;
 
-        TryTransfer(ent, (args.Vehicle, vehicle));
-    }
 
     /// <summary>
     /// Remove all entities currently in a train station.
@@ -376,14 +370,14 @@ public abstract class SharedTrainStationSystem : EntitySystem
     }
 
     /// <summary>
-    /// Tries to transfer any entities stored in a train station into a stopped vehicle.
+    /// Tries to transfer any entities stored in a train station into a vehicle on it.
     /// </summary>
     /// <param name="ent">The station.</param>
     /// <param name="vehicle">The vehicle.</param>
     /// <returns>True if the transfer was successful.</returns>
     public bool TryTransfer(Entity<TrainStationComponent> ent, Entity<TrainVehicleComponent> vehicle)
     {
-        if (vehicle.Comp.CurrentStation != ent.Owner)
+        if (!_trainVehicle.IsAtStation(vehicle, ent))
             return false;
 
         if (vehicle.Comp.Container == null)
