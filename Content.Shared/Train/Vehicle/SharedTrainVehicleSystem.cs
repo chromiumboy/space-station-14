@@ -475,19 +475,19 @@ public abstract partial class SharedTrainVehicleSystem : EntitySystem
         // Apply a linear velocity to the vehicle, directing
         // it toward the next piece of track on its route
         var gridRotation = _xform.GetWorldRotation(gridUid.Value);
-        var origin = _xformQuery.GetComponent(current.Value).Coordinates;
-        var destination = _xformQuery.GetComponent(next.Value).Coordinates;
-        var entCoords = _xformQuery.GetComponent(ent).Coordinates;
+        var origin = _xform.GetMapCoordinates(_xformQuery.GetComponent(current.Value));
+        var destination = _xform.GetMapCoordinates(_xformQuery.GetComponent(next.Value));
+        var entCoords = _xform.GetMapCoordinates(_xformQuery.GetComponent(ent));
 
         // How far off are we from our destination?
         var entDestDiff = destination.Position - entCoords.Position;
 
         // If we're really close, don't bother updating our velocity,
         // just move to the next piece of track
-        if (entDestDiff.Length() > 1e-6)
+        if (entDestDiff.Length() > 1e-3)
         {
             // Set velocity
-            var velocity = gridRotation.RotateVec(entDestDiff.Normalized() * ent.Comp.CurrentSpeed);
+            var velocity = entDestDiff.Normalized() * ent.Comp.CurrentSpeed;
             _physics.SetLinearVelocity(ent, velocity);
 
             // Determine whether the vehicle should update its route,
