@@ -195,10 +195,14 @@
       fix1:
         shape: !type:PolygonShape
           vertices:
-            - -0.5,-0.1667
-            - 0.1667,0.5
-            - 0.5,0.1667
-            - -0.1667,-0.5
+            - "-0.75,-0.25"
+            - "0.25,0.75"
+            - "0.75,0.25"
+            - "-0.25,-0.75"
+        layer:
+        - MachineLayer
+        mask:
+        - MachineMask    
   - type: Construction
     graph: TransitTube
     node: diagonal
@@ -237,9 +241,18 @@
   - type: Fixtures
     fixtures:
       fix1:
-        shape:
-          !type:PhysShapeAabb
-          bounds: "-0.5,-0.5,0.5,0.5"
+        shape: !type:PolygonShape
+          vertices:
+          - "-0.25,-0.5"
+          - "-0.75,0.25"
+          - "-0.25,0.75"
+          - "0.25,0.75"
+          - "0.75,0.25"
+          - "0.25,-0.5"
+        layer:
+        - MachineLayer
+        mask:
+        - MachineMask  
     maxDeltaAngle: 45
   - type: Flippable
     mirrorEntity: TransitTubeJunctionFlipped
@@ -282,9 +295,18 @@
   - type: Fixtures
     fixtures:
       fix1:
-        shape:
-          !type:PhysShapeAabb
-          bounds: "-0.5,-0.5,0.5,0.5"
+        shape: !type:PolygonShape
+          vertices:
+          - "-0.25,-0.5"
+          - "-0.75,0.25"
+          - "-0.25,0.75"
+          - "0.25,0.75"
+          - "0.75,0.25"
+          - "0.25,-0.5"
+        layer:
+        - MachineLayer
+        mask:
+        - MachineMask 
     minDeltaAngle: 45
   - type: Flippable
     mirrorEntity: TransitTubeJunction
@@ -327,9 +349,17 @@
   - type: Fixtures
     fixtures:
       fix1:
-        shape:
-          !type:PhysShapeAabb
-          bounds: "-0.25,-0.5,0.5,0.5"
+        shape: !type:PolygonShape
+          vertices:
+          - "-0.25,-0.5"
+          - "-0.25,0.0"
+          - "0.25,0.75"
+          - "0.75,0.25"
+          - "0.25,-0.5"
+        layer:
+        - MachineLayer
+        mask:
+        - MachineMask    
   - type: Construction
     graph: TransitTube
     node: bend
@@ -370,9 +400,17 @@
   - type: Fixtures
     fixtures:
       fix1:
-        shape:
-          !type:PhysShapeAabb
-          bounds: "-0.5,-0.5,0.25,0.5"
+        shape: !type:PolygonShape
+          vertices:
+          - "-0.25,-0.5"
+          - "-0.75,0.25"
+          - "-0.25,0.75"
+          - "0.25,0.0"
+          - "0.25,-0.5"
+        layer:
+        - MachineLayer
+        mask:
+        - MachineMask 
   - type: Construction
     graph: TransitTube
     node: bendFlipped
@@ -399,28 +437,28 @@
     drawdepth: OverMobs
     sprite: Structures/Piping/Transit/transit_stations.rsi
     layers:
-#    - map: [ "OverlayFull" ]
-#      sprite: Structures/Piping/Transit/transit_pods.rsi
-#      state: pod_parked
-#      shader: unshaded
-#      visible: true
     - map: [ "Base" ]
       state: terminus_closed
   - type: Appearance
   - type: AnimationPlayer
-  #- type: GenericVisualizer
-  #  visuals:
-  #    enum.DisposalUnitVisuals.IsFull:
-  #      enum.DisposalUnitVisualLayers.OverlayFull:
-  #        True: { visible: true }
-  #        False: { visible: false }
-  #    enum.AnchorVisuals.Anchored:
-  #      enum.TransitTubeStationVisualLayers.Base:
-  #        False: { state: terminus_u }
-  #        True: { state: terminus_closed }
+  - type: GenericVisualizer
+    visuals:
+      enum.AnchorVisuals.Anchored:
+        enum.TransitTubeStationVisualLayers.Base:
+          False: { state: terminus_u }
+          True: { state: terminus_closed }
   - type: Physics
-    bodyType: Static
-    canCollide: false
+  - type: Fixtures
+    fixtures:
+      fix1:
+        shape:
+          !type:PhysShapeAabb
+          bounds: "-0.25,-0.5,0.25,0.5"
+        density: 90
+        layer:
+        - MachineLayer
+        mask:
+        - MachineMask
   - type: Destructible
     thresholds:
     - trigger:
@@ -524,12 +562,12 @@
       fix1:
         shape:
           !type:PhysShapeAabb
-          bounds: "-0.5,-0.5,0.5,0.5"
-        mask:
-        - MachineMask
+          bounds: "-0.25,-0.5,0.25,0.5"
+        density: 90
         layer:
         - MachineLayer
-        density: 200
+        mask:
+        - MachineMask
   - type: Destructible
     thresholds:
     - trigger:
