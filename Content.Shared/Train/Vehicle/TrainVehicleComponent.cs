@@ -21,12 +21,6 @@ public sealed partial class TrainVehicleComponent : Component, IGasMixtureHolder
     public Container? Container;
 
     /// <summary>
-    /// The station that this vehicle is currently stopped at.
-    /// </summary>
-    [DataField, AutoNetworkedField]
-    public EntityUid? CurrentStation;
-
-    /// <summary>
     /// Sets the max speed at which the vehicle can move (~ tiles per second).
     /// </summary>
     [DataField]
@@ -135,33 +129,39 @@ public sealed partial class TrainVehicleComponent : Component, IGasMixtureHolder
 }
 
 /// <summary>
-/// Raised on train vehicles that are arriving at a station.
+/// Raised on train vehicles that have just collided with the bounding box of a station.
 /// </summary>
 /// <param name="DepartedStation">The station.</param>
 [ByRefEvent]
-public record struct TrainVehicleArrivingAtStationEvent(Entity<TrainStationComponent> Station);
+public record struct TrainVehicleApproachingStationEvent(Entity<TrainStationComponent> Station);
 
 /// <summary>
-/// Raised on train stations that have an arriving vehicle.
+/// Raised on train stations that have just collided with an approaching vehicle.
 /// </summary>
 /// <param name="Vehicle">The vehicle.</param>
 [ByRefEvent]
-public record struct TrainStationHasVehicleArrivingEvent(Entity<TrainVehicleComponent> Vehicle);
-
+public record struct TrainStationHasVehicleApproachingEvent(Entity<TrainVehicleComponent> Vehicle);
 
 /// <summary>
-/// Raised on train vehicles that are departing a station.
+/// Raised on train vehicles that are no longer colliding with a station.
 /// </summary>
 /// <param name="Station">The station.</param>
 [ByRefEvent]
 public record struct TrainVehicleDepartingStationEvent(Entity<TrainStationComponent> Station);
 
 /// <summary>
-/// Raised on train stations that have a departing vehicle.
+/// Raised on train stations that are no longer colliding a departing vehicle.
 /// </summary>
 /// <param name="Vehicle">The vehicle.</param>
 [ByRefEvent]
 public record struct TrainStationHasVehicleDepartingEvent(Entity<TrainVehicleComponent> Vehicle);
+
+/// <summary>
+/// Raised on trains that have entered a new section of track.
+/// </summary>
+/// <param name="Track">The train track.</param>
+[ByRefEvent]
+public record struct TrainVehicleEnteredNewTrackEvent(Entity<TrainTrackComponent> Track);
 
 /// <summary>
 /// Raised on entities that have boarded a train.

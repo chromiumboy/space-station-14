@@ -23,39 +23,39 @@ public sealed partial class TrainVehicleSystem : SharedTrainVehicleSystem
         SubscribeLocalEvent<AboardTrainComponent, ExhaleLocationEvent>(OnExhaleLocation);
     }
 
-    private void OnGetAir(EntityUid uid, AboardTrainComponent component, ref AtmosExposedGetAirEvent args)
+    private void OnGetAir(Entity<AboardTrainComponent> ent, ref AtmosExposedGetAirEvent args)
     {
-        if (!TryComp<TrainVehicleComponent>(component.TrainVehicle, out var vehicle) || !vehicle.Airtight)
+        if (!TryComp<TrainVehicleComponent>(ent.Comp.TrainVehicle, out var vehicle) || !vehicle.Airtight)
             return;
 
         args.Gas = vehicle.Air;
         args.Handled = true;
     }
 
-    private void OnInhaleLocation(EntityUid uid, AboardTrainComponent component, InhaleLocationEvent args)
+    private void OnInhaleLocation(Entity<AboardTrainComponent> ent, ref InhaleLocationEvent args)
     {
-        if (!TryComp<TrainVehicleComponent>(component.TrainVehicle, out var vehicle) || !vehicle.Airtight)
+        if (!TryComp<TrainVehicleComponent>(ent.Comp.TrainVehicle, out var vehicle) || !vehicle.Airtight)
             return;
 
         args.Gas = vehicle.Air;
     }
 
-    private void OnExhaleLocation(EntityUid uid, AboardTrainComponent component, ExhaleLocationEvent args)
+    private void OnExhaleLocation(Entity<AboardTrainComponent> ent, ref ExhaleLocationEvent args)
     {
-        if (!TryComp<TrainVehicleComponent>(component.TrainVehicle, out var vehicle) || !vehicle.Airtight)
+        if (!TryComp<TrainVehicleComponent>(ent.Comp.TrainVehicle, out var vehicle) || !vehicle.Airtight)
             return;
 
         args.Gas = vehicle.Air;
     }
 
     /// <inheritdoc/>
-    public override void TransferAtmos(Entity<TrainVehicleComponent> ent, Entity<TrainStationComponent> unit)
+    public override void TransferAtmos(Entity<TrainVehicleComponent> ent, Entity<TrainStationComponent> station)
     {
         if (!ent.Comp.Airtight)
             return;
 
-        _atmos.Merge(ent.Comp.Air, unit.Comp.Air);
-        unit.Comp.Air.Clear();
+        _atmos.Merge(ent.Comp.Air, station.Comp.Air);
+        station.Comp.Air.Clear();
     }
 
     /// <inheritdoc/>

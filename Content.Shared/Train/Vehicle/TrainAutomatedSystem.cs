@@ -22,11 +22,10 @@ public sealed partial class TrainAutomatedSystem : EntitySystem
         _metaQuery = GetEntityQuery<MetaDataComponent>();
         _xformQuery = GetEntityQuery<TransformComponent>();
 
-        SubscribeLocalEvent<TrainAutomatedComponent, TrainVehicleArrivingAtStationEvent>(OnArriving);
-        SubscribeLocalEvent<TrainAutomatedComponent, TrainVehicleDepartingStationEvent>(OnDeparture);
+        SubscribeLocalEvent<TrainAutomatedComponent, TrainVehicleApproachingStationEvent>(OnArriving);
     }
 
-    private void OnArriving(Entity<TrainAutomatedComponent> ent, ref TrainVehicleArrivingAtStationEvent args)
+    private void OnArriving(Entity<TrainAutomatedComponent> ent, ref TrainVehicleApproachingStationEvent args)
     {
         if (!TryComp<TrainVehicleComponent>(ent, out var trainVehicle))
             return;
@@ -50,7 +49,8 @@ public sealed partial class TrainAutomatedSystem : EntitySystem
         }
 
         // Set the train's next departure time
-        ent.Comp.AutomaticDepatureTime = _timing.CurTime + ent.Comp.AutomaticDelayAtStations;
+        ent.Comp.NextBoardingTime = _timing.CurTime + ent.Comp.BoardingDelay;
+        ent.Comp.NextDepartureTime = _timing.CurTime + ent.Comp.DepartureDelay;
         Dirty(ent);
 
         // Set the train's speed and position
@@ -59,14 +59,6 @@ public sealed partial class TrainAutomatedSystem : EntitySystem
         _trainVehicle.ResetDirectionChangeCounter(train);
         _trainVehicle.SetSpeed(train, 0);
         _xform.SetCoordinates(ent, Transform(args.Station).Coordinates);
-    }
-
-    private void OnDeparture(Entity<TrainAutomatedComponent> ent, ref TrainVehicleDepartingStationEvent args)
-    {
-        if (!TryComp<TrainVehicleComponent>(ent, out var vehicle))
-            return;
-
-        _trainStation.TryTransfer(args.Station, (ent, vehicle));
     }
 
     public override void Update(float frameTime)
@@ -87,12 +79,27 @@ public sealed partial class TrainAutomatedSystem : EntitySystem
         var vehicle = new Entity<TrainVehicleComponent>(uid, trainVehicle);
 
         // Check if currently at a station and whether we should depart it
-        if (_trainVehicle.IsAtStation(vehicle))
+        if (_trainVehicle.IsAtStation(vehicle, out var station))
         {
-            if (_timing.CurTime >= trainAutomated.AutomaticDepatureTime)
+            if (trainAutomated.AutoBoard &&
+                trainAutomated.NextBoardingTime != null &&
+                _timing.CurTime >= trainAutomated.NextBoardingTime)
+            {
+                _trainStation.TryTransfer(station.Value, (ent, vehicle));
+                trainAutomated.NextBoardingTime = null;
+
+                var ev = new TrainAutomatedBoardingEvent(ent);
+                RaiseLocalEvent(station.Value, ref ev);
+            }
+
+            if (trainAutomated.NextDepartureTime != null &&
+                _timing.CurTime >= trainAutomated.NextDepartureTime)
             {
                 _trainVehicle.SetSpeed(vehicle, trainVehicle.TraversalSpeed);
-                _trainVehicle.DepartStation(vehicle);
+                trainAutomated.NextDepartureTime = null;
+
+                var ev = new TrainAutomatedDepartingEvent(ent);
+                RaiseLocalEvent(station.Value, ref ev);
             }
 
             return;

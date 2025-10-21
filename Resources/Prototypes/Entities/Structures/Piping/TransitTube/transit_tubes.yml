@@ -67,7 +67,7 @@
     price: 30
 
 - type: entity
-  id: TransitHolder
+  id: TransitTubePod
   name: transit pod
   placement:
     mode: SnapgridCenter
@@ -88,10 +88,12 @@
     - map: [ "pod" ]
       state: pod_occupied
       shader: unshaded
+  - type: TransitTubePod
   - type: TrainVehicle
     airtight: true
     ejectContentsOnDerailment: true
   - type: TrainAutomated
+    departureDelay: 6
   - type: ContainerContainer
     containers:
       TrainVehicleComponent: !type:Container
@@ -108,6 +110,21 @@
         - MobLayer
         mask:
         - MobMask
+
+- type: entity
+  parent: TransitTubePod
+  id: TransitTubePodTemp
+  name: transit pod
+  suffix: Temp
+  components:
+  - type: Sprite
+    layers:
+    - map: [ "pod" ]
+      state: pod_appear
+      shader: unshaded
+      loop: false
+  - type: TransitTubePod
+    permanent: false
 
 # Pipes
 
@@ -437,16 +454,16 @@
     drawdepth: OverMobs
     sprite: Structures/Piping/Transit/transit_stations.rsi
     layers:
-    - map: [ "Base" ]
-      state: terminus_closed
+    - map: [ "enum.TransitTubeStationVisualLayers.Base" ]
+      state: station_closed
   - type: Appearance
   - type: AnimationPlayer
   - type: GenericVisualizer
     visuals:
       enum.AnchorVisuals.Anchored:
         enum.TransitTubeStationVisualLayers.Base:
-          False: { state: terminus_u }
-          True: { state: terminus_closed }
+          False: { state: station_u }
+          True: { state: station_closed }
   - type: Physics
   - type: Fixtures
     fixtures:
@@ -495,6 +512,8 @@
     color: DarkGray
     range: 0
   - type: TransitTubeStation
+    transitTubePodPrototype: TransitTubePod
+    transitTubePodSpawnCondition: OnInsert
   - type: Construction
     graph: TransitTubeStations
     node: station
@@ -516,6 +535,7 @@
   - type: TrainTrack
   - type: TrainStation
     maxCapacity: 1
+    entryDelay: 1
     whitelist:
       components:
       - Body
@@ -530,6 +550,24 @@
   parent: TransitTubeStationBase
   name: transit tube terminus
   components:
+  - type: Sprite
+    drawdepth: OverMobs
+    sprite: Structures/Piping/Transit/transit_stations.rsi
+    layers:
+    - map: [ "enum.TransitTubeStationVisualLayers.Base" ]
+      state: terminus_closed
+  - type: GenericVisualizer
+    visuals:
+      enum.AnchorVisuals.Anchored:
+        enum.TransitTubeStationVisualLayers.Base:
+          False: { state: terminus_u }
+          True: { state: terminus_closed }
+  - type: TransitTubeStation
+    transitTubePodPrototype: TransitTubePodTemp
+    openState: "terminus_open"
+    closedState: "terminus_closed"
+    openingState: "terminus_opening"
+    closingState: "terminus_closing"
   - type: Construction
     graph: TransitTubeStations
     node: terminus

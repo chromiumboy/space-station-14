@@ -10,6 +10,18 @@ namespace Content.Shared.TransitTube;
 public sealed partial class TransitTubeStationComponent : Component
 {
     /// <summary>
+    ///
+    /// </summary>
+    [DataField]
+    public TransitTubePodSpawnCondition TransitTubePodSpawnCondition;
+
+    /// <summary>
+    ///
+    /// </summary>
+    [DataField]
+    public EntProtoId? TransitTubePodPrototype;
+
+    /// <summary>
     /// Sound to play when the station opens.
     /// </summary>
     [DataField]
@@ -37,25 +49,25 @@ public sealed partial class TransitTubeStationComponent : Component
     /// The visual state to use when the station is open.
     /// </summary>
     [DataField]
-    public string OpenState = "terminus_open";
+    public string OpenState = "station_open";
 
     /// <summary>
     /// The visual state to use when the station is closed.
     /// </summary>
     [DataField]
-    public string ClosedState = "terminus_closed";
+    public string ClosedState = "station_closed";
 
     /// <summary>
     /// The visual state to use when the station is opening.
     /// </summary>
     [DataField]
-    public string OpeningState = "terminus_opening";
+    public string OpeningState = "station_opening";
 
     /// <summary>
     /// The visual state to use when the station is closing.
     /// </summary>
     [DataField]
-    public string ClosingState = "terminus_closing";
+    public string ClosingState = "station_closing";
 
     /// <summary>
     /// The length of the opening animation (in seconds)
@@ -80,26 +92,11 @@ public sealed partial class TransitTubeStationComponent : Component
     /// </summary>
     [ViewVariables(VVAccess.ReadWrite)]
     public object ClosingAnimation = default!;
-
-    /// <summary>
-    /// Effect played when a transit pod is going to be created.
-    /// </summary>
-    //[DataField]
-    //public EntProtoId PodCreationEffect = "EffectTransitPodAppear";
-
-    /// <summary>
-    /// Effect played when a transit pod is destroyed.
-    /// </summary>
-    //[DataField]
-    //public EntProtoId PodVanishEffect = "EffectTransitPodDisappear";
-
-    /// <summary>
-    /// The effect currently being played on the station.
-    /// </summary>
-    //[DataField]
-    //public EntityUid? CurrentPodEffect;
 }
 
+/// <summary>
+/// State for the transit tube station.
+/// </summary>
 [Serializable, NetSerializable]
 public enum TransitTubeStationState
 {
@@ -107,6 +104,15 @@ public enum TransitTubeStationState
     Open = (1 << 0),
     Closing = (1 << 1),
     Opening = (1 << 1) | Open,
+}
+
+/// <summary>
+/// Condition required for a transit tube pod to be spawned.
+/// </summary>
+public enum TransitTubePodSpawnCondition
+{
+    OnInsert,
+    OnDerailment,
 }
 
 [Serializable, NetSerializable]

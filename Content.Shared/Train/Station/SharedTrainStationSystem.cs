@@ -15,6 +15,8 @@ using Content.Shared.Train.Vehicle;
 using Content.Shared.Verbs;
 using Content.Shared.Whitelist;
 using Robust.Shared.Containers;
+using Robust.Shared.Map.Components;
+using Robust.Shared.Physics.Events;
 using Robust.Shared.Physics.Systems;
 using Robust.Shared.Timing;
 using Robust.Shared.Utility;
@@ -38,6 +40,7 @@ public abstract class SharedTrainStationSystem : EntitySystem
     [Dependency] private readonly SharedDoAfterSystem _doAfterSystem = default!;
     [Dependency] private readonly SharedHandsSystem _handsSystem = default!;
     [Dependency] private readonly SharedTrainVehicleSystem _trainVehicle = default!;
+    [Dependency] private readonly SharedMapSystem _map = default!;
 
     public override void Initialize()
     {
@@ -60,7 +63,8 @@ public abstract class SharedTrainStationSystem : EntitySystem
         SubscribeLocalEvent<TrainStationComponent, DragDropTargetEvent>(OnDragDropOn);
         SubscribeLocalEvent<TrainStationComponent, ContainerRelayMovementEntityEvent>(OnMovement);
 
-
+        SubscribeLocalEvent<TrainStationComponent, StartCollideEvent>(OnStartCollide);
+        SubscribeLocalEvent<TrainStationComponent, EndCollideEvent>(OnEndCollide);
     }
 
     protected virtual void OnInit(Entity<TrainStationComponent> ent, ref ComponentInit args)
@@ -235,7 +239,6 @@ public abstract class SharedTrainStationSystem : EntitySystem
         }
     }
 
-
     private void OnAfterInteractUsing(Entity<TrainStationComponent> ent, ref AfterInteractUsingEvent args)
     {
         if (args.Handled || !args.CanReach)
@@ -274,7 +277,39 @@ public abstract class SharedTrainStationSystem : EntitySystem
         Dirty(ent);
     }
 
+    private void OnStartCollide(Entity<TrainStationComponent> ent, ref StartCollideEvent args)
+    {
+        if (!TryComp<TrainVehicleComponent>(args.OtherEntity, out var trainVehicle))
+            return;
 
+        if (trainVehicle.IsDerailed)
+            return;
+
+        var train = new Entity<TrainVehicleComponent>(args.OtherEntity, trainVehicle);
+
+        var evVehicle = new TrainVehicleApproachingStationEvent(ent);
+        RaiseLocalEvent(train, ref evVehicle);
+
+        var evStation = new TrainStationHasVehicleApproachingEvent(train);
+        RaiseLocalEvent(ent, ref evStation);
+    }
+
+    private void OnEndCollide(Entity<TrainStationComponent> ent, ref EndCollideEvent args)
+    {
+        if (!TryComp<TrainVehicleComponent>(args.OtherEntity, out var trainVehicle))
+            return;
+
+        if (trainVehicle.IsDerailed)
+            return;
+
+        var train = new Entity<TrainVehicleComponent>(args.OtherEntity, trainVehicle);
+
+        var evVehicle = new TrainVehicleDepartingStationEvent(ent);
+        RaiseLocalEvent(train, ref evVehicle);
+
+        var evStation = new TrainStationHasVehicleDepartingEvent(train);
+        RaiseLocalEvent(ent, ref evStation);
+    }
 
     /// <summary>
     /// Remove all entities currently in a train station.
@@ -327,7 +362,13 @@ public abstract class SharedTrainStationSystem : EntitySystem
         var delay = insertingSelf ? ent.Comp.EntryDelay : ent.Comp.DraggedEntryDelay;
 
         if (user != null && !insertingSelf)
-            _popupSystem.PopupEntity(Loc.GetString("disposal-unit-being-inserted", ("user", Identity.Entity((EntityUid)user, EntityManager))), toInsert, toInsert, PopupType.Large);
+        {
+            _popupSystem.PopupEntity(Loc.GetString("disposal-unit-being-inserted",
+                ("user", Identity.Entity((EntityUid)user, EntityManager))),
+                toInsert,
+                toInsert,
+                PopupType.Large);
+        }
 
         if (delay <= 0 || user == null)
         {
@@ -340,6 +381,7 @@ public abstract class SharedTrainStationSystem : EntitySystem
             BreakOnDamage = true,
             BreakOnMove = true,
             NeedHand = false,
+            AttemptFrequency = AttemptFrequency.StartAndEnd,
         };
 
         _doAfterSystem.TryStartDoAfter(doAfterArgs);
@@ -377,7 +419,7 @@ public abstract class SharedTrainStationSystem : EntitySystem
     /// <returns>True if the transfer was successful.</returns>
     public bool TryTransfer(Entity<TrainStationComponent> ent, Entity<TrainVehicleComponent> vehicle)
     {
-        if (!_trainVehicle.IsAtStation(vehicle, ent))
+        if (!_trainVehicle.IsAtStation(vehicle, out var station) || station != ent)
             return false;
 
         if (vehicle.Comp.Container == null)
@@ -418,6 +460,27 @@ public abstract class SharedTrainStationSystem : EntitySystem
     public int GetContainedEntityCount(Entity<TrainStationComponent> ent)
     {
         return GetContainedEntities(ent).Count;
+    }
+
+    /// <summary>
+    /// Returns whether any train vehicles are current at a station.
+    /// </summary>
+    /// <param name="ent">The station.</param>
+    /// <returns>True if a vehicle is at a station.</returns>
+    public bool IsOccupied(Entity<TrainStationComponent> ent, EntityUid? ignored = null)
+    {
+        var xform = Transform(ent);
+
+        if (!TryComp(xform.GridUid, out MapGridComponent? mapGrid))
+            return false;
+
+        var foundUid = _map.GetLocal(xform.GridUid.Value, mapGrid, xform.Coordinates).
+            FirstOrNull(x => x != ignored && HasComp<TrainVehicleComponent>(x));
+
+        if (foundUid == null)
+            return false;
+
+        return true;
     }
 
     /// <summary>
