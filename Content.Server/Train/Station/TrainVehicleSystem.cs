@@ -72,8 +72,10 @@ public sealed partial class TrainVehicleSystem : SharedTrainVehicleSystem
     }
 
     /// <inheritdoc/>
-    protected override bool TryDerailing(Entity<TrainVehicleComponent> ent, Entity<TrainTrackComponent> conduit)
+    public override bool TryDerailing(Entity<TrainVehicleComponent> ent, Entity<TrainTrackComponent> conduit)
     {
+        return false;
+        /*
         // Check if the vehicle should have a chance to derail yet
         if (ent.Comp.DerailmentThreshold == null ||
             ent.Comp.DirectionChangeCount < ent.Comp.DerailmentThreshold)
@@ -88,6 +90,6 @@ public sealed partial class TrainVehicleSystem : SharedTrainVehicleSystem
         _xformSystem.Unanchor(conduit, xform);
         Derail(ent);
 
-        return true;
+        return true;*/
     }
 }

@@ -18,10 +18,10 @@ public abstract partial class SharedTrainTrackSystem : EntitySystem
     {
         base.Initialize();
 
-        SubscribeLocalEvent<TrainTrackComponent, GetTrainVehicleNextDirectionEvent>(OnGetNextDirection);
+        SubscribeLocalEvent<TrainTrackComponent, GetTrainVehicleLocomotorNextDirectionEvent>(OnGetNextDirection);
     }
 
-    private void OnGetNextDirection(Entity<TrainTrackComponent> ent, ref GetTrainVehicleNextDirectionEvent args)
+    private void OnGetNextDirection(Entity<TrainTrackComponent> ent, ref GetTrainVehicleLocomotorNextDirectionEvent args)
     {
         SelectNextDirection(ent, ref args);
     }
@@ -32,12 +32,12 @@ public abstract partial class SharedTrainTrackSystem : EntitySystem
     /// <param name="ent">The train track.</param>
     /// <param name="exits">A list of possible exits.</param>
     /// <param name="args">The 'get next direction' event.</param>
-    private void SelectNextDirection(Entity<TrainTrackComponent> ent, ref GetTrainVehicleNextDirectionEvent args)
+    private void SelectNextDirection(Entity<TrainTrackComponent> ent, ref GetTrainVehicleLocomotorNextDirectionEvent args)
     {
-        if (args.Vehicle.Comp.CurrentDirection == Direction.Invalid)
+        if (args.Locomotor.Comp.CurrentDirection == Direction.Invalid)
             return;
 
-        if (!ent.Comp.Directions.TryGetValue(args.Vehicle.Comp.CurrentDirection.GetOpposite(), out var exits))
+        if (!ent.Comp.Directions.TryGetValue(args.Locomotor.Comp.CurrentDirection.GetOpposite(), out var exits))
             return;
 
         switch (exits.Length)

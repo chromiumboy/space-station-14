@@ -1,19 +1,15 @@
-using Content.Shared.Atmos;
 using Content.Shared.Damage;
 using Content.Shared.Stunnable;
 using Content.Shared.Throwing;
 using Content.Shared.Train.Station;
 using Content.Shared.Train.Track;
-using Robust.Shared.Audio.Systems;
 using Robust.Shared.Containers;
 using Robust.Shared.Map.Components;
-using Robust.Shared.Network;
 using Robust.Shared.Physics;
 using Robust.Shared.Physics.Components;
 using Robust.Shared.Physics.Systems;
 using Robust.Shared.Utility;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 
 namespace Content.Shared.Train.Vehicle;
 
@@ -24,13 +20,12 @@ public abstract partial class SharedTrainVehicleSystem : EntitySystem
 {
     [Dependency] private readonly ThrowingSystem _throwing = default!;
     [Dependency] private readonly DamageableSystem _damageable = default!;
-    [Dependency] private readonly SharedAudioSystem _audio = default!;
     [Dependency] private readonly SharedContainerSystem _container = default!;
     [Dependency] private readonly SharedPhysicsSystem _physics = default!;
     [Dependency] private readonly SharedTransformSystem _xform = default!;
-    [Dependency] private readonly INetManager _net = default!;
     [Dependency] private readonly SharedStunSystem _stun = default!;
     [Dependency] private readonly SharedMapSystem _map = default!;
+    [Dependency] private readonly TrainVehicleLocomotorSystem _locomotor = default!;
 
     private EntityQuery<MetaDataComponent> _metaQuery;
     private EntityQuery<TransformComponent> _xformQuery;
@@ -47,61 +42,7 @@ public abstract partial class SharedTrainVehicleSystem : EntitySystem
 
     private void OnComponentStartup(Entity<TrainVehicleComponent> ent, ref ComponentStartup args)
     {
-        // Ensure container
         ent.Comp.Container = _container.EnsureContainer<Container>(ent, nameof(TrainVehicleComponent));
-
-        // Try to attach to a piece of track
-        TryAttachToTrack(ent);
-    }
-
-    /// <summary>
-    /// Tries to attach a train vehicle to a piece of track. If no track is specified,
-    /// it will attempt to attach itself to a peice of track under it.
-    /// </summary>
-    /// <param name="ent"></param>
-    /// <param name="track"></param>
-    public bool TryAttachToTrack(Entity<TrainVehicleComponent> ent, Entity<TrainTrackComponent>? track = null)
-    {
-        var xform = _xformQuery.GetComponent(ent);
-
-        // Try to find a piece of track to attach the vehicle
-        if (track == null)
-        {
-            if (!TryComp<MapGridComponent>(xform.GridUid, out var grid))
-                return false;
-
-            TrainTrackComponent? trackComp = null;
-
-            var trackUid = _map.GetLocal(xform.GridUid.Value, grid, xform.Coordinates)
-                .FirstOrNull(x => TryComp(x, out trackComp));
-
-            if (trackUid == null || trackComp == null)
-                return false;
-
-            track = (trackUid.Value, trackComp);
-        }
-
-        // Check that the track is valid
-        var direction = track.Value.Comp.Directions.FirstOrNull();
-
-        if (direction == null)
-            return false;
-
-        // Attach the vehicle to the found track
-        ent.Comp.CurrentDirection = track.Value.Comp.Directions.FirstOrDefault().Key.GetOpposite();
-        ent.Comp.IsDerailed = false;
-
-        _xform.SetCoordinates(ent, Transform(track.Value).Coordinates);
-        _xform.SetLocalRotation(ent, ent.Comp.CurrentDirection.ToAngle());
-
-        if (TryComp<PhysicsComponent>(ent, out var body))
-        {
-            _physics.SetBodyType(ent, BodyType.Kinematic, null, body, xform);
-        }
-
-        TryEnterTrack(ent, track.Value);
-
-        return true;
     }
 
     /// <summary>
@@ -123,21 +64,6 @@ public abstract partial class SharedTrainVehicleSystem : EntitySystem
         // Eject contents
         if (ent.Comp.EjectContentsOnDerailment)
         {
-            // Get the vehicle and grid transforms
-            var gridUid = xform.GridUid;
-
-            _xformQuery.TryGetComponent(gridUid, out var gridXform);
-
-            // Determine the exit angle of ejected entities
-            var exitDirection = ent.Comp.CurrentDirection;
-            Angle? exitAngle = exitDirection != Direction.Invalid ? exitDirection.ToAngle() : null;
-
-            // Update the exit angle to account for the grid's rotation
-            if (exitAngle != null && gridXform != null)
-            {
-                exitAngle += _xform.GetWorldRotation(gridXform);
-            }
-
             // We're purposely iterating over all the holder's children
             // because the holder might have something teleported into it,
             // outside the usual container insertion logic.
@@ -161,12 +87,9 @@ public abstract partial class SharedTrainVehicleSystem : EntitySystem
                 }
 
                 // Throw the entity
-                if (exitAngle != null)
-                {
-                    _throwing.TryThrow(held,
-                        exitAngle.Value.ToWorldVec() * ent.Comp.ExitDistanceMultiplier,
-                        ent.Comp.CurrentSpeed * ent.Comp.DerailmentSpeedMultiplier);
-                }
+                _throwing.TryThrow(held,
+                    _xform.GetWorldRotation(ent, _xformQuery).ToWorldVec() * ent.Comp.ExitDistanceMultiplier,
+                    ent.Comp.CurrentSpeed * ent.Comp.DerailmentSpeedMultiplier);
             }
 
             // Expel contained atmosphere
@@ -181,12 +104,10 @@ public abstract partial class SharedTrainVehicleSystem : EntitySystem
             _physics.SetLinearVelocity(ent, velocity);
         }
 
-        // Remove the vehicle from the track
+        // Remove the vehicle from the track and set its speed to zero
         ent.Comp.IsDerailed = true;
-        ent.Comp.CurrentTrack = null;
-        ent.Comp.NextTrack = null;
-        ent.Comp.CurrentDirection = Direction.Invalid;
         SetSpeed(ent, 0, true);
+
         Dirty(ent);
 
         // Raise after derailment event
@@ -194,76 +115,7 @@ public abstract partial class SharedTrainVehicleSystem : EntitySystem
         RaiseLocalEvent(ent, ref afterEv);
     }
 
-    /// <summary>
-    /// Attempts to assigns a train vehicle to a new train track, updating its trajectory.
-    /// </summary>
-    /// <param name="ent">The vehicle.</param>
-    /// <param name="track">The track the vehicle is attempting to enter.</param>
-    /// <param name="ignoreStations">If true the vehicle will not attempt to
-    /// enter any stations on this piece of track.</param>
-    /// <returns>True if the vehicle can enter the track.</returns>
-    /// <remarks>
-    /// This function will call <see cref="Derail"/> on any failure.
-    /// </remarks>
-    public bool TryEnterTrack(Entity<TrainVehicleComponent> ent, Entity<TrainTrackComponent> track, bool ignoreStations = false)
-    {
-        if (ent.Comp.IsDerailed)
-            return false;
 
-        if (ent.Comp.CurrentTrack == track)
-            return false;
-
-        // Get the next direction to move
-        var evNextDirection = new GetTrainVehicleNextDirectionEvent(ent);
-        RaiseLocalEvent(track, ref evNextDirection);
-
-        // If the next direction to move is invalid, derail immediately
-        if (evNextDirection.Next == Direction.Invalid)
-        {
-            Derail(ent);
-            return false;
-        }
-
-        var xform = Transform(ent);
-
-        // Check if we are changing direction
-        if (ent.Comp.CurrentDirection != evNextDirection.Next)
-        {
-            ent.Comp.DirectionChangeCount++;
-
-            if (_net.IsServer)
-            {
-                _audio.PlayPvs(track.Comp.ChangeDirectionsSound, xform.Coordinates);
-            }
-
-            // Check if the holder can escape the current pipe
-            if (TryDerailing(ent, track))
-                return false;
-        }
-
-        // Update trajectory
-        ent.Comp.CurrentDirection = evNextDirection.Next;
-        ent.Comp.CurrentTrack = track;
-
-        var adjacentTrack = track.Comp.AdjacentTrack;
-
-        if (adjacentTrack.TryGetValue(ent.Comp.CurrentDirection, out var nextTrack))
-        {
-            ent.Comp.NextTrack = nextTrack;
-        }
-        else
-        {
-            Derail(ent);
-            return false;
-        }
-
-        Dirty(ent);
-
-        var evEnteredNewTrack = new TrainVehicleEnteredNewTrackEvent(track);
-        RaiseLocalEvent(ent, ref evEnteredNewTrack);
-
-        return true;
-    }
 
     /// <summary>
     /// Adds an entity to a train vehicle.
@@ -348,12 +200,8 @@ public abstract partial class SharedTrainVehicleSystem : EntitySystem
         if (Math.Sign(speed) != Math.Sign(ent.Comp.CurrentSpeed))
         {
             ent.Comp.IsReversing = !ent.Comp.IsReversing;
-            ent.Comp.CurrentDirection = ent.Comp.CurrentDirection.GetOpposite();
 
-            // Switch current and target tracks
-            var targetTrack = ent.Comp.NextTrack;
-            ent.Comp.NextTrack = ent.Comp.CurrentTrack;
-            ent.Comp.CurrentTrack = targetTrack;
+            //_locomotor.ReverseTraversalDirection();
         }
 
         if (updateTargetSpeed)
@@ -394,8 +242,7 @@ public abstract partial class SharedTrainVehicleSystem : EntitySystem
     /// <param name="ent">The vehicle.</param>
     public void ResetDirectionChangeCounter(Entity<TrainVehicleComponent> ent)
     {
-        ent.Comp.DirectionChangeCount = 0;
-        Dirty(ent);
+
     }
 
     /// <summary>
@@ -436,7 +283,7 @@ public abstract partial class SharedTrainVehicleSystem : EntitySystem
             if (Paused(uid, meta))
                 return;
 
-            UpdateTrainVehicle((uid, trainVehicle), dt);
+            UpdateSpeed((uid, trainVehicle), dt);
         }
     }
 
@@ -450,77 +297,6 @@ public abstract partial class SharedTrainVehicleSystem : EntitySystem
             : -ent.Comp.Acceleration.X * dt;
 
         SetSpeed(ent, ent.Comp.CurrentSpeed + dV);
-    }
-
-    /// <summary>
-    /// Runs an update on the trajectory of a train vehicle.
-    /// </summary>
-    /// <param name="ent">The vehicle.</param>
-    private void UpdateTrainVehicle(Entity<TrainVehicleComponent> ent, float dt)
-    {
-        if (ent.Comp.IsDerailed)
-            return;
-
-        // If the track/grid was removed, derail the vehicle
-        var current = ent.Comp.CurrentTrack;
-        var next = ent.Comp.NextTrack;
-
-        if (!Exists(current) || !Exists(next))
-        {
-            Derail(ent);
-            return;
-        }
-
-        var gridUid = _xformQuery.GetComponent(current.Value).GridUid;
-
-        if (gridUid == null)
-        {
-            Derail(ent);
-            return;
-        }
-
-        UpdateSpeed(ent, dt);
-
-        if (ent.Comp.IsDerailed || ent.Comp.CurrentSpeed == 0)
-            return;
-
-        // Update the entity's rotation
-        var xform = _xformQuery.GetComponent(ent);
-        _xform.SetLocalRotation(ent, ent.Comp.CurrentDirection.ToAngle());
-
-        // Apply a linear velocity to the vehicle, directing
-        // it toward the next piece of track on its route
-        var gridRotation = _xform.GetWorldRotation(gridUid.Value);
-        var origin = _xform.GetMapCoordinates(_xformQuery.GetComponent(current.Value));
-        var destination = _xform.GetMapCoordinates(_xformQuery.GetComponent(next.Value));
-        var entCoords = _xform.GetMapCoordinates(_xformQuery.GetComponent(ent));
-
-        // How far off are we from our destination?
-        var entDestDiff = destination.Position - entCoords.Position;
-
-        // If we're really close, don't bother updating our velocity,
-        // just move to the next piece of track
-        if (entDestDiff.Length() > 1e-3)
-        {
-            // Set velocity
-            var velocity = entDestDiff.Normalized() * GetEffectiveSpeed(ent);
-            _physics.SetLinearVelocity(ent, velocity);
-
-            // Determine whether the vehicle should update its route,
-            // based on its current position with respect to its target and origin
-            var originDestDiff = destination.Position - origin.Position;
-            var originEntDiff = entCoords.Position - origin.Position;
-
-            if (originEntDiff.Length() < originDestDiff.Length())
-                return;
-        }
-
-        // Attempt to enter the next track
-        if (TryComp<TrainTrackComponent>(next, out var track) &&
-            TryEnterTrack(ent, (next.Value, track)))
-        {
-            UpdateTrainVehicle(ent, 0);
-        }
     }
 
     /// <summary>
@@ -548,7 +324,7 @@ public abstract partial class SharedTrainVehicleSystem : EntitySystem
     /// <param name="ent">The vehicle.</param>
     /// <param name="track">The track the vehicle is on.</param>
     /// <returns>True if the vehicle derailed.</returns>
-    protected virtual bool TryDerailing(Entity<TrainVehicleComponent> ent, Entity<TrainTrackComponent> track)
+    public virtual bool TryDerailing(Entity<TrainVehicleComponent> ent, Entity<TrainTrackComponent> track)
     {
         // Handled by the server
 

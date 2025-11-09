@@ -92,6 +92,7 @@
   - type: TrainVehicle
     airtight: true
     ejectContentsOnDerailment: true
+  - type: TrainVehicleLocomotor
   - type: TrainAutomated
     departureDelay: 6
   - type: ContainerContainer

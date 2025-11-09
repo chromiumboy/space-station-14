@@ -83,24 +83,6 @@ public sealed partial class TrainVehicleComponent : Component, IGasMixtureHolder
     public float ExitDistanceMultiplier { get; set; } = 1f;
 
     /// <summary>
-    /// The train track the vehicle is moving along.
-    /// </summary>
-    [DataField, AutoNetworkedField]
-    public EntityUid? CurrentTrack { get; set; }
-
-    /// <summary>
-    /// The train track the vehicle is moving towards.
-    /// </summary>
-    [DataField, AutoNetworkedField]
-    public EntityUid? NextTrack { get; set; }
-
-    /// <summary>
-    /// The current direction the vehicle is moving.
-    /// </summary>
-    [DataField, AutoNetworkedField]
-    public Direction CurrentDirection { get; set; } = Direction.Invalid;
-
-    /// <summary>
     /// Sets whether the vehicle is airthight or not.
     /// </summary>
     [DataField]
@@ -111,12 +93,6 @@ public sealed partial class TrainVehicleComponent : Component, IGasMixtureHolder
     /// </summary>
     [DataField]
     public GasMixture Air { get; set; } = new(70);
-
-    /// <summary>
-    /// Tracks the number of times the vehicle changes direction
-    /// </summary>
-    [DataField]
-    public int DirectionChangeCount;
 
     /// <summary>
     /// After <see cref="DirectionChangeCount"/> exceeds this value, the
@@ -225,22 +201,3 @@ public record struct BeforeTrainVehicleDerailmentEvent();
 /// <param name="Vehicle">The vehicle.</param>
 [ByRefEvent]
 public record struct AfterTrainVehicleDerailmentEvent();
-
-/// <summary>
-/// Event raised when determining which direction a train vehicle should move next.
-/// </summary>
-/// <param name="Vehicle">The vehicle.</param>
-/// <param name="Direction">The direction the vehicle is heading.</param>
-[ByRefEvent]
-public record struct GetTrainVehicleNextDirectionEvent(Entity<TrainVehicleComponent> Vehicle)
-{
-    /// <summary>
-    /// Array of potential directions the vehicle could move in.
-    /// </summary>
-    public Direction[] Possibilities = { Direction.Invalid };
-
-    /// <summary>
-    /// The direction that has been selected.
-    /// </summary>
-    public Direction Next = Direction.Invalid;
-}
