@@ -22,15 +22,18 @@ public sealed partial class TrainAutomatedSystem : EntitySystem
         _metaQuery = GetEntityQuery<MetaDataComponent>();
         _xformQuery = GetEntityQuery<TransformComponent>();
 
-        SubscribeLocalEvent<TrainAutomatedComponent, TrainVehicleApproachingStationEvent>(OnArriving);
+        SubscribeLocalEvent<TrainAutomatedComponent, TrainVehicleEnteredNewTrackEvent>(OnArriving);
     }
 
-    private void OnArriving(Entity<TrainAutomatedComponent> ent, ref TrainVehicleApproachingStationEvent args)
+    private void OnArriving(Entity<TrainAutomatedComponent> ent, ref TrainVehicleEnteredNewTrackEvent args)
     {
         if (!TryComp<TrainVehicleComponent>(ent, out var trainVehicle))
             return;
 
-        if (args.Station.Comp.Container == null)
+        if (!TryComp<TrainStationComponent>(args.Track, out var trainStation))
+            return;
+
+        if (trainStation.Container == null)
             return;
 
         // Move all children into the station
@@ -42,7 +45,7 @@ public sealed partial class TrainAutomatedSystem : EntitySystem
             var xformHeld = _xformQuery.GetComponent(held);
             var metaHeld = _metaQuery.GetComponent(held);
 
-            if (_container.Insert((held, xformHeld, metaHeld), args.Station.Comp.Container))
+            if (_container.Insert((held, xformHeld, metaHeld), trainStation.Container))
             {
                 _trainVehicle.DetrainEntity(held);
             }
@@ -57,8 +60,8 @@ public sealed partial class TrainAutomatedSystem : EntitySystem
         var train = new Entity<TrainVehicleComponent>(ent, trainVehicle);
 
         _trainVehicle.ResetDirectionChangeCounter(train);
-        _trainVehicle.SetSpeed(train, 0);
-        _xform.SetCoordinates(ent, Transform(args.Station).Coordinates);
+        _trainVehicle.SetSpeed(train, 0, true);
+        _xform.SetCoordinates(ent, Transform(args.Track).Coordinates);
     }
 
     public override void Update(float frameTime)
@@ -95,7 +98,7 @@ public sealed partial class TrainAutomatedSystem : EntitySystem
             if (trainAutomated.NextDepartureTime != null &&
                 _timing.CurTime >= trainAutomated.NextDepartureTime)
             {
-                _trainVehicle.SetSpeed(vehicle, trainVehicle.TraversalSpeed);
+                _trainVehicle.SetTargetSpeed(vehicle, trainVehicle.TraversalSpeed.Y);
                 trainAutomated.NextDepartureTime = null;
 
                 var ev = new TrainAutomatedDepartingEvent(ent);
@@ -106,6 +109,6 @@ public sealed partial class TrainAutomatedSystem : EntitySystem
         }
 
         // If not at a station, set the train to its max speed
-        _trainVehicle.SetSpeed(vehicle, trainVehicle.TraversalSpeed);
+        _trainVehicle.SetTargetSpeed(vehicle, trainVehicle.TraversalSpeed.Y);
     }
 }

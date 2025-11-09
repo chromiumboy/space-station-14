@@ -186,7 +186,7 @@ public abstract partial class SharedTrainVehicleSystem : EntitySystem
         ent.Comp.CurrentTrack = null;
         ent.Comp.NextTrack = null;
         ent.Comp.CurrentDirection = Direction.Invalid;
-        ent.Comp.CurrentSpeed = 0;
+        SetSpeed(ent, 0, true);
         Dirty(ent);
 
         // Raise after derailment event
@@ -316,21 +316,55 @@ public abstract partial class SharedTrainVehicleSystem : EntitySystem
     }
 
     /// <summary>
+    /// Sets the target speed of a train vehicle.
+    /// </summary>
+    /// <param name="ent">The vehicle.</param>
+    /// <param name="targetSpeed">The new target speed.</param>
+    public void SetTargetSpeed(Entity<TrainVehicleComponent> ent, float targetSpeed)
+    {
+        if (ent.Comp.IsDerailed)
+            return;
+
+        ent.Comp.TargetSpeed = Math.Clamp(targetSpeed, ent.Comp.TraversalSpeed.X, ent.Comp.TraversalSpeed.Y);
+        Dirty(ent);
+    }
+
+    /// <summary>
     /// Sets the current speed of a train vehicle.
     /// </summary>
     /// <param name="ent">The vehicle.</param>
     /// <param name="speed">The new speed.</param>
-    public void SetSpeed(Entity<TrainVehicleComponent> ent, float speed)
+    /// <param name="updateTargetSpeed">Whether the target speed should be set to the new speed.</param>
+    public void SetSpeed(Entity<TrainVehicleComponent> ent, float speed, bool updateTargetSpeed = false)
     {
-        ent.Comp.CurrentSpeed = Math.Clamp(speed, 0, ent.Comp.TraversalSpeed);
+        speed = Math.Clamp(speed, ent.Comp.TraversalSpeed.X, ent.Comp.TraversalSpeed.Y);
 
         if (ent.Comp.IsDerailed)
         {
             speed = 0;
         }
 
+        // Reverse direction?
+        if (Math.Sign(speed) != Math.Sign(ent.Comp.CurrentSpeed))
+        {
+            ent.Comp.IsReversing = !ent.Comp.IsReversing;
+            ent.Comp.CurrentDirection = ent.Comp.CurrentDirection.GetOpposite();
+
+            // Switch current and target tracks
+            var targetTrack = ent.Comp.NextTrack;
+            ent.Comp.NextTrack = ent.Comp.CurrentTrack;
+            ent.Comp.CurrentTrack = targetTrack;
+        }
+
+        if (updateTargetSpeed)
+        {
+            ent.Comp.TargetSpeed = speed;
+        }
+
+        ent.Comp.CurrentSpeed = speed;
         Dirty(ent);
 
+        // Need to reset the train's physics or it'll overshoot stations
         if (!TryComp<PhysicsComponent>(ent, out var body))
             return;
 
@@ -342,6 +376,16 @@ public abstract partial class SharedTrainVehicleSystem : EntitySystem
         }
 
         _physics.SetLinearVelocity(ent, velocity);
+    }
+
+    /// <summary>
+    /// Get the speed of a train vehicle for movement calculations.
+    /// </summary>
+    /// <param name="ent">The vehicle.</param>
+    /// <returns>The vehicle's current speed.</returns>
+    public float GetEffectiveSpeed(Entity<TrainVehicleComponent> ent)
+    {
+        return MathF.Abs(ent.Comp.CurrentSpeed);
     }
 
     /// <summary>
@@ -384,7 +428,7 @@ public abstract partial class SharedTrainVehicleSystem : EntitySystem
         return true;
     }
 
-    public override void Update(float frameTime)
+    public override void Update(float dt)
     {
         var query = EntityQueryEnumerator<TrainVehicleComponent, MetaDataComponent>();
         while (query.MoveNext(out var uid, out var trainVehicle, out var meta))
@@ -392,15 +436,27 @@ public abstract partial class SharedTrainVehicleSystem : EntitySystem
             if (Paused(uid, meta))
                 return;
 
-            UpdateTrainVehicle((uid, trainVehicle));
+            UpdateTrainVehicle((uid, trainVehicle), dt);
         }
+    }
+
+    private void UpdateSpeed(Entity<TrainVehicleComponent> ent, float dt)
+    {
+        if (MathHelper.CloseTo(ent.Comp.CurrentSpeed, ent.Comp.TargetSpeed))
+            return;
+
+        var dV = ent.Comp.CurrentSpeed < ent.Comp.TargetSpeed
+            ? ent.Comp.Acceleration.Y * dt
+            : -ent.Comp.Acceleration.X * dt;
+
+        SetSpeed(ent, ent.Comp.CurrentSpeed + dV);
     }
 
     /// <summary>
     /// Runs an update on the trajectory of a train vehicle.
     /// </summary>
     /// <param name="ent">The vehicle.</param>
-    private void UpdateTrainVehicle(Entity<TrainVehicleComponent> ent)
+    private void UpdateTrainVehicle(Entity<TrainVehicleComponent> ent, float dt)
     {
         if (ent.Comp.IsDerailed)
             return;
@@ -422,6 +478,8 @@ public abstract partial class SharedTrainVehicleSystem : EntitySystem
             Derail(ent);
             return;
         }
+
+        UpdateSpeed(ent, dt);
 
         if (ent.Comp.IsDerailed || ent.Comp.CurrentSpeed == 0)
             return;
@@ -445,7 +503,7 @@ public abstract partial class SharedTrainVehicleSystem : EntitySystem
         if (entDestDiff.Length() > 1e-3)
         {
             // Set velocity
-            var velocity = entDestDiff.Normalized() * ent.Comp.CurrentSpeed;
+            var velocity = entDestDiff.Normalized() * GetEffectiveSpeed(ent);
             _physics.SetLinearVelocity(ent, velocity);
 
             // Determine whether the vehicle should update its route,
@@ -461,7 +519,7 @@ public abstract partial class SharedTrainVehicleSystem : EntitySystem
         if (TryComp<TrainTrackComponent>(next, out var track) &&
             TryEnterTrack(ent, (next.Value, track)))
         {
-            UpdateTrainVehicle(ent);
+            UpdateTrainVehicle(ent, 0);
         }
     }
 
