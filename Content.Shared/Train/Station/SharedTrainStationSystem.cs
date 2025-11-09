@@ -41,6 +41,7 @@ public abstract class SharedTrainStationSystem : EntitySystem
     [Dependency] private readonly SharedHandsSystem _handsSystem = default!;
     [Dependency] private readonly SharedTrainVehicleSystem _trainVehicle = default!;
     [Dependency] private readonly SharedMapSystem _map = default!;
+    [Dependency] private readonly EntityLookupSystem _lookup = default!;
 
     public override void Initialize()
     {
@@ -474,8 +475,9 @@ public abstract class SharedTrainStationSystem : EntitySystem
         if (!TryComp(xform.GridUid, out MapGridComponent? mapGrid))
             return false;
 
-        var foundUid = _map.GetLocal(xform.GridUid.Value, mapGrid, xform.Coordinates).
-            FirstOrNull(x => x != ignored && HasComp<TrainVehicleComponent>(x));
+        var tileRef = _map.GetTileRef(xform.GridUid.Value, mapGrid, xform.Coordinates);
+        var foundUids = _lookup.GetLocalEntitiesIntersecting(xform.GridUid.Value, tileRef.GridIndices, gridComp: mapGrid);
+        var foundUid = foundUids.FirstOrNull(x => x != ignored && HasComp<TrainVehicleComponent>(x));
 
         if (foundUid == null)
             return false;
