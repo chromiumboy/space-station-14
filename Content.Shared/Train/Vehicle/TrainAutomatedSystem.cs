@@ -98,7 +98,7 @@ public sealed partial class TrainAutomatedSystem : EntitySystem
             if (trainAutomated.NextDepartureTime != null &&
                 _timing.CurTime >= trainAutomated.NextDepartureTime)
             {
-                _trainVehicle.SetTargetSpeed(vehicle, trainVehicle.TraversalSpeed.Y);
+                _trainVehicle.SetTargetSpeed(vehicle, trainVehicle.IsReversing ? trainVehicle.TraversalSpeed.X : trainVehicle.TraversalSpeed.Y);
                 trainAutomated.NextDepartureTime = null;
 
                 var ev = new TrainAutomatedDepartingEvent(ent);
@@ -109,6 +109,6 @@ public sealed partial class TrainAutomatedSystem : EntitySystem
         }
 
         // If not at a station, set the train to its max speed
-        _trainVehicle.SetTargetSpeed(vehicle, trainVehicle.TraversalSpeed.Y);
+        _trainVehicle.SetTargetSpeed(vehicle, trainVehicle.IsReversing ? trainVehicle.TraversalSpeed.X : trainVehicle.TraversalSpeed.Y);
     }
 }

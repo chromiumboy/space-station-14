@@ -99,9 +99,9 @@ public abstract partial class SharedTrainVehicleSystem : EntitySystem
         // Alter physics
         if (TryComp<PhysicsComponent>(ent, out var body))
         {
-            var velocity = body.LinearVelocity.Normalized() * ent.Comp.CurrentSpeed;
-            _physics.SetBodyType(ent, BodyType.Dynamic, null, body, xform);
-            _physics.SetLinearVelocity(ent, velocity);
+            //var velocity = body.LinearVelocity.Normalized() * ent.Comp.CurrentSpeed;
+            //_physics.SetBodyType(ent, BodyType.Dynamic, null, body, xform);
+            //_physics.SetLinearVelocity(ent, velocity);
         }
 
         // Remove the vehicle from the track and set its speed to zero
@@ -189,19 +189,17 @@ public abstract partial class SharedTrainVehicleSystem : EntitySystem
     /// <param name="updateTargetSpeed">Whether the target speed should be set to the new speed.</param>
     public void SetSpeed(Entity<TrainVehicleComponent> ent, float speed, bool updateTargetSpeed = false)
     {
-        speed = Math.Clamp(speed, ent.Comp.TraversalSpeed.X, ent.Comp.TraversalSpeed.Y);
-
         if (ent.Comp.IsDerailed)
         {
             speed = 0;
         }
-
-        // Reverse direction?
-        if (Math.Sign(speed) != Math.Sign(ent.Comp.CurrentSpeed))
+        else if (ent.Comp.IsReversing)
         {
-            ent.Comp.IsReversing = !ent.Comp.IsReversing;
-
-            //_locomotor.ReverseTraversalDirection();
+            speed = Math.Clamp(speed, ent.Comp.TraversalSpeed.X, 0);
+        }
+        else
+        {
+            speed = Math.Clamp(speed, 0, ent.Comp.TraversalSpeed.Y);
         }
 
         if (updateTargetSpeed)
@@ -212,18 +210,42 @@ public abstract partial class SharedTrainVehicleSystem : EntitySystem
         ent.Comp.CurrentSpeed = speed;
         Dirty(ent);
 
-        // Need to reset the train's physics or it'll overshoot stations
-        if (!TryComp<PhysicsComponent>(ent, out var body))
-            return;
-
-        var velocity = body.LinearVelocity;
-
-        if (velocity.Length() > 0)
+        if (TryComp<TrainVehicleLocomotorComponent>(ent, out var loco))
         {
-            velocity = body.LinearVelocity.Normalized() * ent.Comp.CurrentSpeed;
+            _locomotor.SetSpeed((ent, loco), ent);
+            return;
         }
 
-        _physics.SetLinearVelocity(ent, velocity);
+        if (TryComp<TrainCompositeVehicleComponent>(ent, out var composite))
+        {
+            if (TryComp<TrainVehicleLocomotorComponent>(composite.ForwardLocomotorJointUid, out var fLoco))
+                _locomotor.SetSpeed((composite.ForwardLocomotorJointUid, fLoco), ent);
+
+            if (TryComp<TrainVehicleLocomotorComponent>(composite.RearLocomotorJointUid, out var rLoco))
+                _locomotor.SetSpeed((composite.RearLocomotorJointUid, rLoco), ent);
+        }
+    }
+
+    public void ReverseTraversalDirection(Entity<TrainVehicleComponent> ent)
+    {
+        ent.Comp.IsReversing = !ent.Comp.IsReversing;
+
+        if (TryComp<TrainVehicleLocomotorComponent>(ent, out var loco))
+        {
+            _locomotor.ReverseTraversalDirection((ent, loco));
+            return;
+        }
+
+        if (TryComp<TrainCompositeVehicleComponent>(ent, out var composite))
+        {
+            if (TryComp<TrainVehicleLocomotorComponent>(composite.ForwardLocomotorJointUid, out var fLoco))
+                _locomotor.ReverseTraversalDirection((composite.ForwardLocomotorJointUid, fLoco));
+
+            if (TryComp<TrainVehicleLocomotorComponent>(composite.RearLocomotorJointUid, out var rLoco))
+                _locomotor.ReverseTraversalDirection((composite.RearLocomotorJointUid, rLoco));
+        }
+
+        Dirty(ent);
     }
 
     /// <summary>

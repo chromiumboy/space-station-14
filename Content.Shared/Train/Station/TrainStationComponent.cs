@@ -69,6 +69,9 @@ public sealed partial class TrainStationComponent : Component
     /// </summary>
     [DataField]
     public float DraggedEntryDelay = 2.0f;
+
+    [DataField]
+    public bool ReverseTrainOnEntry = false;
 }
 
 /// <summary>

@@ -1,7 +1,10 @@
+using Content.Shared.Train.Station;
 using Content.Shared.Train.Track;
 using Robust.Shared.Audio.Systems;
 using Robust.Shared.Map.Components;
 using Robust.Shared.Network;
+using Robust.Shared.Physics;
+using Robust.Shared.Physics.Components;
 using Robust.Shared.Physics.Systems;
 using Robust.Shared.Utility;
 using System.Diagnostics.CodeAnalysis;
@@ -94,6 +97,17 @@ public sealed partial class TrainVehicleLocomotorSystem : EntitySystem
         if (ent.Comp.CurrentTrack == track)
             return false;
 
+        // TODO make event
+        if (TryComp<TrainStationComponent>(track, out var station) && station.ReverseTrainOnEntry)
+        {
+            _trainVehicle.ReverseTraversalDirection(entTrain);
+
+            var evEnteredNewTrack2 = new TrainVehicleEnteredNewTrackEvent(track);
+            RaiseLocalEvent(ent, ref evEnteredNewTrack2);
+
+            return true;
+        }
+
         // Get the next direction to move
         var evNextDirection = new GetTrainVehicleLocomotorNextDirectionEvent(ent);
         RaiseLocalEvent(track, ref evNextDirection);
@@ -164,7 +178,29 @@ public sealed partial class TrainVehicleLocomotorSystem : EntitySystem
             return true;
         }
 
+        if (TryComp<TrainVehicleComponent>(ent.Comp.TrainBody, out var vec))
+        {
+            trainEnt = new Entity<TrainVehicleComponent>(ent.Comp.TrainBody, vec);
+            return true;
+        }
+
         return false;
+    }
+
+    public void SetSpeed(Entity<TrainVehicleLocomotorComponent> ent, Entity<TrainVehicleComponent> trainEnt)
+    {
+        // Need to reset the train's physics or it'll overshoot stations
+        if (!TryComp<PhysicsComponent>(ent, out var body))
+            return;
+
+        var velocity = body.LinearVelocity;
+
+        if (velocity.Length() > 0)
+        {
+            velocity = body.LinearVelocity.Normalized() * _trainVehicle.GetEffectiveSpeed(trainEnt);
+        }
+
+        _physics.SetLinearVelocity(ent, velocity);
     }
 
     /// <summary>
@@ -237,11 +273,10 @@ public sealed partial class TrainVehicleLocomotorSystem : EntitySystem
 
         // Update the entity's rotation
         var xform = _xformQuery.GetComponent(ent);
-        _xform.SetLocalRotation(ent, ent.Comp.CurrentDirection.ToAngle());
+        _xform.SetLocalRotation(ent, trainEnt.Comp.IsReversing ? ent.Comp.CurrentDirection.GetOpposite().ToAngle() : ent.Comp.CurrentDirection.ToAngle());
 
         // Apply a linear velocity to the vehicle, directing
         // it toward the next piece of track on its route
-        var gridRotation = _xform.GetWorldRotation(gridUid.Value);
         var origin = _xform.GetMapCoordinates(_xformQuery.GetComponent(current.Value));
         var destination = _xform.GetMapCoordinates(_xformQuery.GetComponent(next.Value));
         var entCoords = _xform.GetMapCoordinates(_xformQuery.GetComponent(ent));

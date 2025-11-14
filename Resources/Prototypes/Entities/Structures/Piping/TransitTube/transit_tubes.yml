@@ -535,6 +535,7 @@
           North: [ South ]
   - type: TrainTrack
   - type: TrainStation
+    reverseTrainOnEntry: true
     maxCapacity: 1
     entryDelay: 1
     whitelist:
@@ -563,6 +564,8 @@
         enum.TransitTubeStationVisualLayers.Base:
           False: { state: terminus_u }
           True: { state: terminus_closed }
+  - type: TrainStation
+    reverseTrainOnEntry: true
   - type: TransitTubeStation
     transitTubePodPrototype: TransitTubePodTemp
     openState: "terminus_open"

@@ -6,7 +6,7 @@ namespace Content.Shared.Train.Vehicle;
 /// The component of the train that provides movement.
 /// </summary>
 [RegisterComponent, NetworkedComponent, AutoGenerateComponentState]
-[Access(typeof(TrainVehicleLocomotorSystem))]
+//[Access(typeof(TrainVehicleLocomotorSystem))]
 public sealed partial class TrainVehicleLocomotorComponent : Component
 {
     /// <summary>
@@ -32,6 +32,10 @@ public sealed partial class TrainVehicleLocomotorComponent : Component
     /// </summary>
     [DataField, AutoNetworkedField]
     public EntityUid? NextTrack { get; set; }
+
+    [DataField, AutoNetworkedField]
+    public EntityUid TrainBody;
+
 }
 
 /// <summary>
