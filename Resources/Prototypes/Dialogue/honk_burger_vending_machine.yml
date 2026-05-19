@@ -1,0 +1,82 @@
+- type: dialogueTree
+  id: HonkBurgerVendingMachine
+  start: start
+  tree:
+  - node: start
+    text: dialogue-honk-burger-vending-machine-welcome
+    responses:
+    - option: dialogue-honk-burger-vending-machine-check-on-order-2
+      to: outburst-2
+      whitelist: 
+      - dialogue-honk-burger-vending-machine-outburst-1
+    - option: dialogue-honk-burger-vending-machine-check-on-order-1
+      to: outburst-1
+      whitelist:
+      - dialogue-honk-burger-vending-machine-order-placed
+      blacklist: 
+      - dialogue-honk-burger-vending-machine-outburst-1
+    - option: dialogue-honk-burger-vending-machine-order-honk-burger
+      to: upselling
+      blacklist: 
+      - dialogue-honk-burger-vending-machine-order-placed
+      - dialogue-honk-burger-vending-machine-outburst-1
+    - option: dialogue-honk-burger-vending-machine-order-honk-burger-deluxe
+      to: upselling
+      blacklist: 
+      - dialogue-honk-burger-vending-machine-order-placed
+      - dialogue-honk-burger-vending-machine-outburst-1
+    - option: dialogue-honk-burger-vending-machine-order-honk-burger-exit
+
+  - node: outburst-2
+    text: dialogue-honk-burger-vending-machine-outburst-2
+    responses:
+    - option: dialogue-honk-burger-vending-machine-apology-2
+      to: start
+      removeKeys:
+      - dialogue-honk-burger-vending-machine-order-cola
+      - dialogue-honk-burger-vending-machine-order-fries
+      - dialogue-honk-burger-vending-machine-order-apple-pie
+      - dialogue-honk-burger-vending-machine-order-placed
+      - dialogue-honk-burger-vending-machine-outburst-1
+
+  - node: outburst-1
+    text: dialogue-honk-burger-vending-machine-outburst-1
+    addKeys: dialogue-honk-burger-vending-machine-outburst-1
+    responses:
+    - option: dialogue-honk-burger-vending-machine-apology-1
+    
+  - node: upselling
+    text: dialogue-honk-burger-vending-machine-upselling
+    responses:
+    - option: dialogue-honk-burger-vending-machine-order-cola
+      to: upselling
+      addKeys: 
+      - dialogue-honk-burger-vending-machine-order-cola
+      blacklist:
+      - dialogue-honk-burger-vending-machine-order-cola
+    - option: dialogue-honk-burger-vending-machine-order-fries
+      to: upselling
+      addKeys: 
+      - dialogue-honk-burger-vending-machine-order-fries
+      blacklist:
+      - dialogue-honk-burger-vending-machine-order-fries
+    - option: dialogue-honk-burger-vending-machine-order-apple-pie
+      to: upselling
+      addKeys: 
+      - dialogue-honk-burger-vending-machine-order-apple-pie
+      blacklist:
+      - dialogue-honk-burger-vending-machine-order-apple-pie
+    - option: dialogue-honk-burger-vending-machine-order-finished
+      to: name-for-order
+    
+  - node: name-for-order
+    text: dialogue-honk-burger-vending-machine-name-for-order
+    responses:
+    - option: dialogue-honk-burger-vending-machine-give-name
+
+  - node: order-placed
+    text: dialogue-honk-burger-vending-machine-order-placed
+    addKeys: 
+    - dialogue-honk-burger-vending-machine-order-placed
+    responses:
+    - option: dialogue-honk-burger-vending-machine-order-acknowledgement
