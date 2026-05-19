@@ -11,8 +11,15 @@ namespace Content.Shared.Dialogue;
 public sealed partial class DialogueComponent : Component
 {
     /// <summary>
-    /// Keys that affect dialogue with all players. 
-    /// Can only be added via events.
+    /// The dialogue tree that will be used for handling the converstaion.
+    /// Consists of a list of nodes, which are naviagated between via user responses.
+    /// </summary>
+    [DataField("tree", required: true)]
+    public ProtoId<DialogueTreePrototype> CurrentTree { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Keys that affect dialogue with all players.
+    /// Can only be added via functions/events.
     /// </summary>
     [DataField]
     public HashSet<DialogueKeyPrototype> UniversalKeys = new();
@@ -26,107 +33,17 @@ public sealed partial class DialogueComponent : Component
     public Dictionary<EntityUid, HashSet<DialogueKeyPrototype>> UserKeys = new();
 
     /// <summary>
-    /// A list of potential nodes to start a dialogue.
-    /// The dialogue system will cycle through the list
-    /// and pick the first option to pass all tests.
-    /// </summary>
-    [DataField]
-    public List<DialogueNode> PotentialStartNodes = new();
-
-    /// <summary>
     /// The current node the conversation is on.
     /// Updated when the player selects a response.
     /// </summary>
     [DataField]
-    public DialogueNode? CurrentNode = null;
+    public DialogueTreeNode? CurrentNode = null;
 
     /// <summary>
-    /// If no start node is valid, this text is used to end the dialogue.
+    /// The UI key for the dialogue window.
     /// </summary>
     [DataField]
-    public string DefaultNodeText;
-
-    /// <summary>
-    /// If no start node is valid, this response is used to end the dialogue.  
-    /// </summary>
-    [DataField]
-    public string DefaultResponseText;
-}
-
-/// <summary>
-/// A node inside a dialogue tree. Contains the potential responses that user can make.
-/// </summary>
-[Serializable, NetSerializable]
-public sealed class DialogueNode
-{
-    /// <summary>
-    /// The displayed text.
-    /// </summary>
-    public string NodeText = "dialogue-string-undefined";
-
-    /// <summary>
-    /// List of potential responses that can be made by the player.
-    /// </summary>
-    public List<DialogueResponse> PotentialResponses = new();
-
-    /// <summary>
-    /// Having all of the following keys is required for this node to be valid.
-    /// </summary>
-    public List<DialogueKeyPrototype> RequiredKeys = new();
-
-    /// <summary>
-    /// Having any of the following keys will mark this node as invalid.
-    /// </summary>
-    public List<DialogueKeyPrototype> BlockingKeys = new();
-
-    /// <summary>
-    /// Entering this node will add the following keys to the dialogue owner.
-    /// </summary>
-    public List<DialogueKeyPrototype> KeysAdded = new();
-
-    /// <summary>
-    /// Entering this node will remove the following keys from the dialogue owner.
-    /// </summary>
-    public List<DialogueKeyPrototype> KeysRemoved = new();
-}
-
-/// <summary>
-/// A response that a user can select during a dialogue.
-/// </summary>
-[Serializable, NetSerializable]
-public sealed class DialogueResponse
-{
-    /// <summary>
-    /// The response text.
-    /// </summary>
-    public string ResponseText = "dialogue-string-undefined";
-
-    /// <summary>
-    /// List of potential nodes the response may trigger.
-    /// The dialogue system will cycle through the list
-    /// and pick the first option to pass all tests.
-    /// </summary>
-    public List<DialogueNode> PotentialNodes = new();
-
-    /// <summary>
-    /// Having all of the following keys is required for this response to be valid.
-    /// </summary>
-    public List<DialogueKeyPrototype> RequiredKeys = new();
-
-    /// <summary>
-    /// Having any of the following keys will mark this response as invalid.
-    /// </summary>
-    public List<DialogueKeyPrototype> BlockingKeys = new();
-
-    /// <summary>
-    /// This response add the following keys to the dialogue owner.
-    /// </summary>
-    public List<DialogueKeyPrototype> KeysAdded = new();
-
-    /// <summary>
-    /// This response removes the following keys from the dialogue owner.
-    /// </summary>
-    public List<DialogueKeyPrototype> KeysRemoved = new();
+    public DialogueUiKey UiKey = DialogueUiKey.BasicWindow;
 }
 
 [Prototype]

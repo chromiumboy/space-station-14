@@ -1,11 +1,16 @@
 using Content.Shared.Interaction;
+using Robust.Shared.Prototypes;
 using System.Linq;
 
 namespace Content.Shared.Dialogue;
 
 public sealed partial class DialogueSystem : EntitySystem
 {
+    [Dependency] private IPrototypeManager _protoManager = default!;
     [Dependency] private SharedUserInterfaceSystem _userInterfaceSystem = default!;
+    [Dependency] private ILogManager _logManager = default!;
+
+    private ISawmill _sawmill = default!;
 
     public override void Initialize()
     {
@@ -13,22 +18,30 @@ public sealed partial class DialogueSystem : EntitySystem
 
         SubscribeLocalEvent<DialogueComponent, ActivateInWorldEvent>(OnActivateInWorld);
         SubscribeLocalEvent<DialogueComponent, DialogueResponseSelectionMessage>(OnDialogueResponseSelection);
+
+        _sawmill = _logManager.GetSawmill("DialogueSystem");
     }
 
     private void OnActivateInWorld(Entity<DialogueComponent> ent, ref ActivateInWorldEvent ev)
     {
-        // Try to find a valid start node
-        if (TryMoveToNextNodeInList(ent, ent.Comp.PotentialStartNodes, ev.User))
+        // Close dialogue window if it's already open
+        if (_userInterfaceSystem.IsUiOpen(ent.Owner, ent.Comp.UiKey))
+        {
+            _userInterfaceSystem.CloseUi(ent.Owner, ent.Comp.UiKey);
+            return;
+        }
+
+        // Find the dialogue tree prototype
+        if (!_protoManager.TryIndex(ent.Comp.CurrentTree, out DialogueTreePrototype? proto))
             return;
 
-        // If no valid start nodes was found, display default text and default response
-        var defaultResponse = new Dictionary<int, string> { [-1] = ent.Comp.DefaultResponseText };
-        _userInterfaceSystem.SetUiState(ent.Owner, DialogueUiKey.BasicWindow, new DialogueBoundInterfaceState(ent.Comp.DefaultNodeText, defaultResponse));
+        // Move to the start node
+        TryMoveToNode(ent, proto, proto.Start, ev.User);
     }
 
     private void OnDialogueResponseSelection(Entity<DialogueComponent> ent, ref DialogueResponseSelectionMessage args)
     {
-        // Check that the response is valid for the current node, close the dialogue UI if not.
+        // Check that the response is valid for the current node. Close the dialogue window if this fails.
         if (ent.Comp.CurrentNode == null
             || args.ResponseIndex < 0
             || args.ResponseIndex > ent.Comp.CurrentNode.PotentialResponses.Count)
@@ -37,10 +50,15 @@ public sealed partial class DialogueSystem : EntitySystem
             return;
         }
 
+        // Add/remove keys as required
         var response = ent.Comp.CurrentNode.PotentialResponses[args.ResponseIndex];
 
-        // Try to find a valid node based on the response. Close the dialogue UI if one is not found.
-        if (!TryMoveToNextNodeInList(ent, response.PotentialNodes, args.Actor))
+        AddKeys(ent, response.KeysAdded);
+        RemoveKeys(ent, response.KeysRemoved);
+
+        // Try to move to the connected node based on the response. Close the dialogue window if this fails.
+        if (!_protoManager.TryIndex(ent.Comp.CurrentTree, out DialogueTreePrototype? proto)
+            || !TryMoveToNode(ent, proto, response.NextNode, args.Actor))
         {
             _userInterfaceSystem.CloseUi(ent.Owner, DialogueUiKey.BasicWindow);
         }
@@ -53,48 +71,49 @@ public sealed partial class DialogueSystem : EntitySystem
     /// <param name="nodeList">The list of dialogue nodes to check.</param>
     /// <param name="user">The user interacting with the dialogue entity.</param>
     /// <returns></returns>
-    private bool TryMoveToNextNodeInList(Entity<DialogueComponent> ent, List<DialogueNode> nodeList, EntityUid? user = null)
+    private bool TryMoveToNode(Entity<DialogueComponent> ent, DialogueTreePrototype? proto = null, string? nodeName = null, EntityUid? user = null)
     {
-        // Loop over the potential start nodes
-        foreach (var node in nodeList)
+        if (nodeName == null)
+            return false;
+
+        if (proto == null && !_protoManager.TryIndex(ent.Comp.CurrentTree, out proto))
+            return false;
+
+        if (!proto.Nodes.TryGetValue(nodeName, out var node))
+            return false;
+
+        // Add/remove keys as required
+        AddKeys(ent, node.KeysAdded);
+        RemoveKeys(ent, node.KeysRemoved);
+
+        // Update the current node
+        ent.Comp.CurrentNode = node;
+        Dirty(ent);
+
+        // Determine potential responses to the node
+        var responses = new Dictionary<int, string>();
+
+        for (int idx = 0; idx < node.PotentialResponses.Count; idx++)
         {
-            // Check that key whitelists and blacklist are passed
-            if (!PassesWhiteList(ent, node.RequiredKeys, user) || !PassesBlackList(ent, node.BlockingKeys, user))
+            var response = node.PotentialResponses[idx];
+
+            if (!PassesWhiteList(ent, response.RequiredKeys, user) || !PassesBlackList(ent, response.BlockingKeys, user))
                 continue;
 
-            // If the checked are passed, update the component
-            AddKeys(ent, node.KeysAdded);
-            RemoveKeys(ent, node.KeysRemoved);
-
-            ent.Comp.CurrentNode = node;
-            Dirty(ent);
-
-            // Determine potential responses to the node
-            var responses = new Dictionary<int, string>();
-
-            for (int idx = 0; idx < node.PotentialResponses.Count; idx++)
-            {
-                var response = node.PotentialResponses[idx];
-
-                if (!PassesWhiteList(ent, response.RequiredKeys, user) || !PassesBlackList(ent, response.BlockingKeys, user))
-                    continue;
-
-                responses.Add(idx, response.ResponseText);
-            }
-
-            // If no responses pass, set the default response
-            if (responses.Count == 0)
-            {
-                responses = new Dictionary<int, string> { [-1] = ent.Comp.DefaultResponseText };
-            }
-
-            // Send data to the client for display
-            _userInterfaceSystem.SetUiState(ent.Owner, DialogueUiKey.BasicWindow, new DialogueBoundInterfaceState(node.NodeText, responses));
-
-            return true;
+            responses.Add(idx, response.ResponseText);
         }
 
-        return false;
+        // If no responses pass, set the default response
+        if (responses.Count == 0)
+        {
+            responses = new Dictionary<int, string> { [-1] = "dialogue-tree-response-text-undefined" };
+            _sawmill.Error($"Dialogue tree node [{proto.ID} - {nodeName}] has no valid response.");
+        }
+
+        // Send data to the client for display
+        _userInterfaceSystem.SetUiState(ent.Owner, DialogueUiKey.BasicWindow, new DialogueBoundInterfaceState(node.NodeText, responses));
+
+        return true;
     }
 
     /// <summary>
