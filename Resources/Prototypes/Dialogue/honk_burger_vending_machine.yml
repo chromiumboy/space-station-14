@@ -20,11 +20,19 @@
       blacklist: 
       - dialogue-honk-burger-vending-machine-order-placed
       - dialogue-honk-burger-vending-machine-outburst-1
+      removeKeys:
+      - dialogue-honk-burger-vending-machine-order-cola
+      - dialogue-honk-burger-vending-machine-order-fries
+      - dialogue-honk-burger-vending-machine-order-apple-pie
     - option: dialogue-honk-burger-vending-machine-order-honk-burger-deluxe
       to: upselling
       blacklist: 
       - dialogue-honk-burger-vending-machine-order-placed
       - dialogue-honk-burger-vending-machine-outburst-1
+      removeKeys:
+      - dialogue-honk-burger-vending-machine-order-cola
+      - dialogue-honk-burger-vending-machine-order-fries
+      - dialogue-honk-burger-vending-machine-order-apple-pie
     - option: dialogue-honk-burger-vending-machine-order-honk-burger-exit
 
   - node: outburst-2

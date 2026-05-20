@@ -1,4 +1,4 @@
-using Content.Shared.Interaction;
+using Robust.Shared.Network;
 using Robust.Shared.Prototypes;
 using System.Linq;
 
@@ -8,6 +8,7 @@ public sealed partial class DialogueSystem : EntitySystem
 {
     [Dependency] private IPrototypeManager _protoManager = default!;
     [Dependency] private SharedUserInterfaceSystem _userInterfaceSystem = default!;
+    [Dependency] private INetManager _netManager = default!;
     [Dependency] private ILogManager _logManager = default!;
 
     private ISawmill _sawmill = default!;
@@ -43,20 +44,20 @@ public sealed partial class DialogueSystem : EntitySystem
             || args.ResponseIndex < 0
             || args.ResponseIndex > currentNode.PotentialResponses.Count)
         {
-            _userInterfaceSystem.CloseUi(ent.Owner, DialogueUiKey.BasicWindow);
+            _userInterfaceSystem.CloseUi(ent.Owner, DialogueUiKey.BasicWindow, args.Actor);
             return;
         }
 
         // Add/remove keys as required
         var response = currentNode.PotentialResponses[args.ResponseIndex];
 
-        AddKeys(ent, response.KeysAdded);
-        RemoveKeys(ent, response.KeysRemoved);
+        AddKeys(ent, response.KeysAdded, args.Actor);
+        RemoveKeys(ent, response.KeysRemoved, args.Actor);
 
         // Try to move to the connected node based on the response. Close the dialogue window if this fails.
         if (!TryMoveToNode(ent, args.Actor, proto, response.NextNode))
         {
-            _userInterfaceSystem.CloseUi(ent.Owner, DialogueUiKey.BasicWindow);
+            _userInterfaceSystem.CloseUi(ent.Owner, DialogueUiKey.BasicWindow, args.Actor);
         }
     }
 
@@ -80,8 +81,8 @@ public sealed partial class DialogueSystem : EntitySystem
             return false;
 
         // Add/remove keys as required
-        AddKeys(ent, node.KeysAdded);
-        RemoveKeys(ent, node.KeysRemoved);
+        AddKeys(ent, node.KeysAdded, user);
+        RemoveKeys(ent, node.KeysRemoved, user);
 
         // Update the current node
         ent.Comp.UserCurrentNodes[user] = node.Name;
@@ -106,8 +107,11 @@ public sealed partial class DialogueSystem : EntitySystem
             _sawmill.Error($"Dialogue tree node [{proto.ID} - {nodeName}] has no valid response.");
         }
 
-        // Send data to the client for display
-        _userInterfaceSystem.SetUiState(ent.Owner, DialogueUiKey.BasicWindow, new DialogueBasicWindowBoundInterfaceState(node.NodeText, responses));
+        // Update the display (but only from the client side)
+        if (_netManager.IsClient)
+        {
+            _userInterfaceSystem.SetUiState(ent.Owner, DialogueUiKey.BasicWindow, new DialogueBasicWindowBoundInterfaceState(node.NodeText, responses));
+        }
 
         return true;
     }
@@ -122,7 +126,7 @@ public sealed partial class DialogueSystem : EntitySystem
     /// <returns>True if the test passed.</returns>
     private bool PassesWhiteList(Entity<DialogueComponent> ent, List<string> whitelist, EntityUid? user = null)
     {
-        var existingList = ent.Comp.UniversalKeys;
+        var existingList = ent.Comp.UniversalKeys.ToHashSet();
 
         if (user != null && ent.Comp.UserKeys.TryGetValue(user.Value, out var userKeys))
         {
@@ -142,7 +146,7 @@ public sealed partial class DialogueSystem : EntitySystem
     /// <returns>True if the test passed.</returns>
     private bool PassesBlackList(Entity<DialogueComponent> ent, List<string> blacklist, EntityUid? user = null)
     {
-        var existingList = ent.Comp.UniversalKeys;
+        var existingList = ent.Comp.UniversalKeys.ToHashSet();
 
         if (user != null && ent.Comp.UserKeys.TryGetValue(user.Value, out var userKeys))
         {
