@@ -43,4 +43,16 @@ public sealed partial class DialogueResponse
     /// </summary>
     [DataField("removeKeys")]
     public List<string> KeysRemoved = new();
+
+    /// <summary>
+    /// A list of actions that will be executed when this response is selected.
+    /// </summary>
+    [DataField("actions", serverOnly: true)]
+    private IDialogueAction[] _actions = Array.Empty<IDialogueAction>();
+
+    /// <summary>
+    /// A list of actions that will be executed when this response is selected.
+    /// </summary>
+    [ViewVariables]
+    public IReadOnlyList<IDialogueAction> Actions => _actions;
 }

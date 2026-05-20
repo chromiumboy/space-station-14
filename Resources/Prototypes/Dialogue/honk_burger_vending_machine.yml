@@ -3,6 +3,8 @@
   start: start
   tree:
   - node: start
+    actions:
+    - !type:VendingMachineDialogueTestWelcomeAction
     text: dialogue-honk-burger-vending-machine-welcome
     responses:
     - option: dialogue-honk-burger-vending-machine-check-on-order-2
@@ -91,3 +93,5 @@
     - dialogue-honk-burger-vending-machine-order-placed
     responses:
     - option: dialogue-honk-burger-vending-machine-order-acknowledgement
+      actions:
+      - !type:VendingMachineDialogueTestGoodbyeAction

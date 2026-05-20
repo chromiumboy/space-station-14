@@ -32,4 +32,16 @@ public sealed partial class DialogueTreeNode
     /// </summary>
     [DataField("removeKeys")]
     public List<string> KeysRemoved = new();
+
+    /// <summary>
+    /// A list of actions that will be executed when this node is entered.
+    /// </summary>
+    [DataField("actions", serverOnly: true)]
+    private IDialogueAction[] _actions = Array.Empty<IDialogueAction>();
+
+    /// <summary>
+    /// A list of actions that will be executed when this node is entered.
+    /// </summary>
+    [ViewVariables]
+    public IReadOnlyList<IDialogueAction> Actions => _actions;
 }

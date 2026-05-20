@@ -54,6 +54,12 @@ public sealed partial class DialogueSystem : EntitySystem
         AddKeys(ent, response.KeysAdded, args.Actor);
         RemoveKeys(ent, response.KeysRemoved, args.Actor);
 
+        // Perform response actions
+        foreach (var action in response.Actions)
+        {
+            action.PerformAction(ent, args.Actor, EntityManager);
+        }
+
         // Try to move to the connected node based on the response. Close the dialogue window if this fails.
         if (!TryMoveToNode(ent, args.Actor, proto, response.NextNode))
         {
@@ -86,6 +92,13 @@ public sealed partial class DialogueSystem : EntitySystem
 
         // Update the current node
         ent.Comp.UserCurrentNodes[user] = node.Name;
+        Dirty(ent);
+
+        // Perform node actions
+        foreach (var action in node.Actions)
+        {
+            action.PerformAction(ent, user, EntityManager);
+        }
 
         // Determine potential responses to the node
         var responses = new Dictionary<int, string>();

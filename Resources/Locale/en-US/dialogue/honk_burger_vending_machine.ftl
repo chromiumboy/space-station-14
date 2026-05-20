@@ -1,3 +1,4 @@
+dialogue-honk-burger-vending-machine-welcome-bark = Welcome to Honk Burger!
 dialogue-honk-burger-vending-machine-welcome = Welcome to Honk Burger, home of the Honk Burger, can I take your order?
 dialogue-honk-burger-vending-machine-check-on-order-2 = Uh, yeah. You already took it. When will it be ready?
 dialogue-honk-burger-vending-machine-check-on-order-1 = Um, I placed one a while ago. For {$UserName}.
@@ -18,3 +19,4 @@ dialogue-honk-burger-vending-machine-give-name = Yeah, it's for {$UserName}.
 dialogue-honk-burger-vending-machine-order-placed = Thank you muchly, darlin'. Your order will be ready soon.
 dialogue-honk-burger-vending-machine-order-acknowledgement = OK, great.
 dialogue-honk-burger-vending-machine-order-honk-burger-exit = Um, actually, nevermind.
+dialogue-honk-burger-vending-machine-goodbye-bark = Thank you for your order, {$UserName}!
