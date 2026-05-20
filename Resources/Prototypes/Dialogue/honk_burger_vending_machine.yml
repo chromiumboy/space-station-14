@@ -30,7 +30,7 @@
   - node: outburst-2
     text: dialogue-honk-burger-vending-machine-outburst-2
     responses:
-    - option: dialogue-honk-burger-vending-machine-apology-2
+    - option: dialogue-honk-burger-vending-machine-start-over
       to: start
       removeKeys:
       - dialogue-honk-burger-vending-machine-order-cola
@@ -38,10 +38,12 @@
       - dialogue-honk-burger-vending-machine-order-apple-pie
       - dialogue-honk-burger-vending-machine-order-placed
       - dialogue-honk-burger-vending-machine-outburst-1
+    - option: dialogue-honk-burger-vending-machine-apology-2
 
   - node: outburst-1
     text: dialogue-honk-burger-vending-machine-outburst-1
-    addKeys: dialogue-honk-burger-vending-machine-outburst-1
+    addKeys: 
+    - dialogue-honk-burger-vending-machine-outburst-1
     responses:
     - option: dialogue-honk-burger-vending-machine-apology-1
     
@@ -62,7 +64,7 @@
       - dialogue-honk-burger-vending-machine-order-fries
     - option: dialogue-honk-burger-vending-machine-order-apple-pie
       to: upselling
-      addKeys: 
+      addKeys:
       - dialogue-honk-burger-vending-machine-order-apple-pie
       blacklist:
       - dialogue-honk-burger-vending-machine-order-apple-pie
@@ -73,6 +75,7 @@
     text: dialogue-honk-burger-vending-machine-name-for-order
     responses:
     - option: dialogue-honk-burger-vending-machine-give-name
+      to: order-placed
 
   - node: order-placed
     text: dialogue-honk-burger-vending-machine-order-placed

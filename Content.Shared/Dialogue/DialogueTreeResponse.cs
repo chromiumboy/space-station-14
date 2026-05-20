@@ -24,23 +24,23 @@ public sealed partial class DialogueResponse
     /// All of the following keys is required for this response to appear.
     /// </summary>
     [DataField("whitelist")]
-    public List<DialogueKeyPrototype> RequiredKeys = new();
+    public List<string> RequiredKeys = new();
 
     /// <summary>
     /// Any of the following keys will hide this response.
     /// </summary>
     [DataField("blacklist")]
-    public List<DialogueKeyPrototype> BlockingKeys = new();
+    public List<string> BlockingKeys = new();
 
     /// <summary>
     /// This response add the following keys to the dialogue owner.
     /// </summary>
     [DataField("addKeys")]
-    public List<DialogueKeyPrototype> KeysAdded = new();
+    public List<string> KeysAdded = new();
 
     /// <summary>
     /// This response removes the following keys from the dialogue owner.
     /// </summary>
     [DataField("removeKeys")]
-    public List<DialogueKeyPrototype> KeysRemoved = new();
+    public List<string> KeysRemoved = new();
 }

@@ -25,11 +25,11 @@ public sealed partial class DialogueTreeNode
     /// Entering this node will add the following keys to the dialogue owner.
     /// </summary>
     [DataField("addKeys")]
-    public List<DialogueKeyPrototype> KeysAdded = new();
+    public List<string> KeysAdded = new();
 
     /// <summary>
     /// Entering this node will remove the following keys from the dialogue owner.
     /// </summary>
     [DataField("removeKeys")]
-    public List<DialogueKeyPrototype> KeysRemoved = new();
+    public List<string> KeysRemoved = new();
 }

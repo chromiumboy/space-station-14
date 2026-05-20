@@ -16,62 +16,59 @@ public sealed partial class DialogueSystem : EntitySystem
     {
         base.Initialize();
 
-        SubscribeLocalEvent<DialogueComponent, ActivateInWorldEvent>(OnActivateInWorld);
+        SubscribeLocalEvent<DialogueComponent, OpenBoundInterfaceMessage>(OnBoundUIOpened);
         SubscribeLocalEvent<DialogueComponent, DialogueResponseSelectionMessage>(OnDialogueResponseSelection);
 
         _sawmill = _logManager.GetSawmill("DialogueSystem");
     }
 
-    private void OnActivateInWorld(Entity<DialogueComponent> ent, ref ActivateInWorldEvent ev)
+    private void OnBoundUIOpened(Entity<DialogueComponent> ent, ref OpenBoundInterfaceMessage ev)
     {
-        // Close dialogue window if it's already open
-        if (_userInterfaceSystem.IsUiOpen(ent.Owner, ent.Comp.UiKey))
-        {
-            _userInterfaceSystem.CloseUi(ent.Owner, ent.Comp.UiKey);
-            return;
-        }
-
-        // Find the dialogue tree prototype
         if (!_protoManager.TryIndex(ent.Comp.CurrentTree, out DialogueTreePrototype? proto))
             return;
 
         // Move to the start node
-        TryMoveToNode(ent, proto, proto.Start, ev.User);
+        TryMoveToNode(ent, ev.Actor, proto, proto.Start);
     }
 
     private void OnDialogueResponseSelection(Entity<DialogueComponent> ent, ref DialogueResponseSelectionMessage args)
     {
+        if (!_protoManager.TryIndex(ent.Comp.CurrentTree, out DialogueTreePrototype? proto))
+            return;
+
         // Check that the response is valid for the current node. Close the dialogue window if this fails.
-        if (ent.Comp.CurrentNode == null
+        if (ent.Comp.UserCurrentNodes == null
+            || !ent.Comp.UserCurrentNodes.TryGetValue(args.Actor, out var currentNodeName)
+            || !proto.Nodes.TryGetValue(currentNodeName, out var currentNode)
             || args.ResponseIndex < 0
-            || args.ResponseIndex > ent.Comp.CurrentNode.PotentialResponses.Count)
+            || args.ResponseIndex > currentNode.PotentialResponses.Count)
         {
             _userInterfaceSystem.CloseUi(ent.Owner, DialogueUiKey.BasicWindow);
             return;
         }
 
         // Add/remove keys as required
-        var response = ent.Comp.CurrentNode.PotentialResponses[args.ResponseIndex];
+        var response = currentNode.PotentialResponses[args.ResponseIndex];
 
         AddKeys(ent, response.KeysAdded);
         RemoveKeys(ent, response.KeysRemoved);
 
         // Try to move to the connected node based on the response. Close the dialogue window if this fails.
-        if (!_protoManager.TryIndex(ent.Comp.CurrentTree, out DialogueTreePrototype? proto)
-            || !TryMoveToNode(ent, proto, response.NextNode, args.Actor))
+        if (!TryMoveToNode(ent, args.Actor, proto, response.NextNode))
         {
             _userInterfaceSystem.CloseUi(ent.Owner, DialogueUiKey.BasicWindow);
         }
     }
 
     /// <summary>
-    /// Finds the next valid dialogue node from the provided list and sends the appropriate data to the client.
+    /// Moves the dialogue to a specified node and sends the appropriate data to the client UI.
     /// </summary>
     /// <param name="ent">The dialogue entity.</param>
-    /// <param name="nodeList">The list of dialogue nodes to check.</param>
     /// <param name="user">The user interacting with the dialogue entity.</param>
-    /// <returns></returns>
-    private bool TryMoveToNode(Entity<DialogueComponent> ent, DialogueTreePrototype? proto = null, string? nodeName = null, EntityUid? user = null)
+    /// <param name="proto">The dialogue tree prototype for the entity.</param>
+    /// <param name="nodeName">The name of the new node.</param>
+    /// <returns>True if the transition was successful.</returns>
+    private bool TryMoveToNode(Entity<DialogueComponent> ent, EntityUid user, DialogueTreePrototype? proto = null, string? nodeName = null)
     {
         if (nodeName == null)
             return false;
@@ -87,8 +84,7 @@ public sealed partial class DialogueSystem : EntitySystem
         RemoveKeys(ent, node.KeysRemoved);
 
         // Update the current node
-        ent.Comp.CurrentNode = node;
-        Dirty(ent);
+        ent.Comp.UserCurrentNodes[user] = node.Name;
 
         // Determine potential responses to the node
         var responses = new Dictionary<int, string>();
@@ -111,7 +107,7 @@ public sealed partial class DialogueSystem : EntitySystem
         }
 
         // Send data to the client for display
-        _userInterfaceSystem.SetUiState(ent.Owner, DialogueUiKey.BasicWindow, new DialogueBoundInterfaceState(node.NodeText, responses));
+        _userInterfaceSystem.SetUiState(ent.Owner, DialogueUiKey.BasicWindow, new DialogueBasicWindowBoundInterfaceState(node.NodeText, responses));
 
         return true;
     }
@@ -123,8 +119,8 @@ public sealed partial class DialogueSystem : EntitySystem
     /// <param name="ent">The dialogue entity.</param>
     /// <param name="whitelist">The whitelisted keys.</param>
     /// <param name="user">The user interacting with the dialogue entity.</param>
-    /// <returns></returns>
-    private bool PassesWhiteList(Entity<DialogueComponent> ent, List<DialogueKeyPrototype> whitelist, EntityUid? user = null)
+    /// <returns>True if the test passed.</returns>
+    private bool PassesWhiteList(Entity<DialogueComponent> ent, List<string> whitelist, EntityUid? user = null)
     {
         var existingList = ent.Comp.UniversalKeys;
 
@@ -143,8 +139,8 @@ public sealed partial class DialogueSystem : EntitySystem
     /// <param name="ent">The dialogue entity.</param>
     /// <param name="blacklist">The blacklisted keys.</param>
     /// <param name="user">The user interacting with the dialogue entity.</param>
-    /// <returns></returns>
-    private bool PassesBlackList(Entity<DialogueComponent> ent, List<DialogueKeyPrototype> blacklist, EntityUid? user = null)
+    /// <returns>True if the test passed.</returns>
+    private bool PassesBlackList(Entity<DialogueComponent> ent, List<string> blacklist, EntityUid? user = null)
     {
         var existingList = ent.Comp.UniversalKeys;
 
@@ -163,7 +159,7 @@ public sealed partial class DialogueSystem : EntitySystem
     /// <param name="ent">The dialogue entity.</param>
     /// <param name="keys">The keys to add.</param>
     /// <param name="user">The user interacting with the dialogue entity.</param>
-    public void AddKeys(Entity<DialogueComponent> ent, List<DialogueKeyPrototype> keys, EntityUid? user = null)
+    public void AddKeys(Entity<DialogueComponent> ent, List<string> keys, EntityUid? user = null)
     {
         if (user == null)
         {
@@ -174,7 +170,7 @@ public sealed partial class DialogueSystem : EntitySystem
         {
             if (!ent.Comp.UserKeys.TryGetValue(user.Value, out var userKeys))
             {
-                userKeys = new HashSet<DialogueKeyPrototype>();
+                userKeys = new HashSet<string>();
             }
 
             userKeys.UnionWith(keys);
@@ -190,7 +186,7 @@ public sealed partial class DialogueSystem : EntitySystem
     /// <param name="ent">The dialogue entity.</param>
     /// <param name="keys">The keys to remove.</param>
     /// <param name="user">The user interacting with the dialogue entity.</param>
-    public void RemoveKeys(Entity<DialogueComponent> ent, List<DialogueKeyPrototype> keys, EntityUid? user = null)
+    public void RemoveKeys(Entity<DialogueComponent> ent, List<string> keys, EntityUid? user = null)
     {
         if (user == null)
         {
@@ -201,7 +197,7 @@ public sealed partial class DialogueSystem : EntitySystem
         {
             if (!ent.Comp.UserKeys.TryGetValue(user.Value, out var userKeys))
             {
-                userKeys = new HashSet<DialogueKeyPrototype>();
+                userKeys = new HashSet<string>();
             }
 
             userKeys.ExceptWith(keys);
