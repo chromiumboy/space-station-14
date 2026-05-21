@@ -1,0 +1,72 @@
+- type: monologueSpeech
+  id: VoiceMessageMonologueTest
+  speech:
+  - line: monologue-testing-line-1a
+    wait: 3
+  - line: monologue-testing-line-1b
+    wait: 5
+  - line: monologue-testing-line-2a
+    wait: 4
+  - line: monologue-testing-line-2b
+    wait: 4
+  - line: monologue-testing-line-2c
+    wait: 4
+  - line: monologue-testing-line-2d
+    wait: 4
+  - line: monologue-testing-line-2e
+    wait: 4
+  - line: monologue-testing-line-2f
+    wait: 5
+  - line: monologue-testing-line-3a
+    wait: 3
+  - line: monologue-testing-line-3b
+    wait: 5
+  - line: monologue-testing-line-4a
+    wait: 4
+  - line: monologue-testing-line-4b
+    wait: 4
+  - line: monologue-testing-line-4c
+    wait: 4
+  - line: monologue-testing-line-4d
+    wait: 4 
+  - line: monologue-testing-line-4e
+    wait: 5
+  - line: monologue-testing-line-5a
+    wait: 3
+  - line: monologue-testing-line-5b
+    wait: 5
+  - line: monologue-testing-line-6a
+    wait: 4
+  - line: monologue-testing-line-6b
+    wait: 4
+  - line: monologue-testing-line-6c
+    wait: 4
+  - line: monologue-testing-line-6d
+    wait: 4 
+  - line: monologue-testing-line-6e
+    wait: 4
+  - actions:
+    - !type:MonologueSoundAction
+      sound:
+        path: /Audio/Effects/explosion1.ogg
+        params:
+          volume: -12
+    wait: 2
+  - actions:
+    - !type:MonologueSoundAction
+      sound:
+        path: /Audio/Effects/explosion2.ogg 
+        params:
+          volume: -12
+    wait: 1
+  - line: monologue-testing-line-6f
+    actions:
+    - !type:MonologueSoundAction
+      sound:
+        path: /Audio/Effects/explosion3.ogg
+        params:
+          volume: -12      
+    wait: 5
+  - line: monologue-testing-line-7a
+    wait: 3
+  - line: monologue-testing-line-7b
