@@ -7,7 +7,7 @@ using Content.Shared.Speech;
 namespace Content.Server.Dialogue;
 
 [DataDefinition]
-public sealed partial class VendingMachineDialogueTestWelcomeAction : IDialogueAction
+public sealed partial class DialogueTestingGoodbyeAction : IDialogueAction
 {
     public void PerformAction(Entity<DialogueComponent> ent, EntityUid? user, IEntityManager entityManager)
     {
@@ -17,7 +17,7 @@ public sealed partial class VendingMachineDialogueTestWelcomeAction : IDialogueA
         if (!entityManager.TryGetComponent<SpeechComponent>(ent, out var speech))
             return;
 
-        var message = Loc.GetString("dialogue-honk-burger-vending-machine-welcome-bark", ("UserName", Identity.Name(user.Value, entityManager)));
+        var message = Loc.GetString("dialogue-honk-burger-vending-machine-goodbye-bark", ("UserName", Identity.Name(user.Value, entityManager)));
         var chatSystem = entityManager.System<ChatSystem>();
 
         chatSystem.TrySendInGameICMessage(ent, message, InGameICChatType.Speak, hideChat: true);

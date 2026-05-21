@@ -1,7 +1,7 @@
 namespace Content.Shared.Dialogue;
 
 /// <summary>
-/// A node inside a dialogue tree. Contains the potential responses that user can make.
+/// A node inside a dialogue tree. Contains a list of potential responses that users can make.
 /// </summary>
 [Serializable, DataDefinition]
 public sealed partial class DialogueTreeNode

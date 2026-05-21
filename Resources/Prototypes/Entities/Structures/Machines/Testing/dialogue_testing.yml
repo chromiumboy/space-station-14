@@ -1,0 +1,29 @@
+- type: entity
+  parent: VendingMachine
+  id: HonkBurgerVendingMachineDialogueTesting
+  name: Honk Burger Vending Machine
+  description: For testing the dialogue system.
+  categories: [ Debug ]
+  components:
+  - type: Sprite
+    sprite: Structures/Machines/VendingMachines/happyhonk.rsi
+    layers:
+    - state: "off"
+      map: ["enum.VendingMachineVisualLayers.Base"]
+    - state: "off"
+      map: ["enum.VendingMachineVisualLayers.BaseUnshaded"]
+      shader: unshaded
+    - state: panel
+      map: ["enum.WiresVisualLayers.MaintenancePanel"]
+  - type: PointLight
+    radius: 1.5
+    energy: 3.0
+    color: "#3c5eb5"
+  - type: Dialogue
+    tree: HonkBurgerVendingMachineDialogueTesting
+  - type: ActivatableUI
+    key: enum.DialogueUiKey.BasicWindow
+  - type: UserInterface
+    interfaces:
+      enum.DialogueUiKey.BasicWindow:
+        type: DialogueBasicWindowBoundUserInterface

@@ -4,6 +4,9 @@ using System.IO;
 
 namespace Content.Shared.Dialogue;
 
+/// <summary>
+/// A prototype for a dialogue tree, which is a collection of dialogue nodes that can be navigated between via user responses.
+/// </summary>
 [Prototype]
 public sealed partial class DialogueTreePrototype : IPrototype, ISerializationHooks
 {

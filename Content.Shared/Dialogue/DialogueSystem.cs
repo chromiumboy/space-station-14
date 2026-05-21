@@ -4,6 +4,10 @@ using System.Linq;
 
 namespace Content.Shared.Dialogue;
 
+/// <summary>
+/// System for handling dialogue interactions. This includes managing dialogue trees,
+/// tracking player progress through dialogue, and sending dialogue data to the client UI.
+/// </summary>
 public sealed partial class DialogueSystem : EntitySystem
 {
     [Dependency] private IPrototypeManager _protoManager = default!;
