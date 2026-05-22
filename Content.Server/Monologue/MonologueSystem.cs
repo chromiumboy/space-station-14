@@ -1,6 +1,7 @@
 using Content.Server.Chat.Systems;
 using Content.Shared.Monologue;
 using Robust.Shared.Prototypes;
+using System.Linq;
 
 namespace Content.Server.Monologue;
 
@@ -22,26 +23,35 @@ public sealed partial class MonologueSystem : SharedMonologueSystem
     }
 
     /// <summary>
-    /// Causes a monologuing entity to start their speech.
+    /// Causes a monologuing entity to start a pre-defined speech or a supplied one.
     /// </summary>
     /// <param name="ent">The monologuer.</param>
-    public void StartMonologue(Entity<MonologueComponent> ent)
+    /// <param name="timeline">A supplied speech, consisting of time stamped lines.</param>
+    public void StartMonologue(Entity<MonologueComponent> ent, List<(TimeSpan, MonologueLine)>? timeline = null)
     {
-        if (!_proto.Resolve(ent.Comp.CurrentSpeech, out var proto))
-            return;
-
-        // Clear the timeline of any previous monologue and reset the timer
+        // Clear the timeline of a previous monologue and reset the timer
         ent.Comp.Timeline.Clear();
         ent.Comp.TimeElapsed = TimeSpan.Zero;
-        ent.Comp.IsPaused = false;
 
-        // Generate the timeline for the speech
-        var tp = TimeSpan.Zero;
-        foreach (var line in proto.Speech)
+        // If supplied a timeline, use a copy of it for the monologue
+        if (timeline != null)
         {
-            ent.Comp.Timeline.Add((tp, line));
-            tp += line.Delay;
+            ent.Comp.Timeline = timeline.ToList();
         }
+
+        // Otherwise try to generate a timeline based on the entity's speech prototype
+        else if (_proto.Resolve(ent.Comp.CurrentSpeech, out var proto))
+        {
+            var tp = TimeSpan.Zero;
+            foreach (var line in proto.Speech)
+            {
+                ent.Comp.Timeline.Add((tp, line));
+                tp += line.Delay;
+            }
+        }
+
+        // If the timeline is empty, pause the monologue to prevent it from being processed in future updates
+        ent.Comp.IsPaused = ent.Comp.Timeline.Count == 0;
     }
 
     /// <summary>

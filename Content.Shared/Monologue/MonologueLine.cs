@@ -18,7 +18,7 @@ public sealed partial class MonologueLine
     /// Length of time to delay before speaking the next line of the monologue.
     /// </summary>
     [DataField("wait")]
-    public TimeSpan Delay = TimeSpan.FromSeconds(2);
+    public TimeSpan Delay = TimeSpan.FromSeconds(3);
 
     /// <summary>
     /// A list of actions that will be executed when this line is spoken.

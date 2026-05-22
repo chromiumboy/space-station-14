@@ -13,7 +13,7 @@ public sealed partial class MonologueComponent : Component
     /// <summary>
     /// The speech given by the monologer.
     /// </summary>
-    [DataField("speech", required: true)]
+    [DataField("speech")]
     public ProtoId<MonologueSpeechPrototype> CurrentSpeech = string.Empty;
 
     /// <summary>
