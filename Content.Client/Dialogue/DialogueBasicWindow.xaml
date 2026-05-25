@@ -1,13 +1,17 @@
 <controls:FancyWindow xmlns="https://spacestation14.io"
                       xmlns:controls="clr-namespace:Content.Client.UserInterface.Controls"
-                      MinSize="500 400"
-                      SetSize="500 400">
+                      MinSize="500 350"
+                      SetSize="500 350">
     <BoxContainer Orientation="Vertical">
-        <BoxContainer>
+        <BoxContainer MinHeight="150" Orientation="Vertical" Margin="10 10">
             <RichTextLabel Name="NodeText">      
             </RichTextLabel>
+            <BoxContainer HorizontalExpand="True" VerticalExpand="True" />
         </BoxContainer>
-        <BoxContainer Name="ResponseContainer" Orientation="Vertical">
-        </BoxContainer>
+        <PanelContainer StyleClasses="LowDivider" HorizontalExpand="True" Margin="0 0 0 0" SetHeight="2"/>
+        <ScrollContainer HorizontalExpand="True" VerticalExpand="True" Margin="10 10">
+            <BoxContainer Name="ResponseContainer" Orientation="Vertical">
+            </BoxContainer>
+        </ScrollContainer>
     </BoxContainer>
 </controls:FancyWindow>

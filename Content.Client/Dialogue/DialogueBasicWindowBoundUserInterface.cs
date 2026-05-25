@@ -1,5 +1,6 @@
 using Content.Shared.Dialogue;
 using Robust.Client.UserInterface;
+using System.Numerics;
 
 namespace Content.Client.Dialogue;
 
@@ -14,7 +15,7 @@ public sealed class DialogueBasicWindowBoundUserInterface(EntityUid owner, Enum 
 
         _window = this.CreateWindow<DialogueBasicWindow>();
         _window.SetOwner(Owner);
-        _window.OpenCentered();
+        _window.OpenCenteredAt(new Vector2(0.5f, 0.75f));
 
         _window.OnResponseSelectedEvent += OnResponseSelected;
     }
