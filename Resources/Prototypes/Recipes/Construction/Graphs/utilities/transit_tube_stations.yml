@@ -1,0 +1,128 @@
+- type: constructionGraph
+  id: TransitTubeStations
+  start: start
+  graph:
+  - node: start
+    edges:
+    - to: frame
+      steps:
+      - material: Steel
+        amount: 2
+        doAfter: 1
+    
+  - node: frame
+    entity: TransitTubeStationFrame
+    actions:
+    - !type:AppearanceChange
+    edges:
+    - to: start
+      completed:
+      - !type:SpawnPrototype
+        prototype: SheetSteel1
+        amount: 2
+      - !type:DeleteEntity
+      steps:
+      - tool: Screwing
+        doAfter: 2
+    - to: frameStationElectronics
+      conditions:
+      - !type:EntityAnchored
+      steps:
+      - tag: TransitTubeStationElectronics
+        name: construction-graph-tag-transit-tube-station-electronics
+        store: board
+        icon:
+          sprite: "Objects/Misc/module.rsi"
+          state: "mcontroller"
+    - to: frameTerminus
+      conditions:
+      - !type:EntityAnchored
+      steps:
+      - material: Steel
+        amount: 1
+        doAfter: 1
+      - tool: Welding
+        doAfter: 1
+    
+  - node: frameStationElectronics
+    entity: TransitTubeStationFrame
+    edges:
+    - to: frame
+      completed:
+      - !type:EmptyAllContainers
+        pickup: true
+        emptyAtUser: true
+      steps:
+      - tool: Prying
+        doAfter: 2
+    - to: station
+      conditions:
+      - !type:EntityAnchored
+      steps:
+      - material: Glass
+        amount: 2
+
+  - node: station
+    entity: TransitTubeStation
+    edges:
+    - to: frameStationElectronics
+      completed:
+      - !type:SpawnPrototype
+        prototype: SheetGlass1
+        amount: 2
+      steps:
+      - tool: Prying
+        doAfter: 2
+    
+  - node: frameTerminus
+    entity: TransitTubeTerminusFrame
+    edges:
+    - to: frame
+      completed:
+      - !type:SpawnPrototype
+        prototype: SheetSteel1
+        amount: 1
+      steps:
+      - tool: Welding
+        doAfter: 2
+    - to: frameTerminusElectronics
+      conditions:
+      - !type:EntityAnchored
+      steps:
+      - tag: TransitTubeStationElectronics
+        name: construction-graph-tag-transit-tube-station-electronics
+        store: board
+        icon:
+          sprite: "Objects/Misc/module.rsi"
+          state: "mcontroller"
+    
+  - node: frameTerminusElectronics
+    entity: TransitTubeTerminusFrame
+    edges:
+    - to: frameTerminus
+      completed:
+      - !type:EmptyAllContainers
+        pickup: true
+        emptyAtUser: true
+      steps:
+      - tool: Prying
+        doAfter: 2
+    - to: terminus
+      conditions:
+      - !type:EntityAnchored
+      steps:
+      - material: Glass
+        amount: 1
+        doAfter: 1
+    
+  - node: terminus
+    entity: TransitTubeStationTerminus
+    edges:
+    - to: frameTerminusElectronics
+      completed:
+      - !type:SpawnPrototype
+        prototype: SheetGlass1
+        amount: 1
+      steps:
+      - tool: Prying
+        doAfter: 2

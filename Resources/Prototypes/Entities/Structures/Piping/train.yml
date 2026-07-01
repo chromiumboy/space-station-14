@@ -1,0 +1,66 @@
+- type: entity
+  id: TrainBasic
+  name: Train Basic
+  placement:
+    mode: SnapgridCenter
+    snap:
+    - Disposal
+  components:
+  - type: Sprite
+    drawdepth: Mobs
+    sprite: Structures/Piping/Transit/transit_pods.rsi
+    layers:
+    - map: [ "pod" ]
+      state: pod_occupied
+      shader: unshaded
+  - type: Clickable
+    bounds: 
+      all: "-0.5,-0.5,0.5,0.5"
+  - type: InteractionOutline
+  - type: TrainVehicle
+  - type: TrainAutomated
+    departureDelay: 6
+  - type: TrainCompositeVehicle
+    jointPrototype: TrainLocomotor
+    trainGridPath: "Maps/Trains/tram_test.yml"
+  - type: Physics  
+    bodyType: Dynamic
+  - type: Fixtures
+    fixtures:
+      fix1:
+        shape:
+          !type:PhysShapeAabb
+          bounds: "-0.25,-0.5,0.25,0.5"
+
+- type: entity
+  id: TrainLocomotor
+  name: Train locomotor
+  categories: [ HideSpawnMenu ]
+  placement:
+    mode: SnapgridCenter
+    snap:
+    - Disposal
+  components:
+  - type: Sprite
+    drawdepth: Mobs
+    sprite: Structures/Piping/Transit/transit_pods.rsi
+    layers:
+    - map: [ "pod" ]
+      state: pod_occupied
+      shader: unshaded
+  - type: Clickable
+    bounds: 
+      all: "-0.5,-0.5,0.5,0.5"
+  - type: InteractionOutline
+  - type: TrainVehicleLocomotor
+  - type: ContainerContainer
+    containers:
+      TrainVehicleComponent: !type:Container
+  - type: Physics
+    bodyType: Dynamic
+  - type: Fixtures
+    fixtures:
+      fix1:
+        shape:
+          !type:PhysShapeAabb
+          bounds: "-0.25,-0.5,0.25,0.5"

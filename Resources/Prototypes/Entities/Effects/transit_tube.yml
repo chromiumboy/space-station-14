@@ -1,0 +1,16 @@
+﻿- type: entity
+  id: EffectTransitTubePodDisappear
+  categories: [ HideSpawnMenu ]
+  components:
+  - type: Transform
+    anchored: True
+  - type: Sprite
+    drawdepth: Mobs
+    sprite: Structures/Piping/Transit/transit_pods.rsi
+    state: pod_disappear
+    loop: false
+  - type: TimedDespawn
+    lifetime: 0.6
+  - type: Tag
+    tags:
+    - HideContextMenu
