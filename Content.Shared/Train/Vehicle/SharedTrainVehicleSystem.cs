@@ -19,7 +19,7 @@ namespace Content.Shared.Train.Vehicle;
 public abstract partial class SharedTrainVehicleSystem : EntitySystem
 {
     [Dependency] private readonly ThrowingSystem _throwing = default!;
-    [Dependency] private readonly DamageableSystem _damageable = default!;
+    //[Dependency] private readonly DamageableSystem _damageable = default!;
     [Dependency] private readonly SharedContainerSystem _container = default!;
     [Dependency] private readonly SharedPhysicsSystem _physics = default!;
     [Dependency] private readonly SharedTransformSystem _xform = default!;
@@ -83,7 +83,7 @@ public abstract partial class SharedTrainVehicleSystem : EntitySystem
                 // Damage the entity
                 if (ent.Comp.DerailmentDamage.GetTotal() > 0)
                 {
-                    _damageable.TryChangeDamage(held, ent.Comp.DerailmentDamage);
+                    //_damageable.TryChangeDamage(held, ent.Comp.DerailmentDamage);
                 }
 
                 // Throw the entity

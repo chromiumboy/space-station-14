@@ -72,20 +72,22 @@ public sealed partial class TrainTrackNode : Node
         OppositeDirections = GetOppositeDirections(CurrentDirections, xform);
     }
 
-    public override IEnumerable<Node> GetReachableNodes(TransformComponent xform,
+    public override IEnumerable<Node> GetReachableNodes
+        (Entity<TransformComponent> xform,
         EntityQuery<NodeContainerComponent> nodeQuery,
         EntityQuery<TransformComponent> xformQuery,
-        MapGridComponent? grid,
+        Entity<MapGridComponent>? grid,
         IEntityManager entMan)
+
     {
         AdjacentTrack.Clear();
 
-        if (!xform.Anchored || xform.GridUid == null || grid == null)
+        if (!xform.Comp.Anchored || xform.Comp.GridUid == null || grid == null)
             yield break;
 
         foreach (var direction in CurrentDirections.Keys)
         {
-            foreach (var entity in _map.GetInDir(xform.GridUid.Value, grid, xform.Coordinates, direction))
+            foreach (var entity in _map.GetInDir(xform.Comp.GridUid.Value, grid, xform.Comp.Coordinates, direction))
             {
                 if (!nodeQuery.TryGetComponent(entity, out var container))
                     continue;

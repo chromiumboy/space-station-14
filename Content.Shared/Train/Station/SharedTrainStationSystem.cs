@@ -232,12 +232,12 @@ public abstract class SharedTrainStationSystem : EntitySystem
             return;
         }
 
-        if (_whitelistSystem.IsBlacklistPass(ent.Comp.Blacklist, args.EntityUid) ||
-            _whitelistSystem.IsWhitelistFail(ent.Comp.Whitelist, args.EntityUid))
-        {
-            args.Cancel();
-            return;
-        }
+        //if (_whitelistSystem.IsBlacklistPass(ent.Comp.Blacklist, args.EntityUid) ||
+        //    _whitelistSystem.IsWhitelistFail(ent.Comp.Whitelist, args.EntityUid))
+        //{
+        //    args.Cancel();
+        //    return;
+        //}
     }
 
     private void OnAfterInteractUsing(Entity<TrainStationComponent> ent, ref AfterInteractUsingEvent args)

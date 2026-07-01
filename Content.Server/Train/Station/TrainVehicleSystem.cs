@@ -1,5 +1,6 @@
 using Content.Server.Atmos.EntitySystems;
 using Content.Server.Body.Systems;
+using Content.Shared.Atmos;
 using Content.Shared.Train.Station;
 using Content.Shared.Train.Track;
 using Content.Shared.Train.Vehicle;
