@@ -1458,6 +1458,9 @@
   id: ToyKnife # Storage whitelist: ClothingShoesClownBase
 
 - type: Tag
+  id: TransitTubeStationElectronics
+
+- type: Tag
   id: Trash # Tagged entities are generic garbage. They fit inside TrashBag and are destroyed by Recycler.
             # CargoBounty: BountyTrash. SpecialDigestible: OrganVoxStomach
 
